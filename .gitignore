@@ -1,0 +1,6 @@
+# Only needed on the family laptop, not on the website
+serve.ps1
+start.bat
+selftest.js
+supabase-setup.sql
+dailydrum-pics.zip

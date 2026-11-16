@@ -1,0 +1,15 @@
+{
+  "name": "Daily Drum",
+  "short_name": "Daily Drum",
+  "description": "Learn the drums on a roll-up pad. The app listens through the microphone.",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#dff3ff",
+  "theme_color": "#6a5cf0",
+  "icons": [
+    { "src": "icon-180.png", "sizes": "180x180", "type": "image/png" },
+    { "src": "icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" }
+  ]
+}

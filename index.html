@@ -1,0 +1,737 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Daily Drum</title>
+<meta name="theme-color" content="#4b2bb8">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Daily Drum">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="icon-180.png">
+<link rel="icon" type="image/png" href="icon-180.png">
+<link rel="stylesheet" href="style.css">
+<link rel="stylesheet" href="app.css">
+</head>
+<body>
+<header>
+  <button class="brand" id="brandName" title="Home"><span id="brandMark" class="logoMark"></span><span id="brandTxt">Daily Drum</span></button>
+  <nav>
+    <button id="navHub" class="tab"><span class="ti">&#127968;</span><span class="tx">Home</span></button>
+    <button id="navLearn" class="tab"><span class="ti">&#129517;</span><span class="tx">Start here</span></button>
+    <button id="navHome" class="tab"><span class="ti">&#129345;</span><span class="tx">Lessons</span></button>
+    <button id="navSongs" class="tab"><span class="ti">&#127925;</span><span class="tx">Songs</span></button>
+    <button id="navTour" class="tab"><span class="ti">&#127942;</span><span class="tx">Tour</span></button>
+    <button id="navFriends" class="tab"><span class="ti">&#128101;</span><span class="tx">Friends</span></button>
+    <button id="navProgress" class="tab"><span class="ti">&#11088;</span><span class="tx">Progress</span></button>
+  </nav>
+  <button id="navMe" class="meBtn" title="My drummer, my account, log out" aria-haspopup="true" aria-expanded="false"><span id="meFace" class="face"></span><span id="meName"></span><span class="caret">&#9662;</span></button>
+  <div id="meMenu" class="meMenu hidden" role="menu">
+    <div id="mmWho" class="mmWho"></div>
+    <button id="mmMe" role="menuitem">&#127912; My drummer</button>
+    <button id="mmAcct" role="menuitem">&#128100; My account</button>
+    <button id="mmMsgs" role="menuitem">&#128236; My messages</button>
+    <button id="mmOut" role="menuitem" class="danger">&#128682; Log out</button>
+  </div>
+  <button id="navSetup" class="tab gear" title="Setup: microphone, pads and options. A job for a grown-up." aria-label="Setup"><span class="ti">&#9881;</span><span class="tx">Setup</span></button>
+  <div id="earStatus" class="status" role="status">Mic off</div>
+</header>
+
+<div id="loading" class="loading hidden" role="status" aria-live="polite"><div class="loadBox"><div id="loadMascots" class="mascots tiny"></div><div id="loadingTxt">Loading…</div></div></div>
+<main>
+  <div id="fileNote" class="note hidden">The app was opened as a file, so the microphone cannot work. Close this tab and double-click <b>start.bat</b> instead.</div>
+  <div id="httpNote" class="note hidden">This address does not begin with <b>https://</b>, so the browser will not let the app use the microphone. Open the app from its https address instead.</div>
+  <!-- Home: who plays here, and every badge there is to collect -->
+  <section id="hub" class="hidden">
+    <div id="hubMsgs"></div>
+    <div class="homeGrid">
+      <!-- the Beat Brothers stand on the stage and talk: tips, and facts about drums -->
+      <div id="brosPop" class="homeStage">
+        <div class="brosBubble"><b id="brosKind" class="brosKind"></b><span id="brosSay"></span></div>
+        <button id="brosFaces" class="brosDuo" title="Tap for another one" aria-label="The Beat Brothers. Tap for another tip or fact."></button>
+      </div>
+      <div class="homePanel hubHero">
+        <div id="hubArt" class="hidden"></div>
+        <div id="hubBand" class="hubBand"></div>
+        <div class="hubTxt">
+          <div id="hubHello" class="hubHello"></div>
+          <div id="hubRank" class="muted"></div>
+          <div class="xpBar hubXp"><i id="hubXpFill"></i></div>
+          <button id="hubGo" class="primary big playBtn"></button>
+          <div class="row quick">
+            <button id="hubSongs">&#127925; Songs</button>
+            <button id="hubTour">&#127942; Tour</button>
+            <button id="hubMe">&#127912; My drummer</button>
+            <button id="hubInbox">&#128236; Messages</button>
+            <button id="hubAcct">&#128100; Account</button>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="badgeDock">
+      <div class="badgeHead"><b>&#127941; Badges to collect</b><span id="hubCount" class="muted small"></span></div>
+      <div class="badgeStrip hscroll">
+        <div class="bGroup"><h3>&#127942; The big ones</h3><div id="hubBig" class="badgeWall"></div></div>
+        <div class="bGroup"><h3>All the others</h3><div id="hubRest" class="badgeWall"></div></div>
+        <div class="bGroup"><h3 title="Play the same lesson cleanly again and again to earn its medal.">&#127941; Practice medals</h3><div id="hubMedals" class="badgeWall"></div></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Lessons -->
+  <section id="home" class="hidden">
+    <div id="setupBanner" class="banner hidden">
+      <div><strong>Set up your pad first.</strong> The app needs to learn the sound of each pad before it can check your playing.</div>
+      <button id="bannerSetup" class="primary">Open Setup</button>
+    </div>
+    <div id="profile" class="card profile">
+      <div class="rank">
+        <button id="homeFace" class="face faceBtn" title="Change your name and picture"></button>
+        <div class="rankTxt">
+          <div id="hello" class="hello"></div>
+          <b><span id="rankIcon"></span> <span id="rankName"></span></b>
+          <div class="xpBar"><i id="xpFill"></i></div>
+          <span id="xpTxt" class="small muted"></span>
+        </div>
+      </div>
+      <div class="pstats"><span id="dayStreak" title="Days in a row with practice"></span><span id="starTotal" title="Stars earned"></span><span id="comboBest" title="Longest run of right hits"></span></div>
+      <div class="pbtns"><button id="continueBtn" class="primary big"></button><button id="weakBtn">&#127919; Practise my weak spots</button></div>
+      <div id="badges" class="badges"></div>
+    </div>
+    <h1>Lessons</h1>
+    <p class="muted">Go from top to bottom. Two stars or more? Move on to the next one! New to drums? Open <a href="#" id="learnLink">Start here</a> first.</p>
+    <div id="lessonList" class="lessons"></div>
+  </section>
+
+  <!-- Songs -->
+  <section id="songs" class="hidden">
+    <h1>Songs</h1>
+    <p class="muted">Play along with well-known children's songs. The app plays the tune; you play the drums. Try these after lesson 8.</p>
+    <div id="songList" class="lessons"></div>
+
+    <h1 class="gapTop">Your own music</h1>
+    <p class="muted">Play along with any song you have as a file on this device (MP3, M4A or WAV). The file stays on this device.
+      Wear headphones plugged into the device, so the microphone hears the drum pad and not the song. Songs inside streaming apps cannot be used.</p>
+    <div class="row">
+      <button id="addSong" class="primary">Add a song</button>
+      <input id="songFile" type="file" accept="audio/*,.mp3,.m4a,.wav,.ogg,.flac" class="hidden">
+      <span id="songMsg" class="small"></span>
+    </div>
+    <div id="trackList" class="lessons"></div>
+    <details class="ideas">
+      <summary>Song ideas that suit a beginner</summary>
+      <ul>
+        <li>Queen, "We Will Rock You": slow. Drum part: Boom, boom, clap.</li>
+        <li>Katy Perry, "Roar": slow. Drum part: First beat, later Rock beat.</li>
+        <li>Survivor, "Eye of the Tiger": medium. Drum part: Boom, tap, later Rock beat.</li>
+        <li>The Beatles, "Yellow Submarine": medium. Drum part: Boom, tap.</li>
+        <li>Justin Timberlake, "Can't Stop the Feeling!": medium. Drum part: First beat, later Dance beat.</li>
+        <li>Pinkfong, "Baby Shark": medium. Drum part: Boom, tap, later Dance beat.</li>
+        <li>Coldplay, "A Sky Full of Stars": quick. Drum part: Boom, tap, later Dance beat.</li>
+        <li>Taylor Swift, "Shake It Off": fast. Drum part: Boom, tap at 70% speed first.</li>
+      </ul>
+    </details>
+  </section>
+
+  <!-- Start here: the drum kit and the basics, to click and hear rather than read -->
+  <section id="learn" class="hidden">
+    <h1>Start here</h1>
+    <div class="card">
+      <h2>1. Meet the drum kit</h2>
+      <p class="muted">This is a real drum kit. Your roll-up pad is a small, flat version of it. Tap any part to hear it and to see where it is on your pad.</p>
+      <div class="kitGrid">
+        <svg id="kitSvg" viewBox="0 0 520 340" aria-label="A drum kit. Tap a part to hear it."></svg>
+        <div class="kitInfo">
+          <div id="kitName" class="kitName">Tap a drum</div>
+          <div id="kitText" class="kitText">Every part of the kit has its own job in the band.</div>
+          <div id="kitLimb" class="kitLimb"></div>
+          <svg id="padKit" class="padSvg view" viewBox="0 0 420 340" aria-hidden="true"></svg>
+          <div id="kitSeen" class="small muted"></div>
+        </div>
+      </div>
+    </div>
+    <div class="card">
+      <h2>2. Feel the beat</h2>
+      <p class="muted">Music has a steady pulse called the beat. Press Play, then try the buttons: they change how many hits fit into each beat.</p>
+      <div class="row">
+        <button id="labPlay" class="primary big">&#9654; Play</button>
+        <label>Tempo <input id="labTempo" type="range" min="40" max="160" step="5" value="80"> <b id="labTempoTxt">80</b> BPM <span id="labTempoWord" class="muted small"></span></label>
+      </div>
+      <div class="row" id="labFeels">
+        <button data-div="1" class="feel active">4 beat</button>
+        <button data-div="2" class="feel">8 beat</button>
+        <button data-div="3" class="feel">Triplets</button>
+        <button data-div="4" class="feel">16 beat</button>
+      </div>
+      <div id="labDots" class="labDots"></div>
+      <div id="labSay" class="labSay"></div>
+      <p class="muted small">Four beats make one <b>bar</b>. The loud click is beat 1. <b>BPM</b> means beats per minute: 60 BPM is one beat every second.</p>
+    </div>
+    <div class="card">
+      <h2>3. Read drum music</h2>
+      <p class="muted">Drum music is written on five lines called a staff. Each drum has its own place on it. Tap a note to hear which drum it is.</p>
+      <div id="readKey" class="notation readKey"></div>
+      <div id="readInfo" class="labSay">Tap a note above.</div>
+      <div class="howCards">
+        <div class="how"><b>Cross or dot</b><span>A cross is a cymbal. A dot is a drum.</span></div>
+        <div class="how"><b>Up or down</b><span>Stems pointing up are played by the hands. Stems pointing down are played by the feet.</span></div>
+        <div class="how"><b>Left to right</b><span>Read it like a sentence. The numbers under the staff are the count.</span></div>
+        <div class="how"><b>The two numbers</b><span>At the start: the top number is how many beats are in a bar.</span></div>
+      </div>
+      <h3>How long is a note?</h3>
+      <p class="muted">The beams joining the notes tell you how fast they go. Pick one and press Play: the line shows where you are.</p>
+      <div class="row" id="readTabs"></div>
+      <div id="readStaff" class="notation readKey"></div>
+      <div id="readSay" class="labSay"></div>
+      <div class="row"><button id="readPlay" class="primary">&#9654; Play it</button></div>
+      <p class="muted small">In every lesson the sheet music runs above the falling notes with the same moving line. When a lesson feels easy, tick "Sheet only" to hide the falling notes and play from the sheet.</p>
+    </div>
+    <div class="card" id="quizCard">
+      <h2>&#127932; Note quiz: which drum is it?</h2>
+      <p class="muted">A note appears on the staff. Tap that drum in the pad picture, or hit it on your real pad. Ten notes make one round.</p>
+      <div class="row" id="quizLevels">
+        <button data-lv="0" class="feel active">Easy: 3 drums</button>
+        <button data-lv="1" class="feel">Medium: 6 drums</button>
+        <button data-lv="2" class="feel">All 9</button>
+      </div>
+      <div id="quizStaff" class="notation readKey quizStaff"></div>
+      <div id="quizSay" class="labSay">Press Start. Every right answer on the first try is a point.</div>
+      <div class="row"><button id="quizGo" class="primary big">&#9654; Start the quiz</button><b id="quizScore" class="quizScore"></b></div>
+      <svg id="quizPad" class="padSvg quizPad" viewBox="0 0 420 340" aria-label="Your drum pad. Tap the drum that the note shows."></svg>
+      <p id="quizBest" class="muted small"></p>
+    </div>
+    <div class="card">
+      <h2>4. How to sit and hold the sticks</h2>
+      <div id="howCards" class="howCards"></div>
+    </div>
+    <div class="row"><button id="learnDone" class="primary big">Go to the lessons</button></div>
+  </section>
+
+  <!-- Account: nickname and PIN. Stars are saved online, and friends can be added. -->
+  <section id="account" class="hidden">
+    <div id="acMascots" class="mascots"></div>
+    <h1 id="acTitle">Welcome to Daily Drum!</h1>
+    <div id="acHello" class="acHello"></div>
+    <div id="acOut">
+      <p class="muted">Log in, or ask for an account if you are new. Your stars are saved in your account, so they are the same on every device, and you can add friends. A grown-up says yes to every new account.</p>
+      <div class="acGrid">
+        <div class="card">
+          <h2>I have an account</h2>
+          <label for="acNickIn">Nickname</label>
+          <input id="acNickIn" class="textIn" maxlength="16" autocomplete="username" autocapitalize="off">
+          <label for="acPinIn">PIN</label>
+          <input id="acPinIn" class="textIn" type="password" maxlength="40" autocomplete="current-password">
+          <label class="showPin"><input type="checkbox" data-pins="acPinIn"> Show my PIN</label>
+          <div class="row"><button id="acLoginBtn" class="primary big wideBtn">&#128275; Log in</button></div>
+          <div id="acMsg" class="small acMsg"></div>
+          <button id="acForgot" class="linkBtn">Forgot my PIN?</button>
+          <div id="acForgotBox" class="forgotBox hidden">
+            <p>No problem! Type your <b>nickname</b> in the box above. Then type your secret word and pick a new PIN.</p>
+            <label for="acFWord">My secret word</label>
+            <input id="acFWord" class="textIn" maxlength="40" autocomplete="off" autocapitalize="off">
+            <label for="acFPin">My new PIN <span class="muted small">(4 numbers or more)</span></label>
+            <input id="acFPin" class="textIn" type="password" maxlength="40" autocomplete="new-password">
+            <label for="acFPin2">The same new PIN again</label>
+            <input id="acFPin2" class="textIn" type="password" maxlength="40" autocomplete="new-password">
+            <label class="showPin"><input type="checkbox" data-pins="acFPin,acFPin2"> Show my PIN</label>
+            <button id="acResetGo" class="primary big">&#128273; Set my new PIN</button>
+            <div id="acResetMsg" class="small acMsg"></div>
+            <button id="acForgotBoth" class="linkBtn">I forgot my secret word too</button>
+            <div id="acForgotAsk" class="hidden">
+              <p>Then a grown-up helps. Press this button, and the grown-up who looks after Daily Drum will give you a new PIN themselves.</p>
+              <button id="acForgotGo" class="big">Ask the grown-up for a new PIN</button>
+              <div id="acForgotMsg" class="small acMsg"></div>
+            </div>
+          </div>
+        </div>
+        <div class="card">
+          <h2>I am new here</h2>
+          <label for="acNickNew">Pick a nickname <span class="muted small">(not your full name)</span></label>
+          <input id="acNickNew" class="textIn" maxlength="16" autocomplete="off" autocapitalize="off">
+          <label for="acPinNew">Pick a PIN <span class="muted small">(4 numbers or more)</span></label>
+          <input id="acPinNew" class="textIn" type="password" maxlength="40" autocomplete="new-password">
+          <label for="acPinNew2">The same PIN again</label>
+          <input id="acPinNew2" class="textIn" type="password" maxlength="40" autocomplete="new-password">
+          <label for="acWordNew">Pick a secret word <span class="muted small">(like your favourite animal. You need it if you forget your PIN)</span></label>
+          <input id="acWordNew" class="textIn" maxlength="40" autocomplete="off" autocapitalize="off">
+          <label for="acJoin">Join code <span class="muted small">(only if a grown-up gave you one)</span></label>
+          <input id="acJoin" class="textIn" maxlength="30" autocomplete="off">
+          <label class="showPin"><input type="checkbox" data-pins="acPinNew,acPinNew2"> Show my PIN</label>
+          <div class="row"><button id="acNewBtn" class="primary big wideBtn">&#10024; Ask for an account</button></div>
+          <div id="acMsg2" class="small acMsg"></div>
+        </div>
+      </div>
+    </div>
+    <div id="acWait" class="card hidden">
+      <h2 id="acWaitTitle"></h2>
+      <p id="acWaitTxt" class="muted"></p>
+      <div class="row"><button id="acCheck" class="primary big">Check again</button><button id="acOutBtn2" class="big outBtn">&#128682; Log out</button><span id="acWaitMsg" class="small"></span></div>
+    </div>
+    <div id="acIn" class="card acCard hidden">
+      <div id="acFace" class="face big"></div>
+      <div class="acInfo">
+        <div class="acName" id="acNick"></div>
+        <div class="acLine"><span class="acKey">Friend code</span><b id="acCode" class="code"></b></div>
+        <div class="acLine"><span class="acKey">Account</span><span id="acValid"></span></div>
+        <div class="acLine"><span class="acKey">Stars saved</span><span id="acSaved"></span> <button id="acSave" class="linkBtn">Save now</button><span id="acInMsg" class="small"></span></div>
+        <div class="acLine"><span class="acKey">Secret word</span><span id="acWordState"></span> <button id="acWordOpen" class="linkBtn"></button></div>
+        <div class="row acBtns">
+          <button id="acDrummer" class="primary big">&#127912; My drummer</button>
+          <button id="acMsgs" class="big">&#128236; My messages</button>
+          <button id="acOutBtn" class="big outBtn">&#128682; Log out</button>
+        </div>
+        <button id="acPinOpen" class="linkBtn">Change my PIN</button>
+        <div id="acWordBox" class="forgotBox hidden">
+          <p>Your secret word lets you pick a new PIN if you ever forget yours. Choose a word you will remember, like your favourite animal. Keep it to yourself.</p>
+          <label for="acWordPin">The PIN I use now</label>
+          <input id="acWordPin" class="textIn" type="password" maxlength="40" autocomplete="current-password">
+          <label for="acWordIn">My secret word</label>
+          <input id="acWordIn" class="textIn" maxlength="40" autocomplete="off" autocapitalize="off">
+          <div class="row"><button id="acWordGo" class="primary big">Save my secret word</button><button id="acWordCancel" class="big">Cancel</button></div>
+          <div id="acWordMsg" class="small acMsg"></div>
+        </div>
+      </div>
+    </div>
+    <div id="acPin" class="card hidden">
+      <h2 id="acPinTitle">Choose your own new PIN</h2>
+      <p id="acPinTxt" class="muted"></p>
+      <div class="pinGrid">
+        <label for="acPinOld" id="acPinOldLbl">The PIN the grown-up gave you</label>
+        <input id="acPinOld" class="textIn" type="password" maxlength="40" autocomplete="current-password">
+        <label for="acPinA">Your new PIN <span class="muted small">(4 numbers or more)</span></label>
+        <input id="acPinA" class="textIn" type="password" maxlength="40" autocomplete="new-password">
+        <label for="acPinB">The same new PIN again</label>
+        <input id="acPinB" class="textIn" type="password" maxlength="40" autocomplete="new-password">
+      </div>
+      <label class="showPin"><input type="checkbox" data-pins="acPinOld,acPinA,acPinB"> Show the PINs</label>
+      <div class="row"><button id="acPinGo" class="primary big">Save my new PIN</button><button id="acPinCancel" class="big">Cancel</button><button id="acPinOut" class="big outBtn">&#128682; Log out</button></div>
+      <div id="acPinMsg" class="small acMsg"></div>
+    </div>
+  </section>
+
+  <!-- My messages: everything the grown-up sent -->
+  <section id="inbox" class="hidden">
+    <h1>&#128236; My messages</h1>
+    <p class="muted">Messages from the grown-up who looks after Daily Drum. Newest first.</p>
+    <div id="acInboxList" class="inboxList"></div>
+    <div class="row"><button id="inboxHome" class="primary big">&#127968; Back to Home</button></div>
+  </section>
+
+  <!-- Friends: by code, and only when both say yes -->
+  <section id="friends" class="hidden">
+    <h1>Friends</h1>
+    <div id="frOut" class="card">
+      <p>Friends can see each other's rank and points. You need an account for that.</p>
+      <div class="row"><button id="frLogin" class="primary big">Log in or make an account</button></div>
+    </div>
+    <div id="frIn" class="hidden">
+      <div class="card">
+        <h2>Add a friend</h2>
+        <p class="muted">Tell a friend your code, or type theirs. You are friends when both of you have said yes.</p>
+        <p>My friend code: <b id="frCode" class="code"></b></p>
+        <div class="row">
+          <input id="frAddIn" class="textIn" maxlength="10" placeholder="Friend's code" autocomplete="off" autocapitalize="characters">
+          <button id="frAddBtn" class="primary">Ask to be friends</button>
+        </div>
+        <div id="frMsg" class="small acMsg"></div>
+        <div id="frOutgoing" class="small muted"></div>
+      </div>
+      <div id="frIncomingBox" class="card hidden">
+        <h2>Friend requests</h2>
+        <div id="frIncoming"></div>
+      </div>
+      <div class="card">
+        <h2>&#127942; Friends board</h2>
+        <p class="muted small">Most rank points first. Stars, badges, days in a row and Tour stops are shown too.</p>
+        <div id="frBoard"></div>
+        <p id="frEmpty" class="muted">No friends yet. Add one with their code!</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- Tour: challenges that test one skill each -->
+  <section id="tour" class="hidden">
+    <div id="tourMap">
+      <h1>Tour</h1>
+      <p class="muted">Take your drummer on tour. Every stop has four challenges that test one skill each. Win trophies to play the gig: a long piece of music. Finish the gig to earn that stop's background for your drummer.</p>
+      <div class="row" id="tourLv">
+        <b>How hard?</b>
+        <button class="feel" data-lv="rookie">Rookie</button>
+        <button class="feel" data-lv="pro">Pro</button>
+      </div>
+      <div class="tourHost"><span id="tourHostFace"></span><div id="tourLvTxt" class="hostSay"></div></div>
+      <h2 class="tourPick">Choose your stage</h2>
+      <div id="tourStops" class="tourStops"></div>
+      <div id="tourStop"></div>
+    </div>
+    <div id="tourPlay" class="hidden">
+      <div class="playTop">
+        <button id="tourBack">&larr; Tour</button>
+        <div class="playTitle">
+          <div id="tourTitle" class="title"></div>
+          <div id="tourGoal" class="muted small"></div>
+        </div>
+        <button id="tourStart" class="primary">Start</button>
+      </div>
+      <div id="tourNote" class="note hidden"></div>
+      <div class="stage tourStage">
+        <div id="tourArea" class="tourArea"></div>
+        <div class="side">
+          <div class="sideTitle">Your pad</div>
+          <svg id="padTour" class="padSvg view tap" viewBox="0 0 420 340" aria-label="Your drum pad. Tap a pad to play it without the real pad."></svg>
+          <div class="buddy">
+            <div id="venueT" class="venue"></div>
+            <div id="buddyFaceT" class="buddyFace"></div>
+            <div id="buddySayT" class="buddySay"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div id="tourDone" class="hidden">
+      <div id="tdoneFace" class="face mid cheerFace"></div>
+      <div id="tdoneCheer" class="cheer"></div>
+      <div class="card"><ul id="tdoneLines" class="tLines"></ul></div>
+      <div class="row">
+        <button id="tdoneAgain" class="primary">Play again</button>
+        <button id="tdoneBack">Back to the Tour</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- This is me: name, cartoon drummer or photo -->
+  <section id="me" class="hidden">
+    <h1 id="meTitle">Who is drumming?</h1>
+    <div class="card meCard">
+      <div class="meLeft">
+        <div id="mePreview" class="face big"></div>
+        <div id="mePreviewName" class="hello"></div>
+      </div>
+      <div class="meForm">
+        <label for="meNameIn"><b>My name</b></label>
+        <div class="row">
+          <input id="meNameIn" class="textIn" maxlength="20" placeholder="Type your name" autocomplete="off">
+        </div>
+        <h3>Build my drummer</h3>
+        <div id="meOpts"></div>
+        <h3>Or use a photo</h3>
+        <p class="muted small">The photo stays on this device. It is not sent anywhere.</p>
+        <div class="row">
+          <button id="mePhoto">&#128247; Choose a photo</button>
+          <input id="mePhotoFile" type="file" accept="image/*" class="hidden">
+          <button id="mePhotoOff" class="hidden">Use my drummer instead</button>
+          <span id="meMsg" class="small"></span>
+        </div>
+      </div>
+    </div>
+    <div class="row"><button id="meDone" class="primary big">Done</button></div>
+    <div id="mePlayers" class="card">
+      <h2>Who else plays here?</h2>
+      <p class="muted">Every player has their own stars, rank and badges.</p>
+      <div id="meSwitch" class="row"></div>
+      <div id="meRemoveRow" class="row dangerRow hidden">
+        <span class="muted small">For a grown-up: this erases this player's stars and cannot be undone.</span>
+        <button id="meRemove" class="danger">Remove this player</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- Progress -->
+  <section id="progress" class="hidden">
+    <h1>My progress</h1>
+    <div id="pgCards" class="pgCards"></div>
+    <div class="card">
+      <h2>&#127942; My records</h2>
+      <p class="muted">Your own best scores. Can you beat yourself?</p>
+      <div id="pgRecords" class="pgCards"></div>
+    </div>
+    <div class="card">
+      <h2>Minutes practised, last 14 days</h2>
+      <div id="pgDays" class="pgDays"></div>
+    </div>
+    <div class="card">
+      <h2>&#127919; Practise my weak spots</h2>
+      <p class="muted">Three lessons picked from your scores and from the pads you miss most.</p>
+      <div id="pgWeak" class="lessons"></div>
+    </div>
+    <div class="card">
+      <h2>Tests and exams</h2>
+      <p class="muted">Each level ends with a test and each stage with an exam. Nothing is locked: take them whenever you feel ready, as often as you like.</p>
+      <div id="pgTests" class="lessons"></div>
+    </div>
+    <h2 class="gapTop">Every lesson</h2>
+    <p class="muted">Tap a lesson to play it. The line in each chart is the pass mark. A crown means the lesson was played with two stars at its goal tempo.</p>
+    <div id="pgLessons"></div>
+    <div class="card">
+      <h2>Where your progress is kept</h2>
+      <p class="muted">Stars, medals, history and badges are stored inside this app on this device. They are not in the app folder and not on the internet. Save a backup file before you clear the browser's data or move to another device, and load it there.</p>
+      <div class="row">
+        <button id="pgSave" class="primary">Save a backup file</button>
+        <button id="pgLoad">Load a backup file</button>
+        <input id="pgFile" type="file" accept=".json,application/json" class="hidden">
+        <span id="pgMsg" class="small"></span>
+      </div>
+      <div class="row dangerRow">
+        <span class="muted small">For a grown-up: this cannot be undone.</span>
+        <button id="pgReset" class="danger">Erase all progress</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- Test result -->
+  <section id="testDone" class="hidden">
+    <div id="tdCheer" class="cheer"></div>
+    <div class="card" style="text-align:center"><div id="tdScore" class="score"></div><div id="tdNote" class="muted"></div></div>
+    <div class="card"><h2>Piece by piece</h2><div id="tdParts"></div></div>
+    <div class="row">
+      <button id="tdAgain" class="primary">Take it again</button>
+      <button id="tdCert" class="primary hidden">&#127891; Show certificate</button>
+      <button id="tdHome">All lessons</button>
+      <button id="tdProgress">My progress</button>
+    </div>
+  </section>
+
+  <!-- Certificate -->
+  <section id="cert" class="hidden">
+    <div class="certPage">
+      <div class="certTop">&#129345; <span id="certBrand">Daily Drum</span></div>
+      <div class="certTitle">Certificate</div>
+      <div id="certFace" class="face mid"></div>
+      <div class="muted">This is to certify that</div>
+      <input id="certName" class="certName" placeholder="Type the drummer's name" maxlength="40" aria-label="Name on the certificate">
+      <div class="muted">has completed the</div>
+      <div id="certStage" class="certStage"></div>
+      <div id="certGrade" class="certGrade"></div>
+      <div id="certParts" class="small muted"></div>
+      <div id="certDate" class="certDate"></div>
+      <div id="certMascots" class="mascots tiny"></div>
+    </div>
+    <div class="row noPrint"><button id="certPrint" class="primary">Print</button><button id="certBack">Back</button></div>
+  </section>
+
+  <!-- Setup -->
+  <section id="setup" class="hidden">
+    <h1>Setup <span class="muted small">(a job for a grown-up)</span></h1>
+
+    <div class="card">
+      <h2>1. Microphone</h2>
+      <p class="muted">The app listens to your pad through this device's microphone. Turn the pad's volume up, keep it close to the device, and keep the room quiet.</p>
+      <div class="row">
+        <button id="connectBtn" class="primary">Turn on microphone</button>
+        <select id="deviceSel" class="hidden" aria-label="Choose microphone"><option value="">Default microphone</option></select>
+      </div>
+      <div class="meterWrap">
+        <div class="meter"><div id="meterBar"></div><div id="meterMark"></div></div>
+        <span id="meterTxt" class="muted small">Hit a pad: the bar should jump past the line.</span>
+      </div>
+      <div class="row">
+        <label for="sens">Sensitivity</label>
+        <input id="sens" type="range" min="0" max="100" value="50">
+        <span class="muted small">Raise it if soft hits are missed; lower it if noise triggers hits.</span>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>2. Teach the app your pads</h2>
+      <p class="muted">Tap a pad in the picture, then hit that pad 8 times: some soft, some hard. Or press "Teach all pads" and the app walks you through them one by one.
+        You can pause at any time, and tap any pad to teach it again. Teach a pad again if you change its volume or drum-kit sound, or use a different device.</p>
+      <div class="calGrid">
+        <svg id="padMap" class="padSvg" viewBox="0 0 420 340" aria-label="Your drum pad. Tap a pad to teach it."></svg>
+        <div>
+          <div id="calPrompt" class="calPrompt"></div>
+          <div id="calDots" class="dots"></div>
+          <div class="row">
+            <button id="calStart" class="primary">Teach all pads</button>
+            <button id="calPause" class="primary hidden">Pause</button>
+            <button id="calHear" class="hidden" title="Plays the app's own example of this drum. Your pad will sound a little different.">&#128266; Hear an example</button>
+            <button id="calSkip" class="hidden">Skip this pad</button>
+            <button id="calRedo" class="hidden">Start this pad again</button>
+            <button id="calMore" class="hidden" title="Keeps what the app already knows about this pad and adds eight more hits (up to 32 in all). Use it for a pad that is sometimes misheard.">Add 8 more hits instead</button>
+            <button id="calForget" class="hidden">Forget this pad</button>
+            <button id="calReset" class="hidden">Forget all pads</button>
+          </div>
+          <div id="calResult" class="muted"></div>
+        </div>
+      </div>
+      <h3>Pads hit together (optional)</h3>
+      <p class="muted small">Many beats hit two or three pads at the same moment. The app can work these out from the single pads, but it is more exact if it has heard them together. Teach the single pads first, then tap a pair and hit both pads at once, 8 times.</p>
+      <div id="comboList" class="comboList"></div>
+    </div>
+
+    <div class="card">
+      <h2>3. Test</h2>
+      <p class="muted">Hit any pad. The app shows what it heard, and the pad lights up in the picture above.</p>
+      <div id="testOut" class="testOut">-</div>
+      <h3>Check every pad</h3>
+      <p class="muted small">The app asks for each pad in turn, three hits each, and keeps score. Pads it gets wrong can be taught again or given more hits to learn from.</p>
+      <div class="row"><button id="chkStart" class="primary">Check all pads</button><span id="chkPrompt" class="chkPrompt"></span></div>
+      <div id="chkOut" class="chkOut"></div>
+      <h3>&#127932; New to drum music?</h3>
+      <p class="muted small">Once the pads are taught, the Note quiz shows one written note at a time and the player hits that drum. It is the quickest way to get used to the sheet music before the first lesson.</p>
+      <div class="row"><button id="setupQuiz">&#127932; Open the Note quiz</button></div>
+    </div>
+
+    <div class="card">
+      <h2>4. Timing</h2>
+      <p class="muted">Every device delays sound a little. Measure it once so "early" and "late" are judged fairly. Takes about 5 seconds.</p>
+      <div class="row">
+        <button id="latBtn" class="primary">Measure delay</button>
+        <span id="latOut" class="small"></span>
+      </div>
+      <div class="row">
+        <label for="offset">Timing offset</label>
+        <input id="offset" type="range" min="-50" max="400" value="60">
+        <span id="offsetTxt" class="small">60 ms</span>
+      </div>
+      <p class="muted small">Set by "Measure delay"; you can also adjust it by hand. After a lesson, the app suggests a better value if your hits are consistently early or late.</p>
+      <div class="row">
+        <label for="clickVol">Metronome volume</label>
+        <input id="clickVol" type="range" min="0" max="100" value="50">
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>5. Player and app</h2>
+      <div class="row">
+        <label for="handSel">The drummer is</label>
+        <select id="handSel"><option value="R">right-handed</option><option value="L">left-handed</option></select>
+        <span class="muted small">Every note shows which hand or foot plays it.</span>
+      </div>
+      <div class="row">
+        <label for="appName">Name of the app</label>
+        <input id="appName" class="textIn" maxlength="28" placeholder="Daily Drum">
+        <button id="setupMe">Change the player's name and picture</button>
+      </div>
+      <p class="muted small keysHint">No pad nearby? Any lesson can be tried by tapping the pad picture beside the notes, or with the keyboard:
+        <kbd>A</kbd> hi-hat, <kbd>S</kbd> snare, <kbd>Space</kbd> kick, <kbd>Q</kbd> crash, <kbd>E</kbd> <kbd>D</kbd> <kbd>F</kbd> toms, <kbd>R</kbd> ride.</p>
+    </div>
+  </section>
+
+  <!-- Practice -->
+  <section id="play" class="hidden">
+    <div class="playTop">
+      <button id="backBtn">&larr; All lessons</button>
+      <div class="playTitle">
+        <div id="lessonTitle" class="title"></div>
+        <div id="lessonGoal" class="muted small"></div>
+      </div>
+      <button id="demoBtn" title="Watch and hear how it should sound before you try">Listen first</button>
+      <button id="startBtn" class="primary">Start</button>
+    </div>
+    <div class="controls">
+      <label id="tempoLabel">Tempo <input id="tempo" type="range" min="40" max="180" step="5" value="60"> <span id="tempoTxt">60</span> BPM <span id="tempoWord" class="muted small"></span> <span id="tempoGoal" class="small goalChip"></span></label>
+      <label id="speedLabel" class="hidden" title="Slower is easier. A slowed-down song also sounds lower.">Song speed <input id="speed" type="range" min="60" max="100" step="5" value="100"> <span id="speedTxt">100</span>%</label>
+      <label id="waitLabel" title="The notes stop and wait until you hit the right pad"><input id="waitMode" type="checkbox"> Wait mode</label>
+      <label id="climbLabel" title="The beat gets 5 BPM faster after every clean round, and the points grow with it. Three hearts: a messy round costs one."><input id="climbMode" type="checkbox"> &#128640; Speed climb</label>
+      <label id="partLabel" class="hidden">Drum part <select id="trackPart"></select></label>
+      <details id="moreBox" class="more">
+        <summary>More options</summary>
+        <div class="moreIn">
+          <label id="sheetOnlyLabel" title="Hides the falling notes, so you play from the sheet music alone"><input id="sheetOnly" type="checkbox"> Sheet only</label>
+          <label id="loopLabel" title="Keep repeating until you press Stop"><input id="loopMode" type="checkbox"> Repeat until I press Stop</label>
+          <label title="Flash only is silent: use it if the click confuses the microphone">Metronome
+            <select id="metroMode">
+              <option value="sound">Click sound</option>
+              <option value="visual">Flash only (silent)</option>
+              <option value="off">Off</option>
+            </select>
+          </label>
+          <label id="musicLabel" class="hidden" title="The app plays the song's tune while you drum"><input id="musicOn" type="checkbox" checked> Play the tune</label>
+        </div>
+      </details>
+    </div>
+    <div id="playNote" class="note hidden"></div>
+    <div id="testBar" class="focus testBar hidden"></div>
+    <div id="focusLine" class="focus hidden"></div>
+    <div id="sheet" class="sheet notation"></div>
+    <div class="stage">
+      <canvas id="lane"></canvas>
+      <div class="side">
+        <div class="sideTitle">Your pad</div>
+        <svg id="padView" class="padSvg view tap" viewBox="0 0 420 340" aria-label="Your drum pad. Tap a pad to play it without the real pad."></svg>
+        <div id="nextUp" class="nextUp"></div>
+        <div id="climbHud" class="climbHud hidden"></div>
+        <div class="buddy">
+          <div id="venue" class="venue"></div>
+          <div id="buddyFace" class="buddyFace"></div>
+          <div id="buddySay" class="buddySay"></div>
+        </div>
+        <div id="padHint" class="padHint"></div>
+      </div>
+    </div>
+    <div id="lessonTip" class="tip"></div>
+    <details id="alignBox" class="card hidden">
+      <summary>Line up the notes with the song (for a grown-up, once per song)</summary>
+      <p class="muted small">Press "Listen first". You hear the song, a click on every beat, and the drum part. The click should land exactly on the song's beat, like a foot tapping along. If it does not, use these buttons while it plays.</p>
+      <div id="alignInfo" class="small"></div>
+      <div class="row">
+        <button id="alEarlier">&#9664; Click earlier</button>
+        <button id="alLater">Click later &#9654;</button>
+        <span id="nudgeTxt" class="muted small"></span>
+      </div>
+      <div class="row">
+        <button id="alHalf">Click is twice too fast</button>
+        <button id="alDouble">Click is twice too slow</button>
+        <button id="alBetween">Click falls between the beats</button>
+        <button id="alSwap">Kick and snare are swapped</button>
+      </div>
+      <div class="row">
+        <button id="alTap">Tap the beat</button>
+        <span id="tapTxt" class="muted small">If the click is completely off: tap this button in time with the song, 8 times or more.</span>
+      </div>
+      <div class="row">
+        <label for="seek">Jump to</label>
+        <input id="seek" type="range" min="0" max="1000" value="0">
+        <span id="seekTxt" class="muted small">0:00</span>
+      </div>
+    </details>
+  </section>
+
+  <!-- Recap -->
+  <section id="recap" class="hidden">
+    <div class="recapHero">
+      <div id="recapBroL" class="recapBro"></div>
+      <div class="recapMid">
+        <div class="recapStage"><div id="recapFace" class="face flyFace"></div><div id="recapBros" class="recapBros"></div></div>
+        <div id="recapCheer" class="cheer"></div>
+        <h1 id="recapTitle">How did it go?</h1>
+        <div class="card big recapMain"><div id="recapStars" class="stars"></div><div id="recapScore" class="score"></div><div class="muted">Score</div><div id="recapNote" class="muted small"></div></div>
+        <div class="row recapBtns">
+          <button id="againBtn" class="primary big">&#128257; Play again</button>
+          <button id="nextBtn" class="big playBtn">&#9654; Next lesson</button>
+          <button id="homeBtn" class="big">All lessons</button>
+        </div>
+      </div>
+      <div id="recapBroR" class="recapBro"></div>
+    </div>
+    <div class="recapStrip hscroll">
+      <div class="card stat"><div id="recapAcc" class="num"></div><div class="muted">Notes hit</div></div>
+      <div class="card stat"><div id="recapTiming" class="num"></div><div class="muted">Timing</div></div>
+      <div class="card stat"><div id="recapExtra" class="num"></div><div class="muted">Wrong or extra hits</div></div>
+      <div class="card gains">
+        <div class="gain"><div id="recapPoints" class="num"></div><div class="muted">Points</div></div>
+        <div class="gain"><div id="recapCombo" class="num"></div><div class="muted">Best run of right hits</div></div>
+        <div class="gain"><div id="recapXp" class="num"></div><div class="muted" id="recapRank"></div></div>
+        <div id="recapBadges" class="newBadges"></div>
+      </div>
+      <div id="recapFocus" class="focus hidden"></div>
+      <div class="card wide"><h2>Pad by pad</h2><div id="recapPads"></div></div>
+      <div class="card wide"><h2>Coach tips</h2><ul id="recapTips"></ul><div id="offsetOffer" class="row hidden"></div></div>
+    </div>
+  </section>
+</main>
+
+<script src="config.js"></script>
+<script src="lessons.js"></script>
+<script src="audio.js"></script>
+<script src="track.js"></script>
+<script src="game.js"></script>
+<script src="track2.js"></script>
+<script src="tour.js"></script>
+<script src="online.js"></script>
+<script src="facts.js"></script>
+<script src="app.js"></script>
+<script src="ui.js"></script>
+<canvas id="confetti" class="confetti hidden"></canvas>
+</body>
+</html>

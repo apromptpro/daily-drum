@@ -1,0 +1,250 @@
+'use strict';
+// The app look: backdrop pictures, the moving Beat Brothers, sideways strips with arrows,
+// and "app mode" (tablets and bigger), where every screen fits the display and nothing scrolls up and down.
+// Loaded last. It wraps show() so every screen change passes through here.
+const UI = {
+  mq: window.matchMedia('(min-width: 700px) and (min-height: 540px)'),
+  app: false,
+  layer: 0,
+  sceneUrl: '',
+  // How much of the picture shows through. Home: faded and bright. Tour: dimmed, so the cards stand out.
+  // Result page: a darker stage. Screens with a lot to read: a light veil. Only the login screen shows the picture as it is.
+  TONE: { hub: 'bright', tour: 'dim', recap: 'stage', play: 'dark' },
+  POSES: ['idle', 'blink', 'wave', 'jump', 'druma', 'drumb', 'wow', 'ready', 'cheer', 'walk', 'clap', 'thumb', 'trophy', 'think', 'flex', 'hi5', 'yawn', 'sit'],
+
+  init() {
+    const bg = document.createElement('div');
+    bg.id = 'sceneBg'; bg.innerHTML = '<i></i><i></i>';
+    document.body.insertBefore(bg, document.body.firstChild);
+    this.build();
+    this.mode();
+    this.mq.addEventListener ? this.mq.addEventListener('change', () => this.mode()) : this.mq.addListener(() => this.mode());
+    window.addEventListener('resize', () => this.fit());
+    // every screen change
+    const show0 = show;
+    show = function (name) { show0(name); UI.shown(); };   // eslint-disable-line no-global-assign
+    const view0 = Tour.view.bind(Tour);
+    Tour.view = function (name) { view0(name); document.body.dataset.tour = name; UI.scene(); };
+    const home0 = renderHome;
+    renderHome = function () { home0(); UI.lessonsShown(); };   // eslint-disable-line no-global-assign
+    $('#hubTour').onclick = () => show('tour');
+    this.tabs();
+    this.shown();
+    setInterval(() => this.blink(), 2700);
+    setInterval(() => this.drum(), 250);
+    setInterval(() => this.idleAct(), 6500);
+    setInterval(() => this.arrows(), 500);
+    setTimeout(() => this.preload(), 2500);
+    document.addEventListener('wheel', (e) => {   // a mouse wheel moves the sideways strips
+      const s = e.target.closest && e.target.closest('.flow, .hscroll');
+      if (!s || Math.abs(e.deltaY) <= Math.abs(e.deltaX) || s.scrollWidth <= s.clientWidth + 4) return;
+      if (!this.app && s.classList.contains('flow')) return;
+      s.scrollLeft += e.deltaY; e.preventDefault();
+    }, { passive: false });
+  },
+
+  // ----- one-time changes to the page: wrappers for the content that moves sideways -----
+  build() {
+    const wrap = (id, wide) => {
+      const sec = document.getElementById(id), flow = document.createElement('div');
+      flow.className = 'flow' + (wide ? ' wideCols' : '');
+      Array.from(sec.children).forEach(c => { if (c.tagName !== 'H1') flow.appendChild(c); });
+      sec.appendChild(flow);
+    };
+    ['songs', 'learn', 'friends', 'inbox', 'progress', 'setup', 'testDone'].forEach(id => wrap(id, id === 'songs' || id === 'progress'));
+    $('#lessonList').classList.add('flow', 'wideCols');
+    $('#tourStops').classList.add('hscroll');
+    // My drummer: the picture and the Done button stay put, everything else moves sideways
+    const me = $('#me'), body = document.createElement('div'), flow = document.createElement('div');
+    body.className = 'meBody'; flow.className = 'flow';
+    const left = me.querySelector('.meLeft'), card = me.querySelector('.meCard'), done = $('#meDone').parentNode;
+    me.insertBefore(body, card);
+    body.appendChild(left); left.appendChild($('#meDone')); done.remove();
+    body.appendChild(flow); flow.appendChild(card); flow.appendChild($('#mePlayers'));
+  },
+  // The login screen shows one form at a time.
+  tabs() {
+    const out = $('#acOut'), t = document.createElement('div');
+    t.className = 'acTabs';
+    t.innerHTML = '<button data-t="in">&#128275; I have an account</button><button data-t="new">&#10024; I am new here</button>';
+    out.insertBefore(t, out.querySelector('.acGrid'));
+    const pick = (k) => { out.dataset.tab = k; t.querySelectorAll('button').forEach(b => b.classList.toggle('active', b.dataset.t === k)); };
+    t.querySelectorAll('button').forEach(b => { b.onclick = () => pick(b.dataset.t); });
+    let used = false;
+    try { used = !!localStorage.getItem('dc.profile') || !!localStorage.getItem('dc.progress'); } catch (e) {}
+    pick(used ? 'in' : 'new');
+  },
+
+  mode() {
+    this.app = this.mq.matches;
+    document.documentElement.classList.toggle('appMode', this.app);
+    this.fit();
+    if (typeof draw === 'function' && screen === 'play') requestAnimationFrame(draw);
+  },
+
+  // ----- after every screen change -----
+  shown() {
+    const b = document.body;
+    b.dataset.screen = screen;
+    if (screen !== 'tour') delete b.dataset.tour;
+    b.dataset.tone = this.TONE[screen] || (b.classList.contains('locked') ? 'show' : 'soft');
+    this.scene();
+    // on the play screen the top bar is gone, so the microphone light moves next to the Start button
+    const st = $('#earStatus');
+    if (this.app && screen === 'play') $('#play .playTop').insertBefore(st, $('#demoBtn'));
+    else if (st.parentNode !== document.querySelector('header')) document.querySelector('header').appendChild(st);
+    document.querySelectorAll('.flow, .hscroll').forEach(s => { if (s.offsetParent && s.id !== 'lessonList') s.scrollLeft = 0; });
+    this.fit();
+    this.arrows();
+  },
+  // The picture behind the screen. Home shows the stage the player has earned; the Tour shows the stop that is picked.
+  scene() {
+    let f = 'studio';
+    const earned = Math.max(1, Math.min(7, (avOf(prof()).scene || 0) || 1));
+    if (document.body.classList.contains('locked')) f = 's3';
+    else if (screen === 'hub') f = 's' + earned;
+    else if (screen === 'tour') f = 's' + (Tour.k + 1);
+    else if (screen === 'play' || screen === 'recap') f = G.gig ? 's' + (G.gig.stop + 1) : screen === 'recap' ? 's' + Math.max(earned, 3) : 'studio';
+    const url = 'art/' + f + '.jpg';
+    if (url === this.sceneUrl) return;
+    this.sceneUrl = url;
+    const layers = document.querySelectorAll('#sceneBg i'), next = layers[this.layer = 1 - this.layer], prev = layers[1 - this.layer];
+    const im = new Image();
+    im.onload = () => { if (this.sceneUrl !== url) return; next.style.backgroundImage = 'url(' + url + ')'; next.classList.add('on'); prev.classList.remove('on'); };
+    im.src = url;
+  },
+  tourShown() {
+    const games = document.querySelector('#tourStop .tourGames');
+    if (games) games.classList.add('hscroll');
+    document.querySelectorAll('#tourStops .stopCard:not(.open)').forEach(c => { c.addEventListener('click', () => { c.classList.remove('shake'); void c.offsetWidth; c.classList.add('shake'); }); });
+    const here = document.querySelector('#tourStops .stopCard.here');
+    if (here && here.offsetParent) { const s = $('#tourStops'); s.scrollLeft = Math.max(0, here.offsetLeft - (s.clientWidth - here.offsetWidth) / 2); }
+    this.scene();
+    this.act(document.querySelector('#tourHostFace .sprImg'), 'wave', 1300);
+  },
+  // The lesson that comes next glows, and the list opens at it.
+  lessonsShown() {
+    const list = $('#lessonList');
+    const next = Array.from(list.querySelectorAll('details[open] .lesson:not(.test)')).find(b => b.querySelectorAll('.s .off').length === 3);
+    if (!next) return;
+    next.classList.add('next');
+    // open the strip at the column that holds the level's heading (or the lesson itself, when the heading is far back)
+    if (this.app && screen === 'home') requestAnimationFrame(() => {
+      const l = list.getBoundingClientRect(), step = this.colStep(list);
+      const at = (el) => Math.floor((el.getBoundingClientRect().left - l.left + list.scrollLeft + 4) / step);
+      const head = next.closest('details').querySelector('summary');
+      const col = at(next) - at(head) <= 1 ? at(head) : at(next);
+      list.scrollLeft = col * step;
+    });
+  },
+  // How far one column of a flowing strip is from the next.
+  colStep(s) {
+    const cs = getComputedStyle(s), gap = parseFloat(cs.columnGap) || 16, want = parseFloat(cs.columnWidth) || 340;
+    const inner = s.clientWidth - parseFloat(cs.paddingLeft) - parseFloat(cs.paddingRight);
+    const n = Math.max(1, Math.floor((inner + gap) / (want + gap)));
+    return (inner + gap) / n;
+  },
+  // The certificate shrinks until it fits the screen.
+  fit() {
+    const page = document.querySelector('#cert .certPage');
+    if (!page) return;
+    page.style.transform = ''; page.style.marginBottom = '';
+    if (!this.app || screen !== 'cert') return;
+    const sec = $('#cert'), room = sec.clientHeight - 24 - sec.querySelector('.noPrint').offsetHeight - 16, h = page.offsetHeight;
+    if (h > room && room > 100) { const k = room / h; page.style.transform = 'scale(' + k + ')'; page.style.marginBottom = (-(1 - k) * h) + 'px'; }
+  },
+
+  // ----- arrows on every strip that has more to the side -----
+  arrowMap: new WeakMap(),
+  arrows() {
+    if (this.busy()) return;
+    document.querySelectorAll('.flow, .hscroll').forEach(s => {
+      let a = this.arrowMap.get(s);
+      const isFlow = s.classList.contains('flow');
+      const on = !!s.offsetParent && (this.app || !isFlow) && s.scrollWidth > s.clientWidth + 12;
+      if (!a) {
+        if (!on) return;
+        const host = s.parentNode;
+        if (getComputedStyle(host).position === 'static') host.style.position = 'relative';
+        a = ['l', 'r'].map(d => { const b = document.createElement('button'); b.className = 'scrArrow ' + d + ' hide'; b.textContent = d === 'l' ? '‹' : '›'; b.setAttribute('aria-label', d === 'l' ? 'Back' : 'More'); b.onclick = (e) => {
+          e.stopPropagation();
+          const dir = d === 'l' ? -1 : 1;
+          if (!isFlow) { s.scrollBy({ left: dir * Math.max(240, s.clientWidth * 0.8), behavior: 'smooth' }); return; }
+          // a flowing strip turns a whole page, and always stops with a column at the left edge
+          const step = UI.colStep(s), page = Math.max(1, Math.round(s.clientWidth / step)) * step;
+          s.scrollTo({ left: Math.max(0, Math.round((s.scrollLeft + dir * page) / step) * step), behavior: 'smooth' });
+        }; host.appendChild(b); return b; });
+        this.arrowMap.set(s, a);
+      }
+      if (!s.isConnected) { a.forEach(b => b.remove()); this.arrowMap.delete(s); return; }
+      const top = s.offsetTop + s.offsetHeight / 2 - 23;
+      a[0].style.top = a[1].style.top = top + 'px';
+      a[0].style.left = (s.offsetLeft - 6) + 'px';
+      a[1].style.left = (s.offsetLeft + s.offsetWidth - 40) + 'px';
+      a[0].classList.toggle('hide', !on || s.scrollLeft < 12);
+      a[1].classList.toggle('hide', !on || s.scrollLeft + s.clientWidth > s.scrollWidth - 12);
+    });
+    // strips that were drawn again leave their old arrows behind
+    document.querySelectorAll('button.scrArrow').forEach(b => { if (!b.parentNode.querySelector('.flow, .hscroll')) b.remove(); });
+  },
+
+  // ----- the Beat Brothers move -----
+  src(img, pose) { img.dataset.pose = pose; img.src = 'art/b' + img.dataset.b + '-' + pose + '.png'; },
+  base(img) { return img.dataset.base || (img.dataset.base = img.dataset.pose); },
+  // one pose for a moment, with a little hop, then back
+  act(img, pose, ms) {
+    if (!img) return;
+    const base = this.base(img);
+    clearTimeout(img._t);
+    this.src(img, pose);
+    img.classList.remove('pop'); void img.offsetWidth; img.classList.add('pop');
+    img._t = setTimeout(() => { this.src(img, base); img._t = null; }, ms || 1200);
+  },
+  visible() { return Array.from(document.querySelectorAll('img.sprImg')).filter(i => i.offsetParent && !i.closest('.drumming')); },
+  // While notes are falling nothing else on the page is touched, so the game keeps every bit of the device's speed.
+  busy() { return (screen === 'play' && typeof G !== 'undefined' && G.running) || (screen === 'tour' && Tour.running); },
+  blink() {
+    if (document.hidden || this.busy()) return;
+    this.visible().forEach(img => {
+      if (img._t || this.base(img) !== 'idle' || Math.random() < 0.35) return;
+      this.src(img, 'blink');
+      img._t = setTimeout(() => { this.src(img, 'idle'); img._t = null; }, 170);
+    });
+  },
+  drum() {
+    document.querySelectorAll('.drumming img.sprImg').forEach(img => { if (img.offsetParent) this.src(img, img.dataset.pose === 'druma' ? 'drumb' : 'druma'); });
+  },
+  // now and then one of them does something by himself
+  idleAct() {
+    if (document.hidden || this.busy()) return;
+    const free = this.visible().filter(i => !i._t && this.base(i) === 'idle');
+    if (!free.length) return;
+    const img = free[Math.floor(Math.random() * free.length)], list = ['wave', 'thumb', 'clap', 'hi5', 'flex', 'ready', 'wow', 'cheer'];
+    this.act(img, list[Math.floor(Math.random() * list.length)], 1500);
+  },
+  // The other poses are fetched one after another, and never while a lesson is being played.
+  preload() {
+    const list = [];
+    [0, 1].forEach(b => this.POSES.forEach(p => list.push('art/b' + b + '-' + p + '.png')));
+    const next = () => {
+      if (!list.length) return;
+      if (this.busy()) { setTimeout(next, 3000); return; }
+      const i = new Image();
+      i.onload = i.onerror = () => setTimeout(next, 60);
+      i.src = list.shift();
+    };
+    next();
+  },
+  // Bring something inside a sideways strip into view (the strip stops with a column at its left edge).
+  reveal(el) {
+    const s = el && el.closest('.flow');
+    if (!s || !this.app) { if (el) el.scrollIntoView({ block: 'start', behavior: 'smooth' }); return; }
+    const go = () => {
+      const step = this.colStep(s);
+      s.scrollLeft = Math.max(0, Math.floor((el.getBoundingClientRect().left - s.getBoundingClientRect().left + s.scrollLeft + step * 0.25) / step) * step);
+    };
+    requestAnimationFrame(go);
+    setTimeout(go, 400);   // once more when the screen has finished sliding in
+  }
+};
+UI.init();

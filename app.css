@@ -1,0 +1,453 @@
+/* Daily Drum: the app look. Loaded after style.css.
+   Part 1 works at every size: pictures, the Beat Brothers, buttons, the new Home and result pages.
+   Part 2 (.appMode, set by ui.js on tablets and bigger) turns the site into an app:
+   every screen fits the display, nothing scrolls up and down, long content moves sideways. */
+
+/* ============ 1. pictures and motion, every size ============ */
+html { background: #2a1a6e; }
+body { background: none; }
+#sceneBg { position: fixed; inset: 0; z-index: -1; overflow: hidden; background: linear-gradient(160deg, #3b1fa3, #7a2be0 60%, #c03aa6); }
+#sceneBg i { position: absolute; inset: -4%; background-size: cover; background-position: center; opacity: 0; transition: opacity .8s ease; animation: sceneDrift 36s ease-in-out infinite alternate; will-change: transform, opacity; }
+#sceneBg i.on { opacity: 1; }
+#sceneBg::after { content: ""; position: absolute; inset: 0; background: linear-gradient(180deg, rgba(26, 14, 80, .30), rgba(26, 14, 80, .10) 40%, rgba(18, 8, 56, .55)); transition: background .5s; }
+body[data-tone="soft"] #sceneBg::after { background: linear-gradient(180deg, rgba(232, 238, 255, .90), rgba(240, 236, 255, .86)); }
+body[data-tone="dark"] #sceneBg::after { background: rgba(10, 8, 30, .72); }
+@keyframes sceneDrift { 0% { transform: scale(1) translate(0, 0); } 100% { transform: scale(1.06) translate(-1.2%, -1%); } }
+
+/* the Beat Brothers: one picture per pose */
+.mascot.spr { display: inline-block; position: relative; line-height: 0; --bro: 130px; }
+.sprImg { height: var(--bro); width: auto; display: block; transform-origin: 50% 100%; animation: broBreath 2.8s ease-in-out infinite; filter: drop-shadow(0 8px 6px rgba(20, 10, 60, .35)); -webkit-user-drag: none; user-select: none; -webkit-user-select: none; pointer-events: none; }
+.mascot.spr.small .sprImg { height: calc(var(--bro) * .88); animation-delay: -1.4s; }
+.sprImg.pop { animation: broPop .55s cubic-bezier(.2, 1.5, .4, 1); }
+.drumming .sprImg { animation: broDrum .26s ease-in-out infinite alternate; }
+@keyframes broBreath { 0%, 100% { transform: scaleY(1) scaleX(1); } 50% { transform: scaleY(1.025) scaleX(.992); } }
+@keyframes broPop { 0% { transform: translateY(0) scale(1); } 30% { transform: translateY(-12%) scale(1.07, .96); } 60% { transform: translateY(0) scale(.97, 1.04); } 100% { transform: translateY(0) scale(1); } }
+@keyframes broDrum { from { transform: translateY(0) rotate(-1.5deg); } to { transform: translateY(-3%) rotate(1.5deg); } }
+.mascots { --bro: 150px; }
+.mascots .mascot.spr { --bro: 150px; }
+.tourHost .mascot.spr { --bro: 96px; }
+.hostBig .mascot.spr { --bro: 150px; }
+.loadBros { display: inline-flex; align-items: flex-end; }
+.loadBros .mascot.spr { --bro: 150px; }
+.loadBros .mascot.spr + .mascot.spr { margin-left: -46px; }
+.loading { background: radial-gradient(circle at 50% 40%, rgba(122, 43, 224, .96), rgba(38, 20, 110, .97)); }
+.loadBox { color: #fff; text-shadow: 0 2px 0 rgba(0, 0, 0, .3); }
+
+/* the logo */
+.logoBig img, .logoMark img { width: 100%; height: 100%; object-fit: contain; display: block; filter: drop-shadow(0 4px 0 rgba(20, 10, 60, .25)); }
+.logoBig { width: 210px; height: 210px; }
+.logoMark { width: 46px; height: 46px; }
+.logoBig.small { width: 96px; height: 96px; }
+
+/* buttons that feel alive */
+button { transition: transform .12s cubic-bezier(.3, 1.6, .5, 1), box-shadow .08s, background .15s, border-color .15s; }
+button:active { transform: translateY(2px) scale(.96); }
+button.playBtn, button.primary.playBtn { background: linear-gradient(#ffe66b, #ffc21a); border-color: #e0a800; color: #3a2200; box-shadow: 0 5px 0 #b98200, 0 0 0 rgba(255, 214, 60, 0); text-shadow: 0 1px 0 rgba(255, 255, 255, .5); animation: playGlow 2.2s ease-in-out infinite; }
+button.playBtn:hover, button.primary.playBtn:hover { background: linear-gradient(#fff08f, #ffcb33); border-color: #e0a800; }
+@keyframes playGlow { 0%, 100% { box-shadow: 0 5px 0 #b98200, 0 0 0 rgba(255, 214, 60, 0); } 50% { box-shadow: 0 5px 0 #b98200, 0 0 22px rgba(255, 214, 60, .95); } }
+main > section:not(.hidden) { animation: scrIn .32s cubic-bezier(.2, .9, .3, 1) both; }
+@keyframes scrIn { from { opacity: 0; transform: translateY(12px) scale(.985); } to { opacity: 1; transform: none; } }
+#play:not(.hidden) { animation-name: scrFade; }
+@keyframes scrFade { from { opacity: 0; } to { opacity: 1; } }
+
+/* sideways strips, with arrows to tap */
+.hscroll, .flow { scrollbar-width: none; -webkit-overflow-scrolling: touch; }
+.hscroll::-webkit-scrollbar, .flow::-webkit-scrollbar { display: none; }
+.hscroll { overflow-x: auto; overflow-y: hidden; overscroll-behavior-x: contain; }
+button.scrArrow { position: absolute; z-index: 12; width: 46px; height: 46px; padding: 0; border-radius: 50%; border: 3px solid #fff; background: linear-gradient(#8f6cff, #5a36d6); color: #fff; font-size: 24px; line-height: 1; box-shadow: 0 4px 0 #3a1f9c, 0 6px 16px rgba(20, 10, 60, .4); display: grid; place-items: center; }
+button.scrArrow.hide { opacity: 0; pointer-events: none; transform: scale(.6); }
+button.scrArrow.r { animation: nudgeR 1.6s ease-in-out infinite; }
+@keyframes nudgeR { 0%, 100% { margin-left: 0; } 50% { margin-left: 5px; } }
+
+/* Home */
+html:not(.appMode) #hub { padding-bottom: 0; }
+.homeGrid { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.15fr); gap: 18px; align-items: end; }
+.homeStage { position: relative; display: flex; flex-direction: column; align-items: center; justify-content: flex-end; min-height: 0; }
+.homeStage.popIn .brosDuo { animation: brosUp .7s cubic-bezier(.2, 1.4, .4, 1) both; }
+@keyframes brosUp { from { transform: translateY(60%) scale(.7); opacity: 0; } to { transform: none; opacity: 1; } }
+.homeStage .brosBubble { position: relative; width: min(100%, 470px); min-height: 92px; border: 4px solid #8f6cff; border-radius: 24px; padding: 12px 18px; font-size: 17px; line-height: 1.35; background: #fff; box-shadow: 0 8px 0 rgba(20, 10, 60, .28); margin-bottom: 14px; z-index: 2; }
+.homeStage .brosBubble::after { content: ""; position: absolute; left: 50%; bottom: -18px; margin-left: -14px; border: 14px solid transparent; border-bottom: 0; border-top-color: #8f6cff; }
+.homeStage .brosBubble.fact { border-color: #f2b705; background: #fffbe3; }
+.homeStage .brosBubble.fact::after { border-top-color: #f2b705; }
+.brosKind { display: block; font-size: 13px; letter-spacing: .6px; text-transform: uppercase; color: #a66f00; }
+.brosKind:empty { display: none; }
+button.brosDuo { display: flex; align-items: flex-end; justify-content: center; background: none; border: 0; box-shadow: none; padding: 0; cursor: pointer; }
+button.brosDuo:active { transform: none; }
+.brosDuo .mascot.spr { --bro: clamp(150px, 30vh, 280px); }
+.brosDuo .mascot.spr + .mascot.spr { margin-left: -12%; }
+.homeStage::after { content: ""; position: absolute; left: 12%; right: 12%; bottom: -6px; height: 22px; border-radius: 50%; background: radial-gradient(closest-side, rgba(10, 5, 40, .45), transparent); z-index: 0; }
+.homePanel.hubHero, .homePanel.hubHero.hasArt { display: flex; flex-wrap: nowrap; align-items: center; gap: 16px; min-height: 0; background: rgba(255, 255, 255, .95); border: 4px solid #fff; border-radius: 28px; padding: 16px 18px; box-shadow: 0 12px 30px rgba(20, 10, 60, .4); overflow: visible; }
+.homePanel.hubHero.hasArt .hubTxt { background: none; padding: 0; }
+.homePanel .hubBand { flex: none; flex-direction: column; align-items: center; gap: 8px; }
+.homePanel .bandFace.me .face { width: 112px; height: 112px; }
+.homePanel .bandFace .face { width: 56px; height: 56px; }
+.homePanel .hubTxt { min-width: 0; display: flex; flex-direction: column; gap: 6px; }
+.homePanel .hubHello { font-size: clamp(22px, 2.6vw, 30px); }
+.homePanel .hubXp { max-width: none; height: 16px; border-radius: 8px; }
+.homePanel #hubGo { align-self: stretch; font-size: 22px; padding: 14px 20px; margin: 4px 0; }
+.homePanel .quick { margin: 0; gap: 8px; }
+.homePanel .quick button { padding: 8px 12px; font-size: 15px; }
+.badgeDock { margin-top: 14px; background: rgba(255, 255, 255, .93); border: 3px solid #fff; border-radius: 24px; padding: 10px 12px 8px; box-shadow: 0 10px 26px rgba(20, 10, 60, .35); position: relative; }
+.badgeHead { display: flex; align-items: baseline; gap: 12px; margin: 0 4px 6px; color: var(--accentDark); font-size: 17px; }
+.badgeStrip { display: flex; gap: 16px; padding: 2px 2px 6px; }
+.bGroup { flex: none; }
+.bGroup h3 { margin: 0 0 6px 2px; font-size: 13px; letter-spacing: .4px; text-transform: uppercase; color: var(--muted); }
+.badgeStrip .badgeWall { display: grid; grid-auto-flow: column; grid-template-columns: none; grid-template-rows: repeat(var(--bRows, 1), auto); grid-auto-columns: 232px; gap: 8px; }
+.badgeStrip .bCard { padding: 8px 10px; gap: 10px; border-radius: 16px; }
+.badgeStrip .bCard .bIcon, #hubBig .bCard .bIcon { width: 46px; height: 46px; font-size: 24px; }
+.badgeStrip .bCard b { font-size: 15px; }
+.badgeStrip .bCard .small { font-size: 12px; line-height: 1.25; }
+.badgeStrip .bCard.got { animation: badgeShine 3.5s ease-in-out infinite; }
+@keyframes badgeShine { 0%, 100% { box-shadow: 0 3px 0 #f2c230; } 50% { box-shadow: 0 3px 0 #f2c230, 0 0 14px rgba(255, 210, 60, .9); } }
+#hubMsgs:empty { display: none; }
+
+/* Tour: stage cards with their pictures */
+.tourPick { margin: 6px 0 4px; font-size: 26px; text-align: center; color: #fff; text-shadow: 0 3px 0 #4b1fb0, 0 0 18px rgba(170, 120, 255, .9); letter-spacing: .5px; }
+#tour #tourMap > h1, #tour #tourMap > p { color: #fff; text-shadow: 0 2px 4px rgba(10, 5, 40, .8); }
+#tour #tourLv b { color: #fff; text-shadow: 0 2px 4px rgba(10, 5, 40, .8); }
+.tourStops { display: flex; gap: 12px; margin: 8px 0 10px; padding: 16px 6px 12px; grid-template-columns: none; }
+button.stopCard { position: relative; flex: 0 0 clamp(150px, 19vw, 210px); padding: 0 0 8px; border: 4px solid #b9a8ff; border-radius: 22px; background: linear-gradient(#5a36d6, #3a1f9c); color: #fff; overflow: visible; gap: 2px; box-shadow: 0 6px 0 rgba(20, 10, 60, .45); animation: cardFloat 4s ease-in-out infinite; }
+button.stopCard:nth-child(2n) { animation-delay: -1.3s; }
+button.stopCard:nth-child(3n) { animation-delay: -2.6s; }
+@keyframes cardFloat { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-5px); } }
+.stopCard .stopPic { display: block; width: 100%; aspect-ratio: 6 / 5; border-radius: 17px 17px 10px 10px; background-size: cover; background-position: center; position: relative; }
+.stopCard .stopNo { position: absolute; left: 50%; top: -20px; width: 40px; height: 40px; margin-left: -20px; display: grid; place-items: center; font-style: normal; font-weight: 800; font-size: 20px; color: #3a2200; background: linear-gradient(#ffe66b, #ffc21a); border: 3px solid #fff; border-radius: 50%; box-shadow: 0 3px 0 #b98200; }
+.stopCard .stopIcon { position: absolute; right: 8px; top: 8px; z-index: 2; font-size: 22px; background: rgba(255, 255, 255, .9); border-radius: 50%; width: 36px; height: 36px; display: grid; place-items: center; line-height: 1; }
+.stopCard b { font-size: 17px; color: #fff; margin-top: 4px; }
+.stopCard .small { color: #dcd3ff; font-size: 12px; padding: 0 8px; line-height: 1.25; }
+.stopCard.open { background: linear-gradient(#6d47ee, #4426b4); border-style: solid; color: #fff; border-color: #cbbcff; }
+.stopCard:not(.open) { border-style: solid; }
+.stopCard:not(.open) .stopPic { filter: grayscale(1) brightness(.55); }
+.stopCard:not(.open) { animation: none; }
+.stopCard.here, .stopCard.open.here { background: linear-gradient(#7d55ff, #4a28c4) !important; border-color: #ffd84a; box-shadow: 0 6px 0 #b98200, 0 0 26px rgba(255, 214, 60, .95) !important; transform: scale(1.04); animation: hereGlow 1.8s ease-in-out infinite; }
+@keyframes hereGlow { 0%, 100% { box-shadow: 0 6px 0 #b98200, 0 0 12px rgba(255, 214, 60, .6); } 50% { box-shadow: 0 6px 0 #b98200, 0 0 30px rgba(255, 214, 60, 1); } }
+.stopCard.won .stopIcon::after { content: none; }
+.stopCard.won .stopPic::after { content: "★ Gig played"; position: absolute; left: 0; right: 0; bottom: 0; padding: 3px; font-size: 12px; font-weight: 800; color: #3a2200; background: linear-gradient(#ffe66b, #ffc21a); border-radius: 0 0 10px 10px; }
+.stopCard.shake { animation: shakeNo .4s; }
+@keyframes shakeNo { 0%, 100% { transform: translateX(0); } 25% { transform: translateX(-7px); } 75% { transform: translateX(7px); } }
+.stopBanner { min-height: 0; border: 0; border-radius: 0; margin: 0 0 8px; overflow: visible; }
+.stopArt { display: none; }
+.stopTxt { margin: 0; padding: 8px 16px; border-radius: 18px; background: rgba(255, 255, 255, .95); flex: 1; }
+.stopTxt b { font-size: 20px; }
+.tourGames { display: flex; gap: 12px; grid-template-columns: none; padding: 2px 2px 8px; }
+#tour button.gameCard { position: relative; flex: 0 0 clamp(190px, 22vw, 240px); background: rgba(255, 255, 255, .96); min-height: 150px; }
+#tour .gameCard.gigCard { flex-basis: clamp(240px, 28vw, 320px); background: linear-gradient(140deg, var(--tA), #2a1a6e); }
+#tour .gameCard[data-lv="1"]::after, #tour .gameCard[data-lv="2"]::after, #tour .gameCard[data-lv="3"]::after { content: ""; position: absolute; right: 8px; top: 8px; width: 54px; height: 66px; background: center / contain no-repeat; animation: cardFloat 3s ease-in-out infinite; }
+#tour .gameCard[data-lv="1"]::after { background-image: url(art/trophy1.png); }
+#tour .gameCard[data-lv="2"]::after { background-image: url(art/trophy2.png); }
+#tour .gameCard[data-lv="3"]::after { background-image: url(art/trophy3.png); }
+.tourHost { margin: 2px 0 4px; }
+.hostSay { border: 3px solid #8f6cff; box-shadow: 0 5px 0 rgba(20, 10, 60, .25); }
+.hostSay::before { border-right-color: #8f6cff; }
+#tourDone .cheer, #recap .cheer, #recap #recapTitle { color: #fff; text-shadow: 0 3px 0 #4b1fb0, 0 0 18px rgba(20, 10, 60, .9); }
+
+/* after a lesson */
+.recapHero { display: flex; align-items: flex-end; justify-content: center; gap: 8px; }
+.recapMid { flex: 0 1 560px; min-width: 0; display: flex; flex-direction: column; align-items: center; gap: 6px; }
+.recapMid .recapStage { min-height: 0; margin: 0; }
+.recapMid .flyFace { width: 120px; height: 120px; }
+.recapMid .cheer { margin: 0; font-size: clamp(26px, 4vw, 40px); }
+.recapMid #recapTitle { margin: 0; font-size: 20px; }
+.recapMain { width: 100%; margin: 4px 0; text-align: center; border: 4px solid #ffd84a; border-radius: 26px; background: linear-gradient(#ffffff, #fff7d6); box-shadow: 0 8px 0 rgba(20, 10, 60, .35), 0 0 30px rgba(255, 214, 60, .5); }
+.recapMain .stars { font-size: 54px; text-shadow: 0 3px 0 #b98200; }
+.recapBtns { justify-content: center; margin: 4px 0 0; }
+.recapBro { flex: 0 0 auto; display: flex; align-items: flex-end; }
+.recapBro .mascot.spr { --bro: clamp(120px, 30vh, 270px); }
+.recapBro .sprImg { animation: broBreath 2.8s ease-in-out infinite, brosUp .7s .3s cubic-bezier(.2, 1.4, .4, 1) backwards; }
+#recap[data-stars="3"] .recapBro .sprImg, #recap[data-stars="2"] .recapBro .sprImg { animation: broJoy 1s ease-in-out infinite alternate, brosUp .7s .3s cubic-bezier(.2, 1.4, .4, 1) backwards; }
+@keyframes broJoy { from { transform: translateY(0) rotate(-2deg); } to { transform: translateY(-7%) rotate(2deg); } }
+.recapStrip { display: flex; gap: 12px; align-items: stretch; margin-top: 12px; padding: 2px 2px 8px; }
+.recapStrip > .card, .recapStrip > .focus { flex: none; margin: 0; }
+.recapStrip > .card.stat { width: 170px; text-align: center; display: flex; flex-direction: column; justify-content: center; }
+.recapStrip > .card.gains { width: auto; max-width: 720px; flex-wrap: nowrap; gap: 8px 22px; }
+.recapStrip > .card.gains .gain { flex: none; }
+.recapStrip > .card.gains .newBadges { flex-wrap: wrap; align-content: flex-start; max-height: 190px; gap: 6px 8px; }
+.recapStrip > .card.gains .newBadges:empty { display: none; }
+.recapStrip .newBadge { white-space: nowrap; }
+.recapStrip > .card.wide { width: 440px; }
+.recapStrip > .focus { width: 300px; display: flex; align-items: center; }
+.recapStrip #recapTips { margin: 0; padding-left: 20px; }
+
+/* the login screen: tabs instead of two long forms */
+.acTabs { display: flex; gap: 8px; margin: 0 0 10px; }
+.acTabs button { flex: 1; font-size: 18px; padding: 12px 10px; border-radius: 18px; background: rgba(255, 255, 255, .75); }
+.acTabs button.active { background: linear-gradient(#8f6cff, #5a36d6); color: #fff; border-color: #fff; box-shadow: 0 4px 0 #3a1f9c; }
+#acOut[data-tab="in"] .acGrid > .card:nth-child(2), #acOut[data-tab="new"] .acGrid > .card:nth-child(1) { display: none; }
+#acOut[data-tab] .acGrid { grid-template-columns: 1fr; }
+/* while "Forgot my PIN?" is open, only the nickname and the new-PIN form stay */
+#acOut .card:has(#acForgotBox:not(.hidden)) > label[for="acPinIn"], #acOut .card:has(#acForgotBox:not(.hidden)) > #acPinIn, #acOut .card:has(#acForgotBox:not(.hidden)) > .showPin, #acOut .card:has(#acForgotBox:not(.hidden)) > .row, #acOut .card:has(#acForgotBox:not(.hidden)) > #acMsg { display: none; }
+/* "I forgot my secret word too": the request to the grown-up takes the place of the form */
+.forgotBox:has(#acForgotAsk:not(.hidden)) > :not(#acForgotBoth):not(#acForgotAsk) { display: none !important; }
+body.locked #acTitle, body.locked #acHello { color: #fff; text-shadow: 0 3px 0 #4b1fb0, 0 0 16px rgba(20, 10, 60, .9); }
+body.locked #acOut > p { color: #fff; text-shadow: 0 2px 4px rgba(10, 5, 40, .9); font-size: 15px; margin: 6px 0 10px; }
+
+/* the top bar and cards */
+header { background: linear-gradient(90deg, #3b1fa3, #6a2bd9 55%, #b0339c); box-shadow: 0 4px 0 rgba(10, 5, 40, .3); }
+.card { border-color: #fff; box-shadow: 0 6px 0 rgba(40, 24, 110, .18), 0 10px 24px rgba(40, 24, 110, .12); }
+.lesson { transition: transform .12s, border-color .15s, background .15s; }
+.lesson:active { transform: scale(.98); }
+.sheet { background: #fff; }
+
+/* phones keep the scrolling page */
+@media (max-width: 699px) {
+  .homeGrid { grid-template-columns: 1fr; }
+  .homePanel.hubHero, .homePanel.hubHero.hasArt { flex-wrap: wrap; justify-content: center; }
+  .homePanel .hubTxt { min-width: 0; flex: 1 1 220px; }
+  .brosDuo .mascot.spr { --bro: min(30vh, 42vw); }
+  #tourMap > p { display: none; }
+  #tourMap > h1 { display: none; }
+  .recapBro .mascot.spr { --bro: 110px; }
+  .recapStrip > .card.wide, .recapStrip > .card.gains { width: 300px; }
+  .tourPick { font-size: 22px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  #sceneBg i, .sprImg, .drumming .sprImg, button.playBtn, button.stopCard, .stopCard.here, .badgeStrip .bCard.got, main > section:not(.hidden), button.scrArrow.r, .recapBro .sprImg, #tour .gameCard::after { animation: none !important; }
+}
+
+/* ============ 2. app mode: tablets and bigger. Nothing scrolls up and down. ============ */
+html.appMode, html.appMode body { height: 100%; overflow: hidden; overscroll-behavior: none; }
+html.appMode body { display: flex; flex-direction: column; height: 100dvh; min-height: 0; }
+.appMode header { flex: none; flex-wrap: nowrap; height: 58px; padding: 0 calc(14px + env(safe-area-inset-right)) 0 calc(14px + env(safe-area-inset-left)); margin-top: env(safe-area-inset-top); gap: 10px; z-index: 15; }
+.appMode header .brand { flex: 1; text-align: left; }
+.appMode main { flex: 1 1 0; min-height: 0; max-width: none; width: 100%; margin: 0; padding: 0; position: relative; }
+.appMode main > section { position: absolute; inset: 0; padding: 12px 18px calc(92px + env(safe-area-inset-bottom)); overflow: hidden; display: flex; flex-direction: column; min-height: 0; }
+.appMode main > section > h1 { flex: none; margin: 0 0 8px; font-size: 24px; }
+.appMode main > .note { position: absolute; left: 18px; right: 18px; top: 8px; z-index: 30; margin: 0; }
+/* the tabs become a dock at the bottom */
+.appMode header nav { position: fixed; left: 50%; bottom: calc(8px + env(safe-area-inset-bottom)); transform: translateX(-50%); width: auto; max-width: calc(100vw - 12px); flex: none; order: 0; gap: 4px; padding: 6px; border-radius: 28px; overflow: visible; background: rgba(38, 20, 110, .93); border: 2px solid rgba(255, 255, 255, .4); box-shadow: 0 10px 30px rgba(10, 5, 40, .55); z-index: 20; }
+.appMode header nav button.tab { flex: none; flex-direction: column; gap: 1px; width: clamp(76px, 10.4vw, 96px); min-width: 0; padding: 6px 2px 5px; border-radius: 20px; font-size: 12.5px; font-weight: 700; justify-content: center; background: transparent; }
+.appMode header nav button.tab .ti { font-size: 25px; line-height: 1.1; transition: transform .2s cubic-bezier(.3, 1.8, .5, 1); }
+.appMode header nav button.tab.active { background: linear-gradient(#ffe66b, #ffc21a); color: #3a2200; transform: translateY(-9px); box-shadow: 0 5px 0 #b98200, 0 0 18px rgba(255, 214, 60, .85); }
+.appMode header nav button.tab.active .ti { transform: scale(1.2) rotate(-6deg); }
+.appMode body[data-screen="play"] header, .appMode body[data-screen="play"] header nav, .appMode body[data-screen="recap"] header nav, .appMode body[data-screen="cert"] header nav, .appMode body.locked header nav, .appMode body[data-tour="tourPlay"] header nav, .appMode body[data-tour="tourDone"] header nav { display: none; }
+.appMode body[data-screen="play"] main > section, .appMode body[data-screen="recap"] main > section, .appMode body[data-screen="cert"] main > section, .appMode body.locked main > section, .appMode body[data-tour="tourPlay"] main > #tour, .appMode body[data-tour="tourDone"] main > #tour { padding-bottom: calc(12px + env(safe-area-inset-bottom)); }
+
+/* long content flows into columns that move sideways */
+.appMode .flow { flex: 1 1 0; min-height: 0; column-width: 340px; column-gap: 16px; column-fill: auto; overflow-x: auto; overflow-y: hidden; padding: 2px 2px 6px; overscroll-behavior-x: contain; }
+.appMode .flow.wideCols { column-width: 430px; }
+.appMode .flow > * { margin-top: 0; }
+.appMode .flow > :not(.card):not(details):not(#frIn):not(.lessons):not(#pgLessons) { break-inside: avoid; }
+.appMode .flow .card { margin: 0 0 14px; -webkit-box-decoration-break: clone; box-decoration-break: clone; }
+.appMode .flow p, .appMode .flow .row, .appMode .flow svg, .appMode .flow .lesson, .appMode .flow .how, .appMode .flow li, .appMode .flow .frRow, .appMode .flow .trackRow, .appMode .flow summary, .appMode .flow table, .appMode .flow .notation, .appMode .flow .labDots, .appMode .flow .labSay, .appMode .flow .meterWrap, .appMode .flow .pgCards > *, .appMode .flow .pgDays, .appMode .flow .optRow, .appMode .flow .kitInfo > *, .appMode .flow .calGrid > div > *, .appMode .flow .comboList, .appMode .flow .testOut, .appMode .flow .chkOut > *, .appMode .flow .teach > * { break-inside: avoid; }
+.appMode .flow h1, .appMode .flow h2, .appMode .flow h3, .appMode .flow summary { break-after: avoid; }
+.appMode .flow .kitGrid, .appMode .flow .calGrid, .appMode .flow .howCards { grid-template-columns: 1fr; }
+.appMode .flow .kitGrid, .appMode .flow .calGrid { display: block; }
+.appMode .flow .kitGrid > *, .appMode .flow .calGrid > * { margin-bottom: 12px; }
+.appMode .flow .gapTop { margin-top: 0; }
+.appMode .flow .padSvg { max-height: 290px; display: block; margin: 0 auto; }
+.appMode .flow .lessons { margin-top: 8px; }
+.appMode .flow .inboxList { max-width: none; }
+
+/* Home */
+.appMode #hub { gap: 0; justify-content: flex-end; }
+.appMode #hub .homeGrid { flex: 1 1 0; min-height: 0; align-items: end; }
+.appMode #hub .homeStage { height: 100%; }
+.appMode #hub { padding-bottom: calc(92px + env(safe-area-inset-bottom)); }
+.appMode #hub .homeStage .brosBubble { flex: none; }
+.appMode #hub .brosDuo { flex: 1 1 0; min-height: 0; max-height: 350px; width: 100%; }
+.appMode #hub .brosDuo .mascot.spr { height: 100%; display: flex; align-items: flex-end; }
+.appMode #hub .brosDuo .sprImg { height: 100%; }
+.appMode #hub .brosDuo .mascot.small .sprImg { height: 88%; }
+.appMode #hub .homePanel { align-self: center; }
+.appMode #hub .badgeDock { flex: none; }
+.appMode #hub #hubMsgs { position: absolute; left: 18px; right: 18px; top: 8px; z-index: 14; }
+.appMode #hub #hubMsgs .banner { margin: 0 0 6px; box-shadow: 0 8px 20px rgba(20, 10, 60, .4); }
+@media (min-height: 860px) { .appMode .badgeStrip { --bRows: 2; } }
+.appMode #hub .brosDuo { min-height: 120px; }
+@media (orientation: portrait) {
+  .appMode #hub .homeGrid { grid-template-columns: 1fr; grid-template-rows: minmax(0, 1fr) auto; }
+  .appMode #hub .homePanel .quick { flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none; padding-bottom: 4px; }
+  .appMode #hub .homePanel .quick::-webkit-scrollbar { display: none; }
+  .appMode #hub .homePanel .quick button { flex: none; white-space: nowrap; }
+  .appMode #hub .homePanel .bandFace:not(.me) { display: none; }
+  .appMode #hub .badgeStrip .bCard .small { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+}
+/* a tall screen: bigger stage cards on the Tour, and no hole in the middle */
+@media (min-height: 900px) {
+  .appMode #tourMap { justify-content: center; gap: 14px; }
+  .appMode #tourMap #tourStop { flex: none; }
+  .appMode #tourMap .tourStops button.stopCard { flex-basis: clamp(190px, 27vw, 250px); }
+  .appMode #tourMap .stopCard .stopPic { aspect-ratio: 1 / 1; }
+  .appMode #tourMap .stopCard b { font-size: 20px; }
+  .appMode #tourMap .stopCard .small { font-size: 13.5px; -webkit-line-clamp: 3; }
+  .appMode #tourMap .tourHost .mascot.spr { --bro: 120px; }
+  .appMode #tourMap .tourPick { font-size: 32px; }
+  .appMode #tour button.gameCard { min-height: 190px; }
+}
+
+/* Lessons */
+.appMode #home > h1, .appMode #home > p.muted { display: none; }
+.appMode #home #profile { flex: none; display: flex; align-items: center; gap: 12px 18px; margin: 0 0 10px; padding: 10px 16px; }
+.appMode #home #profile .rank { flex: 1 1 260px; min-width: 220px; }
+.appMode #home #profile .rankTxt { min-width: 0; flex: 1; }
+.appMode #home #profile .hello { font-size: 18px; }
+.appMode #home #profile #xpTxt { display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.appMode #home #profile .pbtns button { white-space: nowrap; padding: 10px 16px; font-size: 16px; }
+.appMode #home #profile .pstats { flex-direction: row; gap: 14px; }
+.appMode #home #profile .pbtns { flex-direction: row; }
+.appMode #home #profile .badges { display: none; }
+.appMode #home #profile .faceBtn { width: 58px; height: 58px; }
+.appMode #home .banner { flex: none; margin: 0 0 8px; padding: 8px 14px; }
+.appMode #lessonList.flow { display: block; margin: 0; }
+.appMode #lessonList .stageHead { margin: 0 0 8px; }
+.appMode #lessonList details.level { margin-bottom: 10px; }
+.appMode .lesson.next { border-color: #ffc21a; box-shadow: 0 3px 0 #b98200, 0 0 16px rgba(255, 214, 60, .9); animation: hereGlow 1.8s ease-in-out infinite; }
+@media (max-width: 1180px) { .appMode #home #profile .pstats { display: none; } }
+.appMode #home #profile .rankTxt b { white-space: nowrap; }
+
+/* Tour */
+.appMode #tour { padding-top: 8px; }
+.appMode #tourMap { flex: 1 1 0; min-height: 0; display: flex; flex-direction: column; position: relative; }
+.appMode #tourMap > h1, .appMode #tourMap > p { display: none; }
+.appMode #tourMap #tourLv { position: absolute; right: 0; top: 0; margin: 0; z-index: 3; background: rgba(38, 20, 110, .8); border-radius: 999px; padding: 4px 6px 4px 14px; gap: 8px; }
+.appMode #tourMap .tourHost { flex: none; margin: 0 250px 0 0; min-height: 84px; }
+.appMode #tourMap .tourHost .mascot.spr { --bro: 84px; }
+.appMode #tourMap .hostSay { font-size: 15px; padding: 8px 14px; }
+.appMode #tourMap .tourPick { flex: none; margin: 0; }
+.appMode #tourMap .tourStops { flex: none; margin: 0; }
+.appMode #tourMap #tourStop { flex: 1 1 0; min-height: 0; display: flex; flex-direction: column; justify-content: flex-end; position: relative; }
+.appMode #tourMap .stopCard .small { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+@media (max-height: 800px) { .appMode .stopCard .stopPic { aspect-ratio: 16 / 9; } .appMode #tour button.gameCard { min-height: 0; padding: 10px 12px; } .appMode #tour .gameCard .gIcon { font-size: 26px; } .appMode #tourMap .tourPick { font-size: 22px; } }
+@media (max-height: 730px) { .appMode #tour .gameCard .muted { display: none; } .appMode #tourMap .tourHost { min-height: 66px; } .appMode #tourMap .tourHost .mascot.spr { --bro: 66px; } .appMode #tourMap .hostSay { font-size: 14px; padding: 6px 12px; } .appMode .tourStops { padding-top: 14px; padding-bottom: 8px; } }
+.appMode #tourPlay { flex: 1 1 0; min-height: 0; display: flex; flex-direction: column; gap: 8px; }
+.appMode #tourPlay .playTop { position: static; flex: none; }
+.appMode #tourPlay .note { flex: none; margin: 0; }
+.appMode #tourPlay .tourStage { flex: 1 1 0; min-height: 0; }
+.appMode #tourPlay .side { overflow: hidden; }
+.appMode #tourPlay .side .padSvg { flex: 0 1 auto; min-height: 0; }
+.appMode #tourDone { flex: 1 1 0; min-height: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px; }
+.appMode #tourDone .card { max-width: 640px; margin: 0; }
+
+/* Play: the notes take all the room there is */
+.appMode #play { padding: 8px 12px calc(8px + env(safe-area-inset-bottom)); gap: 6px; }
+.appMode #play > * { flex: none; margin: 0; }
+.appMode #play .playTop { position: static; padding: 6px 10px; }
+.appMode #play .playTop .title { font-size: 19px; }
+.appMode #play .playTop .status { color: #fff; background: #7a86a8; }
+.appMode #play .playTop .status.on { background: #1c9d58; }
+.appMode #play .controls { flex-wrap: nowrap; overflow-x: auto; overflow-y: hidden; padding: 6px 14px; gap: 18px; scrollbar-width: none; }
+.appMode #play .controls::-webkit-scrollbar { display: none; }
+.appMode #play .controls > label, .appMode #play .controls > details { flex: none; flex-wrap: nowrap; white-space: nowrap; }
+.appMode #play .more[open] { display: flex; align-items: center; gap: 16px; }
+.appMode #play .more .moreIn { margin: 0; flex-wrap: nowrap; gap: 16px; }
+.appMode #play .more .moreIn label { white-space: nowrap; display: flex; align-items: center; gap: 6px; }
+.appMode #play .sheet { max-height: 21vh; overflow: hidden; padding: 2px 10px; }
+.appMode #play .sheet svg { max-height: 20vh; }
+.appMode #play .stage { flex: 1 1 0; min-height: 0; }
+.appMode #play #lane { height: 100%; }
+.appMode #play .side { overflow: hidden; }
+.appMode #play .side .padSvg { flex: 0 1 auto; min-height: 0; }
+.appMode #play .side .buddy { flex: none; }
+.appMode #play .tip { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-size: 14px; padding: 4px 12px; }
+.appMode #play .note, .appMode #play .focus { padding: 5px 12px; font-size: 14px; }
+.appMode #play #alignBox { position: absolute; right: 12px; bottom: calc(8px + env(safe-area-inset-bottom)); z-index: 8; max-width: calc(100% - 24px); padding: 6px 14px; }
+.appMode #play #alignBox[open] { left: 12px; padding: 12px 16px; box-shadow: 0 -6px 30px rgba(10, 5, 40, .5); }
+.appMode #play #alignBox:not([open]) summary { font-size: 13px; }
+@media (max-width: 900px) { .appMode #play .stage { flex-direction: column; } .appMode #play #lane { flex: 1 1 0; min-height: 0; height: auto; width: 100%; } .appMode #play .side { flex: none; flex-direction: row; align-items: center; flex-wrap: wrap; } .appMode #play .side .padSvg { width: 240px; max-width: 34%; } .appMode #play .side .sideTitle, .appMode #play .side .padHint { display: none; } .appMode #play .side .buddy { flex: 1; min-width: 220px; } }
+
+/* after a lesson */
+.appMode #recap { gap: 0; }
+.appMode #recap .recapHero { flex: 1 1 0; min-height: 0; }
+.appMode #recap .recapStrip { flex: none; max-height: 34%; }
+.appMode #recap .recapStrip > .card { overflow: hidden; }
+.appMode #recap .recapStrip #recapPads { display: grid; grid-template-columns: 1fr 1fr; gap: 2px 16px; }
+@media (max-height: 800px) { .appMode .recapMid .flyFace { width: 84px; height: 84px; } .appMode .recapMain { padding: 8px 14px; } .appMode .recapMain .stars { font-size: 42px; } .appMode .recapMain .score { font-size: 32px; } .appMode .recapStrip .card { padding: 10px 14px; } }
+
+/* login: picture on one side, one form on the other */
+.appMode body.locked #account { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); grid-template-rows: auto auto auto minmax(0, 1fr); column-gap: 26px; align-content: center; padding: 16px 26px; }
+.appMode body.locked #account > #acMascots { grid-column: 1; grid-row: 1; margin: 0; }
+.appMode body.locked #account > #acTitle { grid-column: 1; grid-row: 2; font-size: 36px; margin: 6px 0 2px; }
+.appMode body.locked #account > #acHello { grid-column: 1; grid-row: 3; margin: 0; }
+.appMode body.locked #account > #acOut, .appMode body.locked #account > #acWait, .appMode body.locked #account > #acPin, .appMode body.locked #account > #acIn { grid-column: 2; grid-row: 1 / -1; align-self: center; margin: 0; min-width: 0; }
+.appMode body.locked .logoBig { width: min(300px, 34vh); height: min(300px, 34vh); animation: floaty 4s ease-in-out infinite; }
+.appMode body.locked #account::before { content: ""; grid-column: 1; grid-row: 4; align-self: end; justify-self: center; width: min(100%, 420px); aspect-ratio: 3 / 2; border-radius: 26px; border: 4px solid #fff; background: url(art/welcome.jpg) left center / cover; box-shadow: 0 12px 30px rgba(10, 5, 40, .5); margin-top: 12px; max-height: 100%; }
+.appMode body.locked .acGrid .card { padding: 16px 20px; gap: 5px; }
+.appMode body.locked .acGrid h2 { font-size: 21px; margin: 0; }
+.appMode body.locked .acGrid label { margin-top: 3px; font-size: 16px; }
+.appMode body.locked .acGrid .textIn { padding: 9px 12px; font-size: 19px; }
+.appMode body.locked #acOut > p { display: none; }
+/* label on the left, field on the right: the long forms stay short */
+.appMode body.locked .acGrid > .card:nth-child(2), .appMode body.locked .forgotBox { display: grid; grid-template-columns: minmax(130px, 38%) minmax(0, 1fr); align-items: center; gap: 6px 12px; }
+.appMode body.locked .acGrid > .card:nth-child(2) > :not(label):not(input), .appMode body.locked .acGrid > .card:nth-child(2) > .showPin, .appMode body.locked .forgotBox > :not(label):not(input), .appMode body.locked .forgotBox > .showPin { grid-column: 1 / -1; }
+.appMode body.locked .acGrid > .card:nth-child(2) > label, .appMode body.locked .forgotBox > label { margin: 0; line-height: 1.2; }
+.appMode body.locked .acGrid > .card:nth-child(2) > label .small { display: block; font-size: 12px; font-weight: 400; }
+.appMode body.locked .acGrid .row { margin: 4px 0 0; }
+.appMode body.locked .acGrid button.wideBtn { padding: 11px 20px; }
+.appMode body.locked .forgotBox { padding: 10px 12px; }
+.appMode body.locked .forgotBox .textIn { max-width: none; min-width: 0; width: 100%; }
+.appMode body.locked .forgotBox p { margin: 0; }
+.appMode body.locked #acForgotAsk { gap: 6px; }
+@media (orientation: portrait) {
+  .appMode body.locked #account { grid-template-columns: 1fr; grid-template-rows: auto auto auto auto; justify-items: center; align-content: start; }
+  .appMode body.locked #account::before { display: none; }
+  .appMode body.locked #account > #acOut, .appMode body.locked #account > #acWait, .appMode body.locked #account > #acPin, .appMode body.locked #account > #acIn { grid-column: 1; grid-row: 4; width: min(100%, 560px); align-self: start; }
+  .appMode body.locked .logoBig { width: 190px; height: 190px; }
+}
+.appMode body:not(.locked) #account { align-items: center; justify-content: center; }
+.appMode body:not(.locked) #account > .card { width: min(100%, 760px); margin: 0; }
+
+/* My drummer: the picture stays, the choices move sideways */
+.appMode #me .meBody { flex: 1 1 0; min-height: 0; display: flex; gap: 16px; }
+.appMode #me .meLeft { position: static; flex: 0 0 220px; background: rgba(255, 255, 255, .95); border-radius: 24px; border: 3px solid #fff; padding: 14px; justify-content: center; }
+.appMode #me .meCard { display: block; background: none; border: 0; box-shadow: none; padding: 0; margin: 0; }
+.appMode #me .meForm { background: rgba(255, 255, 255, .95); border-radius: 20px; padding: 14px 16px; margin: 0 0 14px; -webkit-box-decoration-break: clone; box-decoration-break: clone; }
+.appMode #me .meForm .row { break-inside: avoid; }
+
+/* certificate: made smaller until it fits */
+.appMode #cert { align-items: center; }
+.appMode #cert .certPage { margin: 0 auto; transform-origin: 50% 0; flex: none; }
+.appMode #cert .noPrint { flex: none; }
+
+/* a wide desktop window */
+@media (min-width: 1500px) { .appMode main > section { padding-left: max(18px, calc((100vw - 1500px) / 2)); padding-right: max(18px, calc((100vw - 1500px) / 2)); } }
+@media print { html.appMode, html.appMode body { height: auto; overflow: visible; display: block; } .appMode main > section { position: static; } #sceneBg { display: none; } }
+
+/* ============ 3. calmer backdrops, and one floor for the Beat Brothers ============ */
+/* Home: the picture is faded and bright. The Tour and the result page: the picture is dimmed, so the cards stand out. */
+#sceneBg i { transition: opacity .8s ease, filter .5s ease; }
+body[data-tone="bright"] #sceneBg i { filter: blur(4px) saturate(.85); animation-play-state: paused; }
+body[data-tone="bright"] #sceneBg::after { background: linear-gradient(180deg, rgba(255, 255, 255, .66), rgba(248, 244, 255, .56) 50%, rgba(255, 255, 255, .70)); }
+body[data-tone="dim"] #sceneBg i { filter: blur(6px) saturate(.8); animation-play-state: paused; }
+body[data-tone="dim"] #sceneBg::after { background: linear-gradient(180deg, rgba(34, 18, 100, .84), rgba(34, 18, 100, .74)); }
+body[data-tone="stage"] #sceneBg i { filter: blur(3px); animation-play-state: paused; }
+body[data-tone="stage"] #sceneBg::after { background: linear-gradient(180deg, rgba(24, 12, 76, .62), rgba(24, 12, 76, .50)); }
+body[data-tone="dark"] #sceneBg i, body[data-tone="soft"] #sceneBg i { animation-play-state: paused; }
+
+/* The brothers stand in a soft white alcove. Its bottom edge is the floor: the top of the box below. */
+.homeStage::after { content: none; }
+.homeStage.popIn .brosDuo { animation: none; }
+.homeStage.popIn .brosDuo .mascot.spr { animation: brosUp .7s cubic-bezier(.2, 1.4, .4, 1) both; }
+button.brosDuo { position: relative; width: min(100%, 470px); padding: 10px 8px 0; border-radius: 34px 34px 0 0; background: linear-gradient(180deg, rgba(255, 255, 255, .50), rgba(255, 255, 255, .82)); border: 3px solid rgba(255, 255, 255, .9); border-bottom: 0; box-shadow: none; }
+button.brosDuo::before { content: ""; position: absolute; left: 14%; right: 14%; bottom: -7px; height: 20px; border-radius: 50%; background: radial-gradient(closest-side, rgba(20, 10, 60, .38), transparent); z-index: 0; pointer-events: none; }
+.brosDuo .mascot.spr { z-index: 1; margin-bottom: -4px; }
+.homeStage { z-index: 2; }
+.badgeDock { margin-top: 0; }
+html:not(.appMode) .homePanel.hubHero { margin-bottom: 14px; }
+@media (max-width: 699px) { .homeStage { order: 2; } .homePanel.hubHero { order: 1; } .homeGrid { gap: 14px 0; row-gap: 14px; } .homeStage .brosBubble { margin-bottom: 12px; } }
+.appMode #hub .brosDuo { width: min(100%, 470px); }
+@media (orientation: landscape) { .appMode #hub .homePanel { margin-bottom: 14px; } }
+@media (orientation: portrait) { .appMode #hub .homeGrid { row-gap: 0; } .appMode #hub .badgeDock { margin-top: 14px; } }
+
+/* the Tour on a calm backdrop */
+#tour .tourStop > .card, #tour #tourStop > .card { box-shadow: 0 8px 22px rgba(10, 5, 40, .45); }
+
+/* nothing in the background moves while notes are falling */
+body[data-screen="play"] #sceneBg i, body[data-tour="tourPlay"] #sceneBg i { animation-play-state: paused; }
+
+/* the Note quiz */
+.quizStaff { max-width: 300px; margin-left: auto; margin-right: auto; background: #fff; }
+.quizPad { display: block; max-width: 400px; margin: 10px auto 0; }
+.quizScore { font-size: 18px; color: var(--accentDark); }
+#quizCard .labSay { text-align: center; min-height: 2.6em; }
+#quizCard .row { justify-content: center; }
+.appMode .flow .quizPad { max-height: 250px; }
+@media (max-width: 699px) { .homePanel.hubHero { margin-bottom: 0 !important; } }
+/* both brothers stand on the same line, whatever their height */
+.brosDuo .mascot.spr { display: flex; flex-direction: column; justify-content: flex-end; align-self: flex-end; }
+.brosDuo .mascot.spr .sprImg { margin-top: auto; flex: none; }
+/* in app mode the quiz starts a fresh column: the note on the left, the pad to answer on right beside it */
+.appMode .flow #quizCard { break-before: column; }
+.appMode .flow #quizCard .quizPad { break-before: column; margin-top: 0; max-height: none; height: min(300px, 100%); }
+.appMode .flow #quizCard > p.muted:first-of-type { font-size: 14.5px; margin: 4px 0 8px; }
+.appMode .flow .quizStaff { max-width: 250px; }
+@media (max-height: 730px) { .appMode .flow .quizStaff { max-width: 210px; } .appMode .flow #quizCard .labSay { min-height: 0; font-size: 16px; } .appMode .flow #quizLevels button { padding: 6px 12px; font-size: 14px; } }

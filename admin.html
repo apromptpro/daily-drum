@@ -1,0 +1,117 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<title>Daily Drum admin</title>
+<link rel="stylesheet" href="style.css">
+<style>
+  body { background: #eef2fb; }
+  header { background: #25304f; box-shadow: none; }
+  .brand::before { content: "🛠 "; }
+  main { max-width: 1280px; }
+  table.adm { width: 100%; border-collapse: collapse; background: #fff; border-radius: 14px; overflow: hidden; }
+  table.adm th { text-align: left; font-size: 12px; color: var(--muted); padding: 8px 10px; background: var(--panel2); white-space: nowrap; }
+  table.adm td { padding: 8px 10px; border-top: 1px solid var(--line); font-size: 14px; vertical-align: middle; }
+  table.adm tbody tr { cursor: pointer; }
+  table.adm tbody tr:hover, table.adm tbody tr.sel { background: #f3efff; }
+  .tableWrap { overflow-x: auto; }
+  .chipS { display: inline-block; padding: 2px 10px; border-radius: 999px; font-weight: 700; font-size: 12px; }
+  .chipS.active { background: #eafff2; color: #17794a; } .chipS.pending { background: #fff3bf; color: #7a5a00; }
+  .chipS.disabled { background: #ffe5e2; color: #b3261e; } .chipS.expired { background: #e6e9f2; color: #4a5578; }
+  .admFace { width: 36px; height: 36px; border-color: var(--line); vertical-align: middle; margin-right: 8px; }
+  .admGrid { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px; }
+  .admGrid .card { margin: 0; text-align: center; padding: 12px; }
+  .admTabs { display: flex; gap: 8px; flex-wrap: wrap; margin: 12px 0; }
+  textarea.textIn { width: 100%; min-height: 70px; font-weight: 400; resize: vertical; }
+  .logRow { display: grid; grid-template-columns: 170px 140px 150px 1fr; gap: 8px; padding: 5px 8px; border-top: 1px solid var(--line); font-size: 13px; }
+  .lvBar { display: grid; grid-template-columns: minmax(160px, 320px) 1fr 80px; gap: 10px; align-items: center; margin: 4px 0; font-size: 14px; }
+  .pendRow { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; padding: 8px 12px; border: 2px solid #f2c230; background: #fff9de; border-radius: 14px; margin: 8px 0; }
+  .wide { width: 100%; max-width: 420px; }
+  .pendRow.help { border-color: #7cc4f0; background: #e8f6ff; }
+</style>
+</head>
+<body>
+<header>
+  <div class="brand">Daily Drum admin</div>
+  <nav></nav>
+  <button id="admOut" class="tab hidden">Log out</button>
+</header>
+<main>
+  <!-- first visit: create the one admin password -->
+  <section id="vSetup" class="hidden">
+    <h1>Create the admin password</h1>
+    <div class="card">
+      <p class="muted">This is the first visit to the admin page, so the admin password is created now. There is only one. Choose at least 10 characters and keep it somewhere safe: it cannot be shown again.</p>
+      <div class="row"><input id="suP1" class="textIn wide" type="password" placeholder="New admin password" autocomplete="new-password"></div>
+      <div class="row"><input id="suP2" class="textIn wide" type="password" placeholder="The same password again" autocomplete="new-password"></div>
+      <div class="row"><button id="suGo" class="primary big">Create password</button><span id="suMsg" class="small acMsg"></span></div>
+    </div>
+  </section>
+
+  <section id="vLogin" class="hidden">
+    <h1>Admin login</h1>
+    <div class="card">
+      <div class="row"><input id="liP" class="textIn wide" type="password" placeholder="Admin password" autocomplete="current-password"></div>
+      <div class="row"><button id="liGo" class="primary big">Log in</button><span id="liMsg" class="small acMsg"></span></div>
+    </div>
+  </section>
+
+  <section id="vMain" class="hidden">
+    <div id="aCards" class="admGrid"></div>
+    <div class="admTabs">
+      <button class="feel active" data-tab="tUsers">Players</button>
+      <button class="feel" data-tab="tMsgs">Messages</button>
+      <button class="feel" data-tab="tLog">Activity log</button>
+      <button class="feel" data-tab="tSet">Settings</button>
+      <button id="aRefresh">&#8635; Refresh</button>
+      <span id="aMsg" class="small acMsg"></span>
+    </div>
+
+    <div id="tUsers">
+      <div id="aPending"></div>
+      <div class="card">
+        <h2>All players</h2>
+        <div class="row"><input id="aFilter" class="textIn" placeholder="Find a nickname"><span class="muted small">Click a row for progress and actions.</span></div>
+        <div class="tableWrap"><table class="adm"><thead><tr><th>Player</th><th>Status</th><th>Valid until</th><th>Last seen</th><th>Rank</th><th>Points</th><th>Stars</th><th>Badges</th><th>Days in a row</th><th>Tour stops</th><th>Friends</th></tr></thead><tbody id="aRows"></tbody></table></div>
+      </div>
+      <div id="aDetail" class="card hidden"></div>
+    </div>
+
+    <div id="tMsgs" class="hidden">
+      <div class="card">
+        <h2>Send a message</h2>
+        <p class="muted">The message appears on the player's home page the next time the app is opened, until they press OK.</p>
+        <div class="row"><label for="mTo">To</label><select id="mTo"></select></div>
+        <textarea id="mBody" class="textIn" maxlength="500" placeholder="For example: Great practice this week! Try the Tour today."></textarea>
+        <div class="row"><button id="mSend" class="primary">Send message</button><span id="mMsg" class="small acMsg"></span></div>
+      </div>
+      <div class="card"><h2>Sent messages</h2><div id="mList"></div></div>
+    </div>
+
+    <div id="tLog" class="hidden">
+      <div class="card"><h2>Activity log</h2><p class="muted small">Sign-ups, logins, wrong PINs, friend requests and everything done on this page. Newest first.</p><div id="lList"></div></div>
+    </div>
+
+    <div id="tSet" class="hidden">
+      <div class="card">
+        <h2>Join code</h2>
+        <p class="muted">When a join code is set, a new player must type it to ask for an account. Leave it empty and anyone who finds the app can ask (you still approve each one).</p>
+        <div class="row"><input id="sJoin" class="textIn" maxlength="30" placeholder="No join code"><button id="sJoinSave" class="primary">Save join code</button><span id="sJoinMsg" class="small acMsg"></span></div>
+      </div>
+      <div class="card">
+        <h2>Change the admin password</h2>
+        <div class="row"><input id="sP1" class="textIn wide" type="password" placeholder="New admin password (10 or more)" autocomplete="new-password"></div>
+        <div class="row"><input id="sP2" class="textIn wide" type="password" placeholder="The same password again" autocomplete="new-password"></div>
+        <div class="row"><button id="sPSave" class="primary">Change password</button><span id="sPMsg" class="small acMsg"></span></div>
+      </div>
+    </div>
+  </section>
+</main>
+<script src="config.js"></script>
+<script src="lessons.js"></script>
+<script src="game.js"></script>
+<script src="admin.js"></script>
+</body>
+</html>
