@@ -9,6 +9,10 @@ class OnsetProcessor extends AudioWorkletProcessor {
     this.capPos = 0;
     this.capTime = 0;
     this.capPeak = 0;
+    this.tailLen = Math.round(0.2 * sampleRate);   // what follows the 43 ms: only for playing the hit back in Setup
+    this.tail = null;
+    this.tailPos = 0;
+    this.tailTime = 0;
     this.gap = 0;           // blocks left before another hit may start (about 60 ms)
     this.gapBlocks = Math.ceil(0.06 * sampleRate / 128);
     this.pre = new Float32Array(128);
@@ -17,6 +21,13 @@ class OnsetProcessor extends AudioWorkletProcessor {
     this.port.onmessage = (e) => {
       if (e.data && typeof e.data.floor === 'number') this.floor = e.data.floor;
     };
+  }
+
+  flushTail() {
+    if (!this.tail) return;
+    const out = this.tail.slice(0, this.tailPos);
+    this.tail = null;
+    this.port.postMessage({ type: 'tail', time: this.tailTime, samples: out }, [out.buffer]);
   }
 
   process(inputs) {
@@ -48,9 +59,16 @@ class OnsetProcessor extends AudioWorkletProcessor {
         const buf = this.cap;
         this.cap = null;
         this.port.postMessage({ type: 'hit', time: this.capTime, peak: this.capPeak, samples: buf }, [buf.buffer]);
+        this.tail = new Float32Array(this.tailLen);
+        this.tailTime = this.capTime;
+        const rest = ch.subarray(n);
+        this.tail.set(rest, 0);
+        this.tailPos = rest.length;
+        this.tailNew = true;   // this block is already in it
       }
     } else if (this.gap <= 0 && rms > this.floor && rms > this.env * 2.2) {
       // Sudden rise in loudness: a hit starts in this block.
+      this.flushTail();
       let idx = 0;
       const thr = peak * 0.3;
       for (let i = 0; i <= peakIdx; i++) {
@@ -67,6 +85,13 @@ class OnsetProcessor extends AudioWorkletProcessor {
       this.port.postMessage({ type: 'onset', time: this.capTime });   // tell the page at once; "which pad" follows
     }
 
+    if (this.tailNew) this.tailNew = false;
+    else if (this.tail && !this.cap) {
+      const m = Math.min(ch.length, this.tailLen - this.tailPos);
+      this.tail.set(ch.subarray(0, m), this.tailPos);
+      this.tailPos += m;
+      if (this.tailPos >= this.tailLen) this.flushTail();
+    }
     this.env = Math.max(rms, this.env * 0.97);
     this.pre.set(ch.length === 128 ? ch : ch.subarray(0, 128));
     return true;

@@ -166,6 +166,7 @@ const Tour = {
   },
   note(tried) {
     const msg = !calibrated() ? 'The pad is not set up yet. For now only ' + KEYS_OR_TAP + '. A grown-up can open Setup at the top.'
+      : micUserOff && !Ear.listening ? 'The microphone is switched off. Tap "Mic off" to switch it on. Until then only ' + KEYS_OR_TAP + '.'
       : tried && !Ear.listening ? micProblem() + ' Until then only ' + KEYS_OR_TAP + '.' : '';
     $('#tourNote').textContent = msg;
     $('#tourNote').classList.toggle('hidden', !msg);
@@ -173,7 +174,7 @@ const Tour = {
   async start() {
     if (this.running) { this.stop(); this.pick(this.game.id); return; }
     Ear.ensureCtx();
-    if (calibrated()) await ensureListening();
+    if (calibrated() && !micUserOff) await ensureListening();
     if (screen !== 'tour' || this.running || !this.game) return;
     this.note(true);
     this.running = true;

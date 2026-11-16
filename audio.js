@@ -97,6 +97,19 @@ function meanOf(list) {
   return out;
 }
 
+// A hit as a small piece of text: about a fifth of a second, thinned out to roughly 16000 values a second,
+// as loud as it will go, one byte for each value. Small enough to keep with the taught pads.
+function packSound(head, tail, rate) {
+  const n = head.length + (tail ? tail.length : 0), f = Math.max(1, Math.round(rate / 16000)), m = Math.floor(n / f);
+  const at = (i) => (i < head.length ? head[i] : tail[i - head.length]);
+  const v = new Float32Array(m);
+  let peak = 1e-4;
+  for (let j = 0; j < m; j++) { let s = 0; for (let k = 0; k < f; k++) s += at(j * f + k); v[j] = s / f; const a = Math.abs(v[j]); if (a > peak) peak = a; }
+  let bin = '';
+  for (let j = 0; j < m; j++) bin += String.fromCharCode(Math.max(0, Math.min(255, Math.round(v[j] / peak * 127 + 128))));
+  return Math.round(rate / f) + ':' + btoa(bin);
+}
+
 // Some instruments can be played from two places on the pad (two crash pads; the kick as a pedal or as the Bass Drum pad).
 // Each place is taught on its own, under its own key, and they all count as the same instrument.
 const ALIAS = { crash2: 'crash', kickpad: 'kick', hihatopen: 'hihat' };   // hihatopen = the hi-hat pad with the pedal up (long ring)
@@ -160,7 +173,15 @@ const Ear = {
       if (d.type === 'level') { if (this.onLevel) this.onLevel(d.rms); }
       else if (d.type === 'onset') { if (this.onOnset) this.onOnset(d.time); }
       else if (d.type === 'hit' && this.onHit) {
-        this.onHit({ time: d.time, peak: d.peak, feat: fingerprint(d.samples, ctx.sampleRate) });
+        const feat = fingerprint(d.samples, ctx.sampleRate);
+        feat.snd = packSound(d.samples, null, ctx.sampleRate);   // the first 43 ms now; the rest follows in a moment
+        this._last = { time: d.time, feat, head: d.samples };
+        if (d.time < this.deafUntil) return;   // the app is playing a saved hit back: that is not the player
+        this.onHit({ time: d.time, peak: d.peak, feat });
+      } else if (d.type === 'tail' && this._last && this._last.time === d.time) {
+        this._last.feat.snd = packSound(this._last.head, d.samples, ctx.sampleRate);
+        this._last = null;
+        if (this.onSound) this.onSound();
       }
     };
     const mute = ctx.createGain();
@@ -258,6 +279,33 @@ const Ear = {
   },
 
   makeTemplate(samples) { return { mean: meanOf(samples), samples: samples }; },
+
+  // ----- the sound of a taught hit, kept so that it can be played back in Setup -----
+  deafUntil: 0,
+  playSound(snd) {
+    if (!snd) return 0;
+    const ctx = this.ensureCtx(), at = snd.indexOf(':'), rate = +snd.slice(0, at), bin = atob(snd.slice(at + 1));
+    const buf = ctx.createBuffer(1, bin.length, rate), d = buf.getChannelData(0);
+    for (let i = 0; i < bin.length; i++) d[i] = (bin.charCodeAt(i) - 128) / 127;
+    const s = ctx.createBufferSource(), g = ctx.createGain();
+    s.buffer = buf; g.gain.value = 0.8;
+    s.connect(g).connect(ctx.destination);
+    const t = ctx.currentTime + 0.03;
+    s.start(t);
+    this.deafUntil = t + buf.duration + 0.25;   // the microphone hears it too: do not take it for a hit
+    return buf.duration;
+  },
+  exportSounds() {
+    const out = {};
+    for (const k of Object.keys(this.templates)) if (k !== '_click') out[k] = this.templates[k].samples.map(s => s.snd || '');
+    return out;
+  },
+  importSounds(obj) {
+    for (const k of Object.keys(obj || {})) {
+      const t = this.templates[k];
+      if (t && Array.isArray(obj[k]) && obj[k].length === t.samples.length) t.samples.forEach((s, i) => { if (obj[k][i]) s.snd = obj[k][i]; });
+    }
+  },
 
   padIds() { return Object.keys(this.templates).filter(k => k !== '_click' && k.indexOf('+') < 0); },
   comboIds() { return Object.keys(this.templates).filter(k => k.indexOf('+') > 0); },   // pads taught as hit together, e.g. "hihat+kick"

@@ -382,7 +382,7 @@ const Bros = {
     $('#brosFaces').onclick = () => { this.next(); if (typeof UI !== 'undefined') UI.act($('#brosFaces').querySelector('[data-b="' + (this.list[this.i].fact ? 1 : 0) + '"]'), 'jump', 900); };
   }
 };
-const brandName = () => settings.appName || 'Daily Drum';
+const brandName = () => 'Daily Drum';   // the app has one name; it cannot be changed in Setup
 function renderHeader() {
   const p = prof();
   $('#meFace').innerHTML = faceHtml(p, false);
@@ -1049,7 +1049,7 @@ function quizStart() {
   Quiz.on = true; Quiz.n = 0; Quiz.score = 0; Quiz.last = '';
   $('#quizGo').textContent = '■ Stop';
   Ear.ensureCtx();
-  if (calibrated()) ensureListening();   // the real pad can answer too
+  if (calibrated() && !micUserOff) ensureListening();   // the real pad can answer too
   quizScoreUi();
   quizAsk();
 }

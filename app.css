@@ -625,3 +625,24 @@ body.locked #acOut > p { display: none; }
 /* the name is the login nickname: shown, not typed */
 #me #meNameIn { display: none; }
 #me #mePreviewName { display: block; font-size: 22px; font-weight: 800; color: var(--accentDark); overflow-wrap: anywhere; }
+
+/* ============ 8. Setup: every kept hit, to play and to change one at a time ============ */
+.status { cursor: pointer; user-select: none; -webkit-user-select: none; transition: transform .1s, filter .15s; }
+.status:hover { filter: brightness(1.12); }
+.status:active { transform: scale(.94); }
+.chkRow { display: block; }
+.hitHead { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 12px; }
+.hitHead b { min-width: 0; }
+.hitHead span { font-size: 14px; }
+.hitLine { display: flex; flex-wrap: wrap; align-items: center; gap: 5px; margin-top: 6px; }
+.hitLine .hl { flex: 0 0 100%; font-size: 12px; font-weight: 700; letter-spacing: .3px; text-transform: uppercase; color: var(--muted); }
+.hitChip { display: inline-flex; border: 2px solid var(--line); border-radius: 999px; overflow: hidden; background: #fff; }
+.hitChip.bad { border-color: #f0a39d; background: #fff0ee; }
+.hitChip.good { border-color: #8fd9ae; }
+.hitChip button, .chkRow .hitChip button, body.touch .hitChip button { border: 0; border-radius: 0; box-shadow: none; background: none; padding: 5px 9px; font-size: 13px; font-weight: 700; min-height: 32px; }
+.hitChip button.hp:disabled { opacity: .5; }
+.hitChip button.hp.playing { background: #ffe66b; }
+.hitChip button.ha { border-left: 2px solid var(--line); color: var(--accentDark); }
+.hitChip button.ha:hover { background: #efeaff; }
+.chkRow button.hitMore, body.touch .chkRow button.hitMore { padding: 5px 11px; font-size: 13px; font-weight: 700; border-radius: 999px; box-shadow: none; border: 2px dashed #b9a8ff; background: #f7f4ff; color: var(--accentDark); }
+.appMode .flow .chkOut > .chkRow { break-inside: avoid; }

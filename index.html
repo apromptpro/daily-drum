@@ -563,8 +563,8 @@
       <p class="muted">Hit any pad. The app shows what it heard, and the pad lights up in the picture above.</p>
       <div id="testOut" class="testOut">-</div>
       <h3>Check every pad</h3>
-      <p class="muted small">The app asks for each pad in turn, three hits each, and keeps score. Pads it gets wrong can be taught again or given more hits to learn from.</p>
-      <div class="row"><button id="chkStart" class="primary">Check all pads</button><span id="chkPrompt" class="chkPrompt"></span></div>
+      <p class="muted small">The app asks for each pad in turn, three hits each, and keeps score. Afterwards every hit can be played back with &#9654;. A hit that was heard wrongly can be taught to the app on its own, and a bad hit among the taught ones can be removed.</p>
+      <div class="row"><button id="chkStart" class="primary">Check all pads</button><button id="hitsShow">&#127911; Listen to the taught hits</button><span id="chkPrompt" class="chkPrompt"></span></div>
       <div id="chkOut" class="chkOut"></div>
       <h3>&#127932; New to drum music?</h3>
       <p class="muted small">Once the pads are taught, the Note quiz shows one written note at a time and the player hits that drum. It is the quickest way to get used to the sheet music before the first lesson.</p>
@@ -591,17 +591,13 @@
     </div>
 
     <div class="card">
-      <h2>5. Player and app</h2>
+      <h2>5. Left or right hand</h2>
       <div class="row">
         <label for="handSel">The drummer is</label>
         <select id="handSel"><option value="R">right-handed</option><option value="L">left-handed</option></select>
         <span class="muted small">Every note shows which hand or foot plays it.</span>
       </div>
-      <div class="row">
-        <label for="appName">Name of the app</label>
-        <input id="appName" class="textIn" maxlength="28" placeholder="Daily Drum">
-        <button id="setupMe">Change the player's name and picture</button>
-      </div>
+
       <p class="muted small keysHint">No pad nearby? Any lesson can be tried by tapping the pad picture beside the notes, or with the keyboard:
         <kbd>A</kbd> hi-hat, <kbd>S</kbd> snare, <kbd>Space</kbd> kick, <kbd>Q</kbd> crash, <kbd>E</kbd> <kbd>D</kbd> <kbd>F</kbd> toms, <kbd>R</kbd> ride.</p>
     </div>
