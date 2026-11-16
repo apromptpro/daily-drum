@@ -1820,5 +1820,9 @@ $('#navHub').onclick = () => show('hub');
 $('#hubSongs').onclick = () => show('songs');
 $('#hubMe').onclick = () => show('me');
 Online.ses = store.get('session', null);
-show(Online.blocked() ? 'account' : Online.home());
+{ // straight after a login the first screen is "This is me today", so the player can dress the drummer
+  let justIn = false;
+  try { justIn = sessionStorage.getItem('dd.justIn') === '1'; sessionStorage.removeItem('dd.justIn'); } catch (e) {}
+  show(Online.blocked() ? 'account' : justIn ? 'me' : Online.home());
+}
 Online.init();   // the very first visit starts with "Who is drumming?"

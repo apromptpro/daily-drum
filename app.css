@@ -579,3 +579,49 @@ body.locked #acOut > p { display: none; }
 #loadMascots { display: flex; flex-direction: column; align-items: center; justify-content: center; }
 #loadMascots .loadLogo { flex: none; max-width: 100%; }
 .textIn.lower { text-transform: lowercase; }
+
+/* ============ 7. My drummer: a slim panel for who I am, the rest for the drummer's styles ============ */
+.meBody { display: flex; gap: 16px; align-items: flex-start; }
+.meBody .meLeft, .appMode #me .meLeft { position: static; flex: 0 0 250px; gap: 8px; justify-content: flex-start; background: rgba(255, 255, 255, .96); border: 3px solid #fff; border-radius: 24px; padding: 14px 12px; box-shadow: 0 8px 22px rgba(20, 10, 60, .25); }
+.meBody .meCard, .appMode #me .meCard { flex: 1 1 0; min-width: 0; display: block; margin: 0; padding: 14px 16px; background: rgba(255, 255, 255, .96); border: 3px solid #fff; border-radius: 24px; box-shadow: 0 8px 22px rgba(20, 10, 60, .25); }
+.meBody .meForm, .appMode #me .meForm { background: none; border-radius: 0; padding: 0; margin: 0; }
+#mePreviewName { display: none; }
+.meLeft .face.big { width: 150px; height: 150px; }
+.meLeft #meNameIn { width: 100%; max-width: none; text-align: center; font-weight: 700; font-size: 18px; padding: 8px 10px; }
+.meHints, .mePlay { width: 100%; display: flex; flex-wrap: wrap; gap: 6px; justify-content: center; align-items: center; border-top: 2px dashed var(--line); padding-top: 8px; }
+.meHints .tiny, .mePlay .tiny { flex: 0 0 100%; font-size: 12px; line-height: 1.2; color: var(--muted); text-align: center; }
+.mePlay .tiny { order: -1; font-weight: 700; }
+.mePlay #meSwitch { margin: 0; gap: 6px; justify-content: center; flex-wrap: wrap; }
+.meLeft .meHints button, .meLeft .mePlay button, body.touch .meLeft .meHints button, body.touch .meLeft .mePlay button { font-size: 13.5px; font-weight: 700; padding: 5px 12px; border-radius: 999px; border: 2px solid var(--line); background: #fff; box-shadow: none; display: inline-flex; align-items: center; gap: 6px; }
+.meLeft .mePlay .whoBtn .face { width: 26px; height: 26px; flex: none; }
+.meLeft #meRemoveRow { flex: 0 0 100%; justify-content: center; margin: 0; padding: 0; border: 0; background: none; }
+.meLeft #meRemoveRow span { display: none; }
+.meLeft #meRemoveRow #meRemove, body.touch .meLeft #meRemoveRow #meRemove { font-size: 12px; padding: 3px 10px; opacity: .75; color: #b3261e; border-color: #f0c4c0; }
+.meLeft #meDone { align-self: stretch; margin-top: 4px; }
+.meForm h3 { margin: 0 0 4px; font-size: 19px; color: var(--accentDark); }
+.meForm #meMsg { display: block; min-height: 0; font-weight: 700; color: #a55a00; }
+.meForm #meMsg:empty { display: none; }
+/* one line for each style: the name on the left, the choices beside it (they slide sideways if there are many) */
+#meOpts .optRow { display: flex; flex-wrap: nowrap; align-items: center; gap: 8px; margin: 0; padding: 6px 4px; border-top: 1px solid #ece7ff; overflow-x: auto; overflow-y: hidden; scrollbar-width: none; -webkit-overflow-scrolling: touch; }
+#meOpts .optRow::-webkit-scrollbar { display: none; }
+#meOpts .optRow:first-child { border-top: 0; }
+#meOpts .optName { position: sticky; left: 0; z-index: 2; flex: 0 0 104px; align-self: stretch; display: flex; align-items: center; background: linear-gradient(90deg, #fff 88%, rgba(255, 255, 255, 0)); font-weight: 700; font-size: 15px; margin: -6px 0; padding: 6px 0; }
+#meOpts .chip { flex: none; }
+.appMode #me .meBody { flex: 1 1 0; min-height: 0; align-items: stretch; }
+.appMode #me .meLeft { overflow: hidden; }
+.appMode #me .meCard { display: flex; flex-direction: column; overflow: hidden; }
+.appMode #me .meForm { flex: 1 1 0; min-height: 0; display: flex; flex-direction: column; }
+.appMode #me #meOpts { flex: 1 1 0; min-height: 0; display: flex; flex-direction: column; justify-content: space-between; }
+.appMode #me #meOpts .optRow { flex: 0 1 auto; }
+@media (max-height: 740px) { .appMode #me .meLeft .face.big { width: 104px; height: 104px; } .appMode #me .meHints .tiny { display: none; } .appMode #me #meOpts .optRow { padding: 3px 4px; } .appMode #me #meOpts .optName { margin: -3px 0; padding: 3px 0; } .appMode #me button.chip.swatch { width: 32px; height: 32px; } .appMode #me button.chip { padding: 4px 12px; } .appMode #me .meLeft { gap: 6px; padding: 10px; } }
+@media (max-width: 699px) {
+  .meBody { flex-direction: column; align-items: stretch; }
+  .meBody .meLeft { flex: none; }
+  #meOpts .optRow { flex-wrap: wrap; overflow: visible; }
+  #meOpts .optName { position: static; flex: 0 0 100%; background: none; margin: 0; padding: 0; }
+}
+.meLeft .face.big { width: 128px; height: 128px; }
+@media (max-height: 740px) { .appMode #me .meLeft .face.big { width: 92px; height: 92px; } .appMode #me .meLeft #meNameIn { padding: 5px 8px; font-size: 16px; } .appMode #me .meHints, .appMode #me .mePlay { padding-top: 5px; gap: 4px; } }
+/* the name is the login nickname: shown, not typed */
+#me #meNameIn { display: none; }
+#me #mePreviewName { display: block; font-size: 22px; font-weight: 800; color: var(--accentDark); overflow-wrap: anywhere; }

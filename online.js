@@ -12,6 +12,12 @@ const Online = {
   ok() { return !!(this.ses && this.ses.status === 'active' && !this.ses.expired && !this.ses.must_change); },
   blocked() { return this.gate && !this.ok(); },
   keep() { store.set('session', this.ses); },
+  // The player's name in the app is the nickname they log in with: one name, nothing to mix up.
+  syncName() {
+    if (!this.ses || !this.ses.nick) return;
+    const p = prof();
+    if (p.name !== this.ses.nick) { p.name = this.ses.nick; saveProf(); if (typeof renderHeader === 'function') renderHeader(); }
+  },
   err(code) {
     return ({ nick: 'A nickname has 3 to 16 small letters or numbers.', pin: 'A PIN has at least 4 numbers or letters.', taken: 'That nickname is taken. Try another one.',
       join: 'That join code is not right. Ask the grown-up who looks after Daily Drum.', full: 'Too many accounts are waiting. Try again later.',
@@ -28,6 +34,7 @@ const Online = {
   async init() {
     this.ses = store.get('session', null);
     this.wire();
+    if (this.ok()) this.syncName();
     if (this.ses) {
       this.load('Getting your drums ready…');
       await Promise.race([this.refresh(true), new Promise(r => setTimeout(r, 7000))]);   // no internet: do not wait for ever
@@ -49,6 +56,7 @@ const Online = {
     }
     Object.assign(this.ses, { nick: me.nick, status: me.status, expired: !!me.expired, expires_at: me.expires_at || null, must_change: !!me.must_change, friend_code: me.friend_code || this.ses.friend_code, requests: me.requests || 0, has_word: me.has_word !== false });
     this.keep();
+    this.syncName();
     this.msgs = me.messages || [];
     if (this.ok()) {
       if (first && me.data_at && me.data_at !== this.ses.dataAt && !this.dirty) { await this.pull(); return; }
@@ -122,6 +130,7 @@ const Online = {
     this.keep();
     await this.refresh(false);
     if (!this.ok()) return '';
+    try { sessionStorage.setItem('dd.justIn', '1'); } catch (e) {}   // every login opens "This is me today"
     const cloud = await Net.rpc('dd_load', { p_token: this.ses.token });
     const mine = String(prof().acct || '').toLowerCase() === String(this.ses.nick || '').toLowerCase(), has = Object.keys(progress).length > 0 || prof().xp > 0;
     if (cloud.ok && cloud.data) {
@@ -129,10 +138,11 @@ const Online = {
         prof().acct = this.ses.nick; saveProf(); await this.push();
       } else { this.apply(cloud.data, cloud.data_at); return ''; }
     } else {
-      const p = prof(); p.acct = this.ses.nick; if (!p.name) p.name = this.ses.nick;
+      const p = prof(); p.acct = this.ses.nick; p.name = this.ses.nick;
       saveProf(); await this.push();
     }
-    show(Online.home());
+    try { sessionStorage.removeItem('dd.justIn'); } catch (e) {}
+    show('me');
     return '';
   },
   async signup(nick, pin, join, word) {
@@ -140,7 +150,7 @@ const Online = {
     if (!r.ok) return this.err(r.error);
     this.ses = { token: r.token, nick: r.nick, status: r.status, has_word: !!word };
     this.keep();
-    const p = prof(); if (!p.name) { p.name = r.nick; saveProf(); }
+    const p = prof(); p.name = r.nick; saveProf();
     this.after();
     return '';
   },

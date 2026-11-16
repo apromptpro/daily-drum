@@ -55,13 +55,32 @@ const UI = {
     ['songs', 'learn', 'friends', 'inbox', 'progress', 'setup', 'testDone'].forEach(id => wrap(id, id === 'songs' || id === 'progress'));
     $('#lessonList').classList.add('flow', 'wideCols');
     $('#tourStops').classList.add('hscroll');
-    // My drummer: the picture and the Done button stay put, everything else moves sideways
-    const me = $('#me'), body = document.createElement('div'), flow = document.createElement('div');
-    body.className = 'meBody'; flow.className = 'flow';
-    const left = me.querySelector('.meLeft'), card = me.querySelector('.meCard'), done = $('#meDone').parentNode;
+    // My drummer: the picture, the name, the photo button and the other players sit in a slim panel on the left.
+    // All the rest of the page belongs to the drummer's styles.
+    const me = $('#me'), body = document.createElement('div');
+    body.className = 'meBody';
+    const left = me.querySelector('.meLeft'), card = me.querySelector('.meCard'), form = me.querySelector('.meForm'), done = $('#meDone').parentNode;
+    const tiny = (text) => { const s = document.createElement('span'); s.className = 'tiny'; s.textContent = text; return s; };
     me.insertBefore(body, card);
-    body.appendChild(left); left.appendChild($('#meDone')); done.remove();
-    body.appendChild(flow); flow.appendChild(card); flow.appendChild($('#mePlayers'));
+    body.appendChild(left); body.appendChild(card);
+    const nameIn = $('#meNameIn'), nameRow = nameIn.parentNode;
+    nameIn.placeholder = 'My name'; nameIn.setAttribute('aria-label', 'My name');
+    form.querySelector('label[for="meNameIn"]').remove();
+    left.appendChild(nameIn); nameRow.remove();
+    const photoRow = $('#mePhoto').parentNode, hints = document.createElement('div'), play = document.createElement('div');
+    hints.className = 'meHints'; play.className = 'mePlay';
+    $('#mePhoto').innerHTML = '&#128247; Use a photo';
+    hints.appendChild($('#mePhoto')); hints.appendChild($('#mePhotoFile')); hints.appendChild($('#mePhotoOff'));
+    hints.appendChild(tiny('A photo stays on this device.'));
+    form.insertBefore($('#meMsg'), $('#meOpts'));
+    Array.from(form.children).forEach(c => { if (c !== $('#meOpts') && c !== $('#meMsg') && c.tagName !== 'H3') c.remove(); });
+    Array.from(form.querySelectorAll('h3')).slice(1).forEach(h => h.remove());
+    photoRow.remove();
+    play.appendChild(tiny('Who else plays here?'));
+    play.appendChild($('#meSwitch')); play.appendChild($('#meRemoveRow'));
+    play.querySelector('#meRemove').title ='For a grown-up: this erases this player\'s stars and cannot be undone.';
+    $('#mePlayers').remove();
+    left.appendChild(hints); left.appendChild(play); left.appendChild($('#meDone')); done.remove();
   },
   // The login screen shows one form at a time.
   tabs() {
