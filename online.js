@@ -1,14 +1,14 @@
 'use strict';
 // Accounts, saved progress, friends and messages. Loaded before app.js; everything here runs later.
 // A player on this device can be joined to one online account (nickname and PIN). Stars, rank and badges are then
-// saved online after every change, so another device shows the same. Photos never leave the device.
+// saved online after every change, so another device shows the same.
 
 const Online = {
   // The first screen is always "log in or ask for an account": nothing else opens without an approved account.
   // A device that was logged in keeps working without internet until the account is paused or runs out.
   gate: true,
   ses: null, timer: null, dirty: false, sending: false, fr: null, msgs: [], skipped: false,
-  home() { const p = prof(); return p.name && (p.av || p.photo) ? 'hub' : 'me'; },   // a new player builds a drummer first
+  home() { const p = prof(); return p.name && p.av ? 'hub' : 'me'; },   // a new player builds a drummer first
   ok() { return !!(this.ses && this.ses.status === 'active' && !this.ses.expired && !this.ses.must_change); },
   blocked() { return this.gate && !this.ok(); },
   keep() { store.set('session', this.ses); },
@@ -121,8 +121,8 @@ const Online = {
   },
   // Put progress from the account onto this device, then start the app again with it.
   apply(data, at) {
-    const photo = prof().photo, p = Object.assign({}, data.profile || {}, { acct: this.ses.nick });
-    if (photo) p.photo = photo;
+    const p = Object.assign({}, data.profile || {}, { acct: this.ses.nick });
+    delete p.photo;
     if (!p.name) p.name = this.ses.nick;
     try {
       localStorage.setItem(keyOf('progress'), JSON.stringify(data.progress || {}));

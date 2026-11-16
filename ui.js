@@ -55,7 +55,7 @@ const UI = {
     ['songs', 'learn', 'friends', 'inbox', 'progress', 'setup', 'testDone'].forEach(id => wrap(id, id === 'songs' || id === 'progress'));
     $('#lessonList').classList.add('flow', 'wideCols');
     $('#tourStops').classList.add('hscroll');
-    // My drummer: the picture, the name, the photo button and the other players sit in a slim panel on the left.
+    // My drummer: the picture, the name and "Not you?" sit in a slim panel on the left.
     // All the rest of the page belongs to the drummer's styles.
     const me = $('#me'), body = document.createElement('div');
     body.className = 'meBody';
@@ -67,20 +67,16 @@ const UI = {
     nameIn.placeholder = 'My name'; nameIn.setAttribute('aria-label', 'My name');
     form.querySelector('label[for="meNameIn"]').remove();
     left.appendChild(nameIn); nameRow.remove();
-    const photoRow = $('#mePhoto').parentNode, hints = document.createElement('div'), play = document.createElement('div');
-    hints.className = 'meHints'; play.className = 'mePlay';
-    $('#mePhoto').innerHTML = '&#128247; Use a photo';
-    hints.appendChild($('#mePhoto')); hints.appendChild($('#mePhotoFile')); hints.appendChild($('#mePhotoOff'));
-    hints.appendChild(tiny('A photo stays on this device.'));
+    const play = document.createElement('div');
+    play.className = 'mePlay';
     form.insertBefore($('#meMsg'), $('#meOpts'));
     Array.from(form.children).forEach(c => { if (c !== $('#meOpts') && c !== $('#meMsg') && c.tagName !== 'H3' && !c.classList.contains('avTabs')) c.remove(); });
     Array.from(form.querySelectorAll('h3')).slice(1).forEach(h => h.remove());
-    photoRow.remove();
     play.appendChild(tiny('Not you?'));
     play.appendChild($('#meSwitch')); play.appendChild($('#meRemoveRow'));
     play.querySelector('#meRemove').title ='For a grown-up: this erases this player\'s stars and cannot be undone.';
     $('#mePlayers').remove();
-    left.appendChild(hints); left.appendChild(play); left.appendChild($('#meDone')); done.remove();
+    left.appendChild(play); left.appendChild($('#meDone')); done.remove();
   },
   // The login screen shows one form at a time.
   tabs() {

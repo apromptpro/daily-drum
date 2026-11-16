@@ -140,7 +140,15 @@ function renderProfile() {
   }
 }
 
-// ---------- The player: a name and a face (a cartoon drummer built from parts, or a photo) ----------
+// ---------- The player: a name and a face (a cartoon drummer built from parts) ----------
+// Photos are no longer used: a photo was only ever visible on its own device, while friends saw the drummer.
+// Any photo an older version kept on this device is deleted here, once.
+try {
+  Object.keys(localStorage).filter(k => /^dc\.([^.]+\.)?profile$/.test(k)).forEach(k => {
+    const v = JSON.parse(localStorage.getItem(k) || 'null');
+    if (v && v.photo) { delete v.photo; localStorage.setItem(k, JSON.stringify(v)); }
+  });
+} catch (e) {}
 const AV = {
   skin: ['#ffe0c2', '#f2c79a', '#d9a273', '#b97a4e', '#8a5633', '#5e3a22'],
   hair: ['short', 'spiky', 'curly', 'side', 'buzz', 'quiff', 'flattop', 'messy', 'undercut', 'afro', 'bob', 'ponytail', 'pigtails', 'braids', 'bun', 'buns', 'flow', 'mohawk', 'long'],
@@ -322,7 +330,6 @@ function avatarSvg(a, cheer) {
     '</g></svg>';
 }
 function faceHtml(p, cheer) {
-  if (p.photo) { const i = document.createElement('img'); i.src = p.photo; i.alt = ''; return i.outerHTML; }
   return avatarSvg(avOf(p), cheer);
 }
 // ---------- The mascots: the Beat Brothers, the two boys the app was made for ----------
@@ -509,8 +516,6 @@ function renderMe() {
   $('#mePreview').innerHTML = faceHtml(p, false);
   $('#mePreviewName').textContent = p.name || '';
   if (document.activeElement !== $('#meNameIn')) $('#meNameIn').value = p.name || '';
-  $('#mePhotoOff').classList.toggle('hidden', !p.photo);
-  $('#meOpts').classList.toggle('dim', !!p.photo);
   document.querySelectorAll('#meOpts .chip').forEach(c => {
     c.classList.toggle('active', String(a[c.dataset.k]) === c.dataset.v);
     const need = GEAR_RANK[c.dataset.k + '.' + c.dataset.v] || 0, isScene = c.dataset.k === 'scene', sc = +c.dataset.v;
@@ -594,26 +599,6 @@ function buildMe() {
   box.parentNode.insertBefore(tabs, box);
   pickTab('face');
   $('#meNameIn').oninput = (e) => { prof().name = e.target.value.trim(); saveProf(); renderMe(); };
-  $('#mePhoto').onclick = () => { $('#mePhotoFile').value = ''; $('#mePhotoFile').click(); };
-  $('#mePhotoOff').onclick = () => { delete prof().photo; saveProf(); renderMe(); };
-  // A photo is cut to a square and shrunk, so it is small enough to keep with the stars and to go into a backup file.
-  $('#mePhotoFile').onchange = (e) => {
-    const f = e.target.files[0];
-    if (!f) return;
-    const url = URL.createObjectURL(f), img = new Image();
-    img.onload = () => {
-      const s = Math.min(img.width, img.height), cv = document.createElement('canvas');
-      cv.width = cv.height = 240;
-      cv.getContext('2d').drawImage(img, (img.width - s) / 2, (img.height - s) / 2, s, s, 0, 0, 240, 240);
-      URL.revokeObjectURL(url);
-      prof().photo = cv.toDataURL('image/jpeg', 0.82);
-      saveProf();
-      $('#meMsg').textContent = '';
-      renderMe();
-    };
-    img.onerror = () => { URL.revokeObjectURL(url); $('#meMsg').textContent = 'That picture could not be opened. Try a JPG or PNG.'; };
-    img.src = url;
-  };
   $('#meDone').onclick = () => {
     if (!prof().name) { $('#meMsg').textContent = 'Type your name first.'; $('#meNameIn').focus(); return; }
     $('#meMsg').textContent = '';

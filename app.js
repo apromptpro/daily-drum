@@ -1736,7 +1736,7 @@ $('#pgFile').onchange = () => { if ($('#pgFile').files[0]) loadBackup($('#pgFile
 $('#pgReset').onclick = () => {
   const b = $('#pgReset');
   if (!b.dataset.sure) { b.dataset.sure = '1'; b.textContent = 'Really erase all progress?'; setTimeout(() => { delete b.dataset.sure; b.textContent = 'Erase all progress'; }, 4000); return; }
-  const me = prof(), keep = { name: me.name, av: me.av, photo: me.photo };   // the name and picture stay; stars, ranks and badges go
+  const me = prof(), keep = { name: me.name, av: me.av };   // the name and picture stay; stars, ranks and badges go
   ['progress', 'profile', 'history'].forEach(k => store.del(k));
   if (keep.name) store.set('profile', Object.assign({ xp: 0 }, keep));
   location.reload();
