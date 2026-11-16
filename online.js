@@ -61,6 +61,7 @@ const Online = {
     if (this.ok()) {
       if (first && me.data_at && me.data_at !== this.ses.dataAt && !this.dirty) { await this.pull(); return; }
       if (!me.data_at) this.push();
+      else if (this.ses.sumV !== 2 && !this.dirty) { this.ses.sumV = 2; this.keep(); this.push(); }   // once: save the fuller summary that the friend card shows
       if (wasBlocked && screen === 'account') { show(Online.home()); return; }   // the grown-up said yes: straight in
     }
     this.after();
@@ -83,7 +84,16 @@ const Online = {
   summary() {
     const p = prof(), rk = rankOf(p.xp);
     return { xp: p.xp, rank: rk.name, icon: rk.icon, stars: LESSONS.reduce((a, l) => a + (progress[l.id] ? progress[l.id].stars || 0 : 0), 0),
-      badges: Object.keys(p.badges || {}).length, streak: liveStreak(), stops: VENUES.filter((v, k) => Tour.gigWon(k)).length, level: p.level === 'pro' ? 'Pro' : 'Rookie' };
+      badges: Object.keys(p.badges || {}).length, streak: liveStreak(), stops: VENUES.filter((v, k) => Tour.gigWon(k)).length, level: p.level === 'pro' ? 'Pro' : 'Rookie',
+      // for the friend card: which badges, how far through the course, the longest run of right notes
+      bl: Object.keys(p.badges || {}), done: this.lessonCount(1), three: this.lessonCount(3), of: LESSONS.filter(l => !l.song).length,
+      combo: p.bestCombo || 0, best: Math.max(p.maxStreak || 0, liveStreak()), at: this.courseAt() };
+  },
+  lessonCount(stars) { return LESSONS.filter(l => !l.song && progress[l.id] && (progress[l.id].stars || 0) >= stars).length; },
+  // The course level the player is working on: the level of the first lesson without two stars.
+  courseAt() {
+    const l = LESSONS.find(x => !x.song && !(progress[x.id] && progress[x.id].stars >= 2));
+    return l && COURSE[l.lv] ? COURSE[l.lv].name : 'Course finished';
   },
   touch() {   // something was earned: save it online in a moment
     if (!this.ok()) return;
@@ -304,15 +314,67 @@ const Online = {
       d.querySelector('.who span').textContent = (s.icon || '🥁') + ' ' + (s.rank || 'Beginner Tapper') + ' · ' + (s.level || 'Rookie');
       d.querySelector('.pts').textContent = (s.xp || 0) + ' points';
       d.querySelector('.stats').textContent = '⭐ ' + (s.stars || 0) + '   🎖 ' + (s.badges || 0) + '   🔥 ' + (s.streak || 0) + '   🚌 ' + (s.stops || 0) + '/7';
+      d.setAttribute('role', 'button'); d.setAttribute('tabindex', '0');
+      d.title = f.me ? 'Open my card' : 'Open ' + f.nick + '\'s card';
+      d.onclick = () => this.friendCard(f, rows.find(q => q.me));
+      d.onkeydown = (e) => { if (e.key === 'Enter') d.click(); };
+      const more = document.createElement('span');
+      more.className = 'frMore'; more.textContent = '›';
+      d.appendChild(more);
       if (!f.me) {
         const x = document.createElement('button');
         x.className = 'frX'; x.textContent = '✕'; x.title = 'Stop being friends with ' + f.nick;
-        x.onclick = () => { if (!x.dataset.sure) { x.dataset.sure = '1'; x.textContent = 'Remove?'; setTimeout(() => { delete x.dataset.sure; x.textContent = '✕'; }, 3000); return; } this.answer(f.id, false); };
+        x.onclick = (e) => { e.stopPropagation(); if (!x.dataset.sure) { x.dataset.sure = '1'; x.textContent = 'Remove?'; setTimeout(() => { delete x.dataset.sure; x.textContent = '✕'; }, 3000); return; } this.answer(f.id, false); };
         d.appendChild(x);
       }
       board.appendChild(d);
     });
     $('#frEmpty').classList.toggle('hidden', r.friends.length > 0);
+  },
+  // ----- the friend card: one friend, a little closer -----
+  // Shows only what the summary holds: the drummer, rank, points, stars, badges, days in a row, Tour stops, how far
+  // through the course. No practice times, no lesson-by-lesson results, and no way to write to each other.
+  friendCard(f, me) {
+    const s = f.summary || {}, box = $('#frCard'), mine = (me && me.summary) || {};
+    const rk = rankOf(s.xp || 0), num = (v) => (v === undefined || v === null ? '–' : v);
+    const seen = (() => {
+      if (f.me) return '';
+      if (!f.last_seen) return 'Has not played yet';
+      const d = Math.floor((Date.now() - new Date(f.last_seen).getTime()) / 86400000);
+      return d <= 0 ? 'Played today' : d === 1 ? 'Played yesterday' : d < 14 ? 'Played ' + d + ' days ago' : 'Has not played for a while';
+    })();
+    const tiles = [['⭐', num(s.stars), 'stars'], ['🎖', num(s.badges), 'badges'], ['🔥', num(s.streak), 'days in a row'], ['🚌', num(s.stops) + '/7', 'Tour stops'],
+      ['🎓', s.done === undefined ? '–' : s.done + (s.of ? '/' + s.of : ''), 'lessons played'], ['🌟', num(s.three), 'with 3 stars'], ['🔗', num(s.combo), 'best run of notes'], ['📅', num(s.best), 'longest streak']];
+    const badgeList = (s.bl || []).map(id => BADGES.find(b => b.id === id)).filter(Boolean);
+    const bar = (label, a, b) => {
+      const top = Math.max(1, a || 0, b || 0);
+      return '<div class="fcCmp"><span class="fcCmpL">' + label + '</span><div class="fcBars"><div class="fcBar you"><i style="width:' + Math.round(100 * (a || 0) / top) + '%"></i><b>' + (a || 0) + '</b></div><div class="fcBar them"><i style="width:' + Math.round(100 * (b || 0) / top) + '%"></i><b>' + (b || 0) + '</b></div></div></div>';
+    };
+    box.innerHTML = '<div class="fcIn" role="document">' +
+      '<button class="fcClose" aria-label="Close">✕</button>' +
+      '<div class="fcLeft"><div class="face big fcFace"></div><div class="fcName"></div><div class="fcRank"></div><div class="fcXp"><i></i></div><div class="fcPts"></div><div class="fcSeen muted small"></div></div>' +
+      '<div class="fcRight"><div class="fcAt"></div><div class="fcTiles">' + tiles.map(t => '<div class="fcTile"><span class="fi">' + t[0] + '</span><b>' + t[1] + '</b><span class="fl">' + t[2] + '</span></div>').join('') + '</div>' +
+      '<div class="fcBadges"><span class="fcHead"></span><div class="fcBadgeRow hscroll"></div></div>' +
+      (f.me ? '' : '<div class="fcVs"><span class="fcHead">You and <span class="fcN2"></span></span><div class="fcLegend"><span class="you">you</span><span class="them fcN3"></span></div>' + bar('Points', mine.xp, s.xp) + bar('Stars', mine.stars, s.stars) + bar('Badges', mine.badges, s.badges) + '</div>') +
+      '</div></div>';
+    box.querySelector('.fcFace').innerHTML = avatarSvg(avOf({ av: (f.profile || {}).av }), false);
+    box.querySelector('.fcName').textContent = f.nick + (f.me ? ' (you)' : '');
+    box.querySelector('.fcRank').textContent = (s.icon || rk.icon) + ' ' + (s.rank || rk.name) + ' · ' + (s.level || 'Rookie');
+    box.querySelector('.fcXp i').style.width = (rk.hi ? Math.max(4, Math.round(100 * ((s.xp || 0) - rk.lo) / (rk.hi - rk.lo))) : 100) + '%';
+    box.querySelector('.fcPts').textContent = (s.xp || 0) + ' points' + (rk.hi ? ' · ' + (rk.hi - (s.xp || 0)) + ' to ' + RANKS[rk.k + 1][1] : '');
+    box.querySelector('.fcSeen').textContent = seen;
+    box.querySelector('.fcAt').textContent = s.at ? '🎵 Working on: ' + s.at : '';
+    box.querySelector('.fcHead').textContent = badgeList.length ? 'Badges earned (' + badgeList.length + ')' : s.bl ? 'No badges yet' : 'Badges: ' + num(s.badges);
+    const row = box.querySelector('.fcBadgeRow');
+    badgeList.forEach(b => { const e = document.createElement('span'); e.className = 'fcBadge'; e.innerHTML = '<i></i><span></span>'; e.firstChild.textContent = b.icon; e.lastChild.textContent = b.name; e.title = b.how; row.appendChild(e); });
+    if (!f.me) { box.querySelector('.fcN2').textContent = f.nick; box.querySelector('.fcN3').textContent = f.nick; }
+    const close = () => { box.classList.add('hidden'); box.innerHTML = ''; document.removeEventListener('keydown', esc); };
+    const esc = (e) => { if (e.key === 'Escape') close(); };
+    document.addEventListener('keydown', esc);
+    box.onclick = (e) => { if (e.target === box) close(); };
+    box.querySelector('.fcClose').onclick = close;
+    box.classList.remove('hidden');
+    box.querySelector('.fcClose').focus();
   },
   async answer(id, yes) {
     try { await Net.rpc('dd_friend_answer', { p_token: this.ses.token, p_user: id, p_accept: yes }); } catch (e) {}

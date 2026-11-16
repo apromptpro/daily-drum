@@ -46,6 +46,7 @@ function show(name) {
   if (Lat.active && name !== 'setup') { clearTimeout(Lat.timer); Lat.active = false; $('#latBtn').disabled = false; $('#latOut').textContent = ''; }
   if (G.test && name !== 'play' && name !== 'testDone') endTest('');   // leaving in the middle of a test ends it
   if (Online.blocked() && name !== 'account') name = 'account';   // nothing opens without an approved account
+  $('#frCard').classList.add('hidden');
   document.body.classList.toggle('locked', Online.blocked());
   if (name === 'hub') { renderHub(); Online.renderMsgs(); }
   if (name === 'account') Online.renderAccount();

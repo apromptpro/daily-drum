@@ -1,7 +1,7 @@
 // Keeps a copy of the app on the device so it opens fast, and without internet.
 // Pictures never change under the same name, so the saved copy is used at once (no waiting for the network).
 // The pages and the code are fetched fresh, but if the network is slow the saved copy is used after 3 seconds.
-const CACHE = 'drum-coach-31';
+const CACHE = 'drum-coach-32';
 const FILES = ['./', 'index.html', 'style.css', 'app.css', 'facts.js', 'ui.js', 'art/logo-s.png', 'art/logo-wide.png', 'art/b0-idle.png', 'art/b1-idle.png', 'art/b0-blink.png', 'art/b1-blink.png', 'art/studio.jpg', 'art/s1.jpg', 'lessons.js', 'audio.js', 'track.js', 'game.js', 'track2.js', 'tour.js', 'config.js', 'online.js', 'app.js', 'worklet.js',
   'manifest.webmanifest', 'icon-180.png', 'icon-512.png'];
 
