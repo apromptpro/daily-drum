@@ -413,7 +413,7 @@ function removePlayer() {
 
 function renderMe() {
   const p = prof(), a = avOf(p);
-  $('#meTitle').textContent = p.name ? 'This is me' : 'Who is drumming?';
+  $('#meTitle').textContent = p.name ? 'This is me today' : 'Who is drumming?';
   $('#mePreview').innerHTML = faceHtml(p, false);
   $('#mePreviewName').textContent = p.name || '';
   if (document.activeElement !== $('#meNameIn')) $('#meNameIn').value = p.name || '';
