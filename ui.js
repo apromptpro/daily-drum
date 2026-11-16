@@ -76,7 +76,7 @@ const UI = {
     Array.from(form.children).forEach(c => { if (c !== $('#meOpts') && c !== $('#meMsg') && c.tagName !== 'H3' && !c.classList.contains('avTabs')) c.remove(); });
     Array.from(form.querySelectorAll('h3')).slice(1).forEach(h => h.remove());
     photoRow.remove();
-    play.appendChild(tiny('Who else plays here?'));
+    play.appendChild(tiny('Not you?'));
     play.appendChild($('#meSwitch')); play.appendChild($('#meRemoveRow'));
     play.querySelector('#meRemove').title ='For a grown-up: this erases this player\'s stars and cannot be undone.';
     $('#mePlayers').remove();

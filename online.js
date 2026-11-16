@@ -93,6 +93,8 @@ const Online = {
   },
   async push() {
     if (!this.ok() || this.sending) return;
+    // The stars on this device belong to another account (someone else has just logged in here): never save them into this one.
+    if (prof().acct && String(prof().acct).toLowerCase() !== String(this.ses.nick).toLowerCase()) return;
     clearTimeout(this.timer);
     this.sending = true; this.dirty = false;
     const p = Object.assign({}, prof());
@@ -122,6 +124,16 @@ const Online = {
     location.reload();
   },
 
+  // This device held another account's stars (safely saved online): start this account with a clean slate.
+  fresh() {
+    try {
+      localStorage.removeItem(keyOf('progress')); localStorage.removeItem(keyOf('history'));
+      localStorage.setItem(keyOf('profile'), JSON.stringify({ name: this.ses.nick, acct: this.ses.nick }));
+    } catch (e) {}
+    this.load('Getting your drums ready…');
+    location.reload();
+  },
+
   // ----- logging in and out -----
   async login(nick, pin) {
     const r = await Net.rpc('dd_login', { p_nick: nick, p_pin: pin });
@@ -133,11 +145,15 @@ const Online = {
     try { sessionStorage.setItem('dd.justIn', '1'); } catch (e) {}   // every login opens "This is me today"
     const cloud = await Net.rpc('dd_load', { p_token: this.ses.token });
     const mine = String(prof().acct || '').toLowerCase() === String(this.ses.nick || '').toLowerCase(), has = Object.keys(progress).length > 0 || prof().xp > 0;
+    // linked: the stars on this device already belong to an account (they were saved there when that player logged out),
+    // so another player logging in simply gets their own; nothing is asked and nothing is mixed.
+    const linked = !!prof().acct;
     if (cloud.ok && cloud.data) {
-      if (has && !mine && !confirm('This device already has stars for "' + (prof().name || 'this player') + '".\n\nOK = use the stars saved in the account "' + this.ses.nick + '" (the stars on this device are replaced).\nCancel = keep the stars on this device and save them to the account.')) {
+      if (has && !mine && !linked && !confirm('This device already has stars for "' + (prof().name || 'this player') + '".\n\nOK = use the stars saved in the account "' + this.ses.nick + '" (the stars on this device are replaced).\nCancel = keep the stars on this device and save them to the account.')) {
         prof().acct = this.ses.nick; saveProf(); await this.push();
       } else { this.apply(cloud.data, cloud.data_at); return ''; }
     } else {
+      if (linked && !mine) { this.fresh(); return ''; }   // another player's stars are on this device: this account starts empty
       const p = prof(); p.acct = this.ses.nick; p.name = this.ses.nick;
       saveProf(); await this.push();
     }
@@ -150,6 +166,7 @@ const Online = {
     if (!r.ok) return this.err(r.error);
     this.ses = { token: r.token, nick: r.nick, status: r.status, has_word: !!word };
     this.keep();
+    if (prof().acct && String(prof().acct).toLowerCase() !== String(r.nick).toLowerCase()) { this.fresh(); return ''; }   // a new account never inherits another player's stars
     const p = prof(); p.name = r.nick; saveProf();
     this.after();
     return '';

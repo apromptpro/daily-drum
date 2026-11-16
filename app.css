@@ -652,7 +652,7 @@ body.locked #acOut > p { display: none; }
 .avTabs button, body.touch .avTabs button { flex: 1 1 0; min-width: 0; display: flex; align-items: center; justify-content: center; gap: 6px; padding: 9px 6px; font-size: 16px; font-weight: 700; border-radius: 16px; border: 2px solid var(--line); background: #f5f2ff; box-shadow: none; color: #4a4f6a; }
 .avTabs button .ti { font-size: 21px; }
 .avTabs button.active { background: linear-gradient(#8f6cff, #5a36d6); color: #fff; border-color: #fff; box-shadow: 0 4px 0 #3a1f9c; }
-#meOpts[data-tab="face"] .optRow:not([data-tab="face"]), #meOpts[data-tab="hair"] .optRow:not([data-tab="hair"]), #meOpts[data-tab="clothes"] .optRow:not([data-tab="clothes"]), #meOpts[data-tab="extras"] .optRow:not([data-tab="extras"]) { display: none; }
+#meOpts[data-tab="face"] .optRow:not([data-tab="face"]), #meOpts[data-tab="hair"] .optRow:not([data-tab="hair"]), #meOpts[data-tab="clothes"] .optRow:not([data-tab="clothes"]), #meOpts[data-tab="extras"] .optRow:not([data-tab="extras"]), #meOpts[data-tab="hats"] .optRow:not([data-tab="hats"]) { display: none; }
 /* only a few lines show at a time now, so the choices wrap instead of sliding sideways, and the buttons are bigger */
 #meOpts .optRow, .appMode #me #meOpts .optRow { flex-wrap: wrap; overflow: visible; align-items: center; padding: 10px 4px; gap: 9px; }
 #meOpts .optName, .appMode #me #meOpts .optName { position: static; flex: 0 0 116px; background: none; margin: 0; padding: 0; font-size: 16px; }
