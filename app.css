@@ -568,3 +568,8 @@ body.locked #acOut > p { display: none; }
   .appMode #hub .homeStage .brosBubble { margin-top: 22px; }
 }
 @media (orientation: landscape) and (max-height: 720px) { .appMode #hub .homePanel .bandFace:not(.me) ~ .bandFace:not(.me) { display: none; } }
+/* the wide logo on the login screen */
+.logoBig.wide, body.locked .logoBig.wide, .appMode body.locked .logoBig.wide { width: min(100%, 460px); height: auto; aspect-ratio: 996 / 320; }
+.appMode body.locked #account > #acMascots { text-align: center; }
+@media (orientation: portrait) { .appMode body.locked .logoBig.wide { width: min(100%, 440px); } }
+@media (max-width: 699px) { body.locked .logoBig.wide { width: min(100%, 330px); } }

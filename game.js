@@ -319,7 +319,7 @@ function logoSvg(square) {
 }
 function fillMascots() {
   const logo = (cls, file) => '<span class="' + cls + '"><img alt="Daily Drum, by the Beat Brothers" draggable="false" src="art/' + file + '"></span>';
-  $('#acMascots').innerHTML = logo('logoBig', 'logo.png');
+  $('#acMascots').innerHTML = logo('logoBig wide', 'logo-wide.png');
   $('#acHello').textContent = 'Drum along with the Beat Brothers!';
   $('#loadMascots').innerHTML = '<span class="loadBros drumming">' + mascotHtml(0, false, 'druma') + mascotHtml(1, false, 'drumb') + '</span>';
   $('#certMascots').innerHTML = logo('logoBig small', 'logo-s.png') + '<b class="certBy">The Beat Brothers</b>';
