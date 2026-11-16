@@ -414,7 +414,7 @@ function fillMascots() {
   $('#acMascots').innerHTML = logo('logoBig wide', 'logo-wide.png');
   $('#acHello').textContent = 'Drum along with the Beat Brothers!';
   $('#loadMascots').innerHTML = logo('logoBig wide loadLogo', 'logo-wide.png') + '<span class="loadBros drumming">' + mascotHtml(0, false, 'druma') + mascotHtml(1, false, 'drumb') + '</span>';
-  $('#certMascots').innerHTML = logo('logoBig small', 'logo-s.png') + '<b class="certBy">The Beat Brothers</b>';
+  $('#certMascots').innerHTML = logo('logoBig wide certLogo', 'logo-wide.png');   // the wide logo already says "by Beat Brothers"
   $('#brandMark').innerHTML = '<img alt="" draggable="false" src="art/logo-s.png">';
 }
 // The Beat Brothers pop up in the corner of the Home page, float there, and say something that fits the player today.
