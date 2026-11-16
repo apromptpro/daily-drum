@@ -219,11 +219,10 @@
         <div class="card">
           <h2>I have an account</h2>
           <label for="acNickIn">Nickname</label>
-          <input id="acNickIn" class="textIn" maxlength="16" autocomplete="username" autocapitalize="off">
+          <div class="inWrap" data-ic="&#128100;"><input id="acNickIn" class="textIn" maxlength="16" autocomplete="username" autocapitalize="off"></div>
           <label for="acPinIn">PIN</label>
-          <input id="acPinIn" class="textIn" type="password" maxlength="40" autocomplete="current-password">
-          <label class="showPin"><input type="checkbox" data-pins="acPinIn"> Show my PIN</label>
-          <div class="row"><button id="acLoginBtn" class="primary big wideBtn">&#128275; Log in</button></div>
+          <div class="inWrap" data-ic="&#128273;"><input id="acPinIn" class="textIn" type="password" maxlength="40" autocomplete="current-password"><button type="button" class="eyeBtn" data-pins="acPinIn" aria-label="Show my PIN" aria-pressed="false">&#128065;</button></div>
+          <div class="row"><button id="acLoginBtn" class="primary big wideBtn playBtn">&#129345; Let's drum!</button></div>
           <div id="acMsg" class="small acMsg"></div>
           <button id="acForgot" class="linkBtn">Forgot my PIN?</button>
           <div id="acForgotBox" class="forgotBox hidden">
@@ -234,7 +233,7 @@
             <input id="acFPin" class="textIn" type="password" maxlength="40" autocomplete="new-password">
             <label for="acFPin2">The same new PIN again</label>
             <input id="acFPin2" class="textIn" type="password" maxlength="40" autocomplete="new-password">
-            <label class="showPin"><input type="checkbox" data-pins="acFPin,acFPin2"> Show my PIN</label>
+            <label class="showPin"><input type="checkbox" data-pins="acFPin,acFPin2"><span>&#128065; Show my PIN</span></label>
             <button id="acResetGo" class="primary big">&#128273; Set my new PIN</button>
             <div id="acResetMsg" class="small acMsg"></div>
             <button id="acForgotBoth" class="linkBtn">I forgot my secret word too</button>
@@ -257,9 +256,10 @@
           <input id="acWordNew" class="textIn" maxlength="40" autocomplete="off" autocapitalize="off">
           <label for="acJoin">Join code <span class="muted small">(only if a grown-up gave you one)</span></label>
           <input id="acJoin" class="textIn" maxlength="30" autocomplete="off">
-          <label class="showPin"><input type="checkbox" data-pins="acPinNew,acPinNew2"> Show my PIN</label>
+          <label class="showPin"><input type="checkbox" data-pins="acPinNew,acPinNew2"><span>&#128065; Show my PIN</span></label>
           <div class="row"><button id="acNewBtn" class="primary big wideBtn">&#10024; Ask for an account</button></div>
           <div id="acMsg2" class="small acMsg"></div>
+          <div class="small muted acNote">A grown-up says yes to every new account.</div>
         </div>
       </div>
     </div>

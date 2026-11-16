@@ -173,7 +173,10 @@ const Online = {
     $('#acWait').classList.toggle('hidden', st !== 'wait' && st !== 'stop');
     $('#acIn').classList.toggle('hidden', st !== 'in' || !!this.pinOpen);
     document.body.classList.toggle('locked', this.blocked());
-    $('#acTitle').textContent = st === 'out' ? 'Welcome to Daily Drum!' : 'Your Daily Drum account';
+    // A player who has logged in on this device before only types the PIN: the nickname is filled in already.
+    const known = st === 'out' ? (prof().acct || '') : '';
+    if (known && !$('#acNickIn').value) $('#acNickIn').value = known;
+    $('#acTitle').textContent = st !== 'out' ? 'Your Daily Drum account' : known ? 'Welcome back, ' + known + '!' : 'Welcome to Daily Drum!';
     if (st === 'wait') {
       $('#acWaitTitle').textContent = '⏳ Hi ' + s.nick + '! Your account is waiting for a grown-up to say yes.';
       $('#acWaitTxt').textContent = 'Ask the grown-up who looks after Daily Drum to approve "' + s.nick + '". Then press "Check again".';

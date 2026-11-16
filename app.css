@@ -499,3 +499,60 @@ body[data-screen="play"] #sceneBg i, body[data-tour="tourPlay"] #sceneBg i { ani
   .appMode #tourPlay .side .padSvg { width: 100%; max-width: none; align-self: stretch; }
   .appMode #tourPlay .hostBig .mascot.spr { --bro: 110px; }
 }
+
+/* ============ 5. the login screen ============ */
+/* links are soft pills, not underlined text */
+button.linkBtn, .acGrid button.linkBtn { text-decoration: none; background: rgba(106, 92, 240, .10); border: 2px solid rgba(106, 92, 240, .22); border-radius: 999px; padding: 6px 14px; font-size: 14.5px; font-weight: 700; color: var(--accentDark); box-shadow: none; }
+button.linkBtn:hover { background: rgba(106, 92, 240, .18); text-decoration: none; }
+button.brand:hover { text-decoration: none; }
+/* the form: soft coloured boxes with a picture in front, an eye to show the PIN */
+#acOut .acGrid .card { border-radius: 26px; border: 4px solid #fff; box-shadow: 0 14px 34px rgba(10, 5, 40, .5); }
+#acOut .acGrid h2 { color: var(--accentDark); }
+#acOut .textIn { background: #f5f2ff; border: 3px solid #cfc4ff; border-radius: 16px; transition: border-color .15s, background .15s, box-shadow .15s; }
+#acOut .textIn:focus { outline: none; background: #fff; border-color: #6a5cf0; box-shadow: 0 0 0 4px rgba(106, 92, 240, .2); }
+.inWrap { position: relative; }
+.inWrap::before { content: attr(data-ic); position: absolute; left: 13px; top: 50%; transform: translateY(-50%); font-size: 22px; line-height: 1; pointer-events: none; }
+.inWrap .textIn, .acGrid .inWrap .textIn { width: 100%; padding-left: 48px; }
+.inWrap:has(.eyeBtn) .textIn { padding-right: 56px; }
+button.eyeBtn, body.touch button.eyeBtn { position: absolute; right: 6px; top: 50%; transform: translateY(-50%); width: 44px; height: 40px; padding: 0; border: 0; border-radius: 12px; background: none; box-shadow: none; font-size: 22px; line-height: 1; filter: grayscale(1); opacity: .55; }
+button.eyeBtn:active { transform: translateY(-50%) scale(.92); }
+button.eyeBtn[aria-pressed="true"] { filter: none; opacity: 1; background: #ffe66b; }
+#acOut .showPin:has(span) { position: relative; align-self: flex-start; justify-self: start; display: inline-flex; padding: 6px 14px; border-radius: 999px; border: 2px solid var(--line); background: #fff; font-size: 14.5px; font-weight: 700; cursor: pointer; margin: 4px 0; }
+#acOut .showPin:has(span) input { position: absolute; opacity: 0; width: 1px; height: 1px; }
+#acOut .showPin:has(span) span { filter: grayscale(1); opacity: .7; }
+#acOut .showPin:has(input:checked) { background: #ffe66b; border-color: #e0a800; }
+#acOut .showPin:has(input:checked) span { filter: none; opacity: 1; }
+#acLoginBtn.playBtn { font-size: 22px; padding: 14px 20px; margin-top: 6px; }
+.acNote { text-align: center; }
+.acMsg:empty { display: none; }
+body.locked #acTitle { font-size: 32px; }
+body.locked #acOut > p { display: none; }
+/* the picture of the brothers drumming: a photo pinned to the wall, a little crooked */
+.appMode body.locked #account::before { border-width: 5px; transform: rotate(-2deg); box-shadow: 0 14px 34px rgba(10, 5, 40, .6); }
+@media (orientation: portrait) {
+  .appMode body.locked #account { grid-template-rows: auto auto auto auto minmax(0, 1fr); }
+  .appMode body.locked #account::before { display: block; grid-column: 1; grid-row: 5; align-self: start; width: min(100%, 400px); margin-top: 22px; }
+}
+/* phones: a small logo, the form straight below it, the picture after the form */
+@media (max-width: 699px) {
+  body.locked .logoBig { width: 124px; height: 124px; }
+  body.locked #acMascots { margin: 0; text-align: center; }
+  body.locked #acTitle { font-size: 25px; margin: 2px 0 10px; }
+  body.locked #account::after { content: ""; display: block; max-width: 420px; aspect-ratio: 3 / 2; margin: 18px auto 6px; border-radius: 22px; border: 5px solid #fff; background: url(art/welcome.jpg) left center / cover; box-shadow: 0 12px 30px rgba(10, 5, 40, .5); transform: rotate(-2deg); }
+  .acTabs button { font-size: 16px; padding: 10px 6px; }
+}
+
+/* ============ 6. Home in landscape: the big logo hangs from the top corner ============ */
+@media (orientation: landscape) {
+  .appMode body[data-screen="hub"]:not(.locked) header { overflow: visible; }
+  .appMode body[data-screen="hub"]:not(.locked) #brandMark { position: absolute; left: calc(8px + env(safe-area-inset-left)); top: 3px; width: 132px; height: 132px; z-index: 17; background: url(art/logo.png) center / contain no-repeat; filter: drop-shadow(0 6px 8px rgba(20, 10, 60, .45)); transition: transform .2s cubic-bezier(.3, 1.6, .5, 1); }
+  .appMode body[data-screen="hub"]:not(.locked) #brandMark img { opacity: 0; }
+  .appMode body[data-screen="hub"]:not(.locked) #brandName:active #brandMark { transform: scale(.95) rotate(-3deg); }
+  .appMode body[data-screen="hub"]:not(.locked) #brandTxt { visibility: hidden; }
+  .appMode body[data-screen="hub"]:not(.locked) #brandName { min-width: 150px; }
+  .appMode #hub .homeStage .brosBubble { width: auto; align-self: stretch; margin-left: 132px; min-height: 76px; }
+  .appMode #hub .homeStage .brosBubble::after { left: calc(50% - 66px); }
+}
+#acOut .inWrap .textIn { padding-left: 48px; }
+#acOut .inWrap:has(.eyeBtn) .textIn { padding-right: 56px; }
+#acOut .card:has(#acForgotBox:not(.hidden)) > .inWrap:has(#acPinIn) { display: none; }

@@ -71,6 +71,14 @@ const UI = {
     out.insertBefore(t, out.querySelector('.acGrid'));
     const pick = (k) => { out.dataset.tab = k; t.querySelectorAll('button').forEach(b => b.classList.toggle('active', b.dataset.t === k)); };
     t.querySelectorAll('button').forEach(b => { b.onclick = () => pick(b.dataset.t); });
+    // the eye in the PIN box shows or hides what was typed
+    document.querySelectorAll('button.eyeBtn').forEach(e => {
+      e.onclick = () => {
+        const on = e.getAttribute('aria-pressed') !== 'true';
+        e.setAttribute('aria-pressed', String(on));
+        e.dataset.pins.split(',').forEach(id => { $('#' + id).type = on ? 'text' : 'password'; });
+      };
+    });
     let used = false;
     try { used = !!localStorage.getItem('dc.profile') || !!localStorage.getItem('dc.progress'); } catch (e) {}
     pick(used ? 'in' : 'new');
@@ -120,7 +128,7 @@ const UI = {
     const b = document.body;
     b.dataset.screen = screen;
     if (screen !== 'tour') delete b.dataset.tour;
-    b.dataset.tone = this.TONE[screen] || (b.classList.contains('locked') ? 'show' : 'soft');
+    b.dataset.tone = this.TONE[screen] || (b.classList.contains('locked') ? 'stage' : 'soft');
     this.scene();
     // on the play screen the top bar is gone, so the microphone light moves next to the Start button
     const st = $('#earStatus');
