@@ -573,3 +573,8 @@ body.locked #acOut > p { display: none; }
 .appMode body.locked #account > #acMascots { text-align: center; }
 @media (orientation: portrait) { .appMode body.locked .logoBig.wide { width: min(100%, 440px); } }
 @media (max-width: 699px) { body.locked .logoBig.wide { width: min(100%, 330px); } }
+/* the loading screen: the wide logo above the drumming brothers */
+.loadBox .logoBig.wide.loadLogo { display: block; width: min(78vw, 400px); margin: 0 auto 18px; }
+@media (max-height: 520px) { .loadBox .logoBig.wide.loadLogo { width: min(60vw, 280px); margin-bottom: 8px; } }
+#loadMascots { display: flex; flex-direction: column; align-items: center; justify-content: center; }
+#loadMascots .loadLogo { flex: none; max-width: 100%; }
