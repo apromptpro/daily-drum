@@ -646,3 +646,31 @@ body.locked #acOut > p { display: none; }
 .hitChip button.ha:hover { background: #efeaff; }
 .chkRow button.hitMore, body.touch .chkRow button.hitMore { padding: 5px 11px; font-size: 13px; font-weight: 700; border-radius: 999px; box-shadow: none; border: 2px dashed #b9a8ff; background: #f7f4ff; color: var(--accentDark); }
 .appMode .flow .chkOut > .chkRow { break-inside: avoid; }
+
+/* ============ 9. My drummer: four tabs of styles, with room for big buttons ============ */
+.avTabs { display: flex; gap: 6px; margin: 6px 0 8px; }
+.avTabs button, body.touch .avTabs button { flex: 1 1 0; min-width: 0; display: flex; align-items: center; justify-content: center; gap: 6px; padding: 9px 6px; font-size: 16px; font-weight: 700; border-radius: 16px; border: 2px solid var(--line); background: #f5f2ff; box-shadow: none; color: #4a4f6a; }
+.avTabs button .ti { font-size: 21px; }
+.avTabs button.active { background: linear-gradient(#8f6cff, #5a36d6); color: #fff; border-color: #fff; box-shadow: 0 4px 0 #3a1f9c; }
+#meOpts[data-tab="face"] .optRow:not([data-tab="face"]), #meOpts[data-tab="hair"] .optRow:not([data-tab="hair"]), #meOpts[data-tab="clothes"] .optRow:not([data-tab="clothes"]), #meOpts[data-tab="extras"] .optRow:not([data-tab="extras"]) { display: none; }
+/* only a few lines show at a time now, so the choices wrap instead of sliding sideways, and the buttons are bigger */
+#meOpts .optRow, .appMode #me #meOpts .optRow { flex-wrap: wrap; overflow: visible; align-items: center; padding: 10px 4px; gap: 9px; }
+#meOpts .optName, .appMode #me #meOpts .optName { position: static; flex: 0 0 116px; background: none; margin: 0; padding: 0; font-size: 16px; }
+#meOpts button.chip, .appMode #me #meOpts button.chip { padding: 8px 16px; font-size: 15px; }
+#meOpts button.chip.swatch, .appMode #me #meOpts button.chip.swatch { width: 44px; height: 44px; padding: 0; }
+.appMode #me #meOpts { justify-content: flex-start; overflow: hidden; }
+#meOpts .optRow[data-tab] .optName + .chip { margin-left: 0; }
+@media (max-height: 740px) { .appMode #me #meOpts .optRow { padding: 5px 4px; gap: 7px; } .appMode #me #meOpts button.chip { padding: 5px 13px; font-size: 14px; } .appMode #me #meOpts button.chip.swatch { width: 36px; height: 36px; } .avTabs button, body.touch .avTabs button { padding: 6px; } }
+@media (max-width: 699px) { .avTabs button span:last-child { font-size: 13px; } .avTabs button { flex-direction: column; gap: 0; padding: 6px 2px; } #meOpts .optName { flex: 0 0 100%; } }
+
+/* ============ 10. the metronome button, and a Beat Brother beside the notes ============ */
+.controls #metroBtn .ci { position: relative; display: inline-flex; filter: none; opacity: 1; transform: none; color: #3a2200; }
+.controls #metroBtn .metroPic { width: 26px; height: 26px; display: block; }
+.controls #metroBtn .metroMark { position: absolute; right: -9px; top: -7px; min-width: 17px; height: 17px; display: grid; place-items: center; font-style: normal; font-size: 11px; line-height: 1; border-radius: 50%; background: #fff; border: 1.5px solid #e0a800; }
+.controls #metroBtn[data-m="off"] .ci { color: #8a8fa6; }
+.controls #metroBtn[data-m="off"] .metroMark { background: #e0453c; border-color: #fff; color: #fff; font-weight: 800; font-size: 10px; }
+.controls #metroBtn[data-m="off"] .metroPic { opacity: .7; }
+.controls #metroBtn { padding-right: 14px; }
+.buddyFace { background: linear-gradient(#7d55ff, #3a1f9c); }
+.buddyFace img.buddyImg { width: 230%; max-width: none; height: auto; margin: -3% 0 0 -65%; object-fit: fill; -webkit-user-drag: none; user-select: none; }
+.controls #metroBtn .metroPic { width: 29px; height: 29px; }

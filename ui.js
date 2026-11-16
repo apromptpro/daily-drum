@@ -73,7 +73,7 @@ const UI = {
     hints.appendChild($('#mePhoto')); hints.appendChild($('#mePhotoFile')); hints.appendChild($('#mePhotoOff'));
     hints.appendChild(tiny('A photo stays on this device.'));
     form.insertBefore($('#meMsg'), $('#meOpts'));
-    Array.from(form.children).forEach(c => { if (c !== $('#meOpts') && c !== $('#meMsg') && c.tagName !== 'H3') c.remove(); });
+    Array.from(form.children).forEach(c => { if (c !== $('#meOpts') && c !== $('#meMsg') && c.tagName !== 'H3' && !c.classList.contains('avTabs')) c.remove(); });
     Array.from(form.querySelectorAll('h3')).slice(1).forEach(h => h.remove());
     photoRow.remove();
     play.appendChild(tiny('Who else plays here?'));
@@ -105,7 +105,9 @@ const UI = {
 
   // The lesson options are icon buttons. Tapping one says in words what it now does, because an icon alone
   // does not explain itself and a tablet has no mouse to hover with.
-  METRO: { sound: ['🔔', 'Click', 'Metronome: you hear a click on every beat.'], visual: ['💡', 'Flash', 'Metronome: a silent flash on every beat. Use it if the click confuses the microphone.'], off: ['🔕', 'Off', 'Metronome is off.'] },
+  // The picture is always a metronome; the small mark in its corner says what it does: sound, silent flash, or off.
+  METRO_SVG: '<svg class="metroPic" viewBox="0 0 24 24" aria-hidden="true"><path d="M9.2 3.5 H14.8 L18 20.5 H6Z" fill="currentColor" fill-opacity=".16" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/><path d="M7.2 15.5 H16.8" stroke="currentColor" stroke-width="1.5"/><path d="M12 17.5 L17.6 4.6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><circle cx="15.4" cy="9.6" r="2" fill="currentColor"/></svg>',
+  METRO: { sound: ['🔊', 'Metronome', 'Metronome: you hear a click on every beat.'], visual: ['💡', 'Metronome', 'Metronome: a silent flash on every beat. Use it if the click confuses the microphone.'], off: ['✕', 'Metronome', 'Metronome is off.'] },
   options() {
     document.querySelectorAll('#play .controls label.tog').forEach(t => {
       const inp = t.querySelector('input');
@@ -114,7 +116,8 @@ const UI = {
     const sel = $('#metroMode'), btn = $('#metroBtn');
     const paint = () => {
       const m = this.METRO[sel.value] || this.METRO.sound;
-      btn.querySelector('.ci').textContent = m[0]; btn.querySelector('.ct').textContent = m[1];
+      btn.querySelector('.ci').innerHTML = this.METRO_SVG + '<i class="metroMark">' + m[0] + '</i>'; btn.querySelector('.ct').textContent = m[1];
+      btn.dataset.m = sel.value;
       btn.classList.toggle('on', sel.value !== 'off');
       btn.setAttribute('aria-label', m[2]);
     };

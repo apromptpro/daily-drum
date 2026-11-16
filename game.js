@@ -143,22 +143,38 @@ function renderProfile() {
 // ---------- The player: a name and a face (a cartoon drummer built from parts, or a photo) ----------
 const AV = {
   skin: ['#ffe0c2', '#f2c79a', '#d9a273', '#b97a4e', '#8a5633', '#5e3a22'],
-  hair: ['short', 'spiky', 'curly', 'side', 'buzz', 'mohawk', 'long'],
+  hair: ['short', 'spiky', 'curly', 'side', 'buzz', 'bob', 'ponytail', 'pigtails', 'braids', 'bun', 'buns', 'flow', 'afro', 'mohawk', 'long'],
   hairCol: ['#22242e', '#4a2f1d', '#8a5a2b', '#d9a441', '#c2452d', '#9aa0aa', '#3f7fe0', '#1c9d58', '#f06aa8'],
-  head: ['none', 'headphones', 'bandana', 'beanie', 'cap', 'capback'],
-  glasses: ['none', 'round', 'shades', 'star'],
+  head: ['none', 'headphones', 'bandana', 'beanie', 'cap', 'capback', 'bow', 'flower', 'headband', 'catears', 'crown'],
+  eyes: ['dots', 'lashes', 'sparkle', 'happy'],
+  face: ['none', 'freckles', 'rosy', 'starpaint', 'heartpaint', 'boltpaint'],
+  ear: ['none', 'studs', 'hoops', 'stars'],
+  neck: ['none', 'bowtie', 'necklace', 'scarf', 'tie'],
+  pattern: ['none', 'stripes', 'dots', 'hearts', 'tiedye'],
+  glasses: ['none', 'round', 'shades', 'star', 'heart'],
   shirt: ['#25304f', '#e0453c', '#3f7fe0', '#f2a100', '#1c9d58', '#8a5cf0', '#f06aa8', '#22b8c4', '#f4f4f4'],
-  logo: ['none', 'star', 'bolt', 'flame', 'note', 'skull'],
+  logo: ['none', 'star', 'heart', 'rainbow', 'bolt', 'flame', 'note', 'skull'],
   sticks: ['#d9a55b', '#e0453c', '#3f7fe0', '#7ad14a', '#f2c230', '#b05cf0', '#25304f']
 };
-const AV_LABEL = { skin: 'Skin', hair: 'Hair', hairCol: 'Hair colour', head: 'On my head', glasses: 'Glasses', shirt: 'Band shirt', logo: 'Shirt badge', sticks: 'Drumsticks' };
+const AV_LABEL = { skin: 'Skin', eyes: 'Eyes', face: 'Cheeks', glasses: 'Glasses', hair: 'Hair', hairCol: 'Hair colour', head: 'On my head', ear: 'Earrings', shirt: 'Band shirt', pattern: 'Shirt pattern', logo: 'Shirt badge', neck: 'Round my neck', sticks: 'Drumsticks' };
+// The styles are sorted into four tabs, so each tab has room for big buttons.
+const AV_TABS = [['face', '🙂', 'Face', ['skin', 'eyes', 'face', 'glasses']], ['hair', '💇', 'Hair', ['hair', 'hairCol', 'head', 'ear']], ['clothes', '👕', 'Clothes', ['shirt', 'pattern', 'logo', 'neck']], ['extras', '🥁', 'Extras', ['sticks', 'scene']]];
+const AV_TAB_OF = {};
+AV_TABS.forEach(t => t[3].forEach(k => { AV_TAB_OF[k] = t[0]; }));
 const AV_WORD = {
   short: 'Short', spiky: 'Spiky', curly: 'Curly', side: 'Side', buzz: 'Very short', mohawk: 'Mohawk', long: 'Rocker',
   none: 'None', headphones: 'Headphones', bandana: 'Bandana', beanie: 'Beanie', cap: 'Cap', capback: 'Cap backwards',
-  round: 'Round', shades: 'Shades', star: 'Star shades', bolt: 'Lightning', flame: 'Flame', note: 'Music note', skull: 'Smiley skull'
+  round: 'Round', shades: 'Shades', star: 'Star shades', bolt: 'Lightning', flame: 'Flame', note: 'Music note', skull: 'Smiley skull',
+  bob: 'Bob', ponytail: 'Ponytail', pigtails: 'Pigtails', braids: 'Braids', bun: 'Bun', buns: 'Two buns', flow: 'Long', afro: 'Afro',
+  bow: 'Bow', flower: 'Flower', headband: 'Headband', catears: 'Cat ears', crown: 'Crown',
+  dots: 'Round', lashes: 'Lashes', sparkle: 'Sparkle', happy: 'Smiling',
+  freckles: 'Freckles', rosy: 'Rosy', starpaint: 'Star', heartpaint: 'Heart', boltpaint: 'Lightning',
+  studs: 'Studs', hoops: 'Hoops', stars: 'Stars', bowtie: 'Bow tie', necklace: 'Necklace', scarf: 'Scarf', tie: 'Tie',
+  stripes: 'Stripes', hearts: 'Hearts', tiedye: 'Tie-dye', heart: 'Heart', rainbow: 'Rainbow',
+  'glasses.heart': 'Heart shades', 'pattern.dots': 'Dots', 'logo.star': 'Star', 'ear.stars': 'Stars'
 };
 function avOf(p) {
-  const a = Object.assign({ skin: 2, hair: 'short', hairCol: 0, head: 'none', glasses: 'none', shirt: 0, logo: 'star', sticks: 0, scene: 0 }, p.av || {});
+  const a = Object.assign({ skin: 2, hair: 'short', hairCol: 0, head: 'none', glasses: 'none', shirt: 0, logo: 'star', sticks: 0, scene: 0, eyes: 'dots', face: 'none', ear: 'none', neck: 'none', pattern: 'none' }, p.av || {});
   if (a.hair === 'cap') { a.hair = 'short'; a.head = 'cap'; }                       // choices saved by the first version
   if (typeof a.glasses === 'number') a.glasses = a.glasses ? 'round' : 'none';
   return a;
@@ -177,27 +193,54 @@ function avatarSvg(a, cheer) {
     side: '<path d="M27 47 Q25 19 52 18 Q75 19 73 45 Q71 34 61 29 Q46 37 32 32 Q29 38 27 47Z"/>',
     mohawk: '<path opacity=".45" d="M28 43 Q27 21 50 21 Q73 21 72 43 Q66 31 50 31 Q34 31 28 43Z"/><path d="M43 33 L41 12 L46 18 L50 5 L54 18 L59 12 L57 33 Q50 29 43 33Z"/>',
     long: '<path d="M27 46 Q25 18 50 18 Q75 18 73 46 Q68 31 50 30 Q32 31 27 46Z"/>',
+    bob: '<path d="M27 45 Q26 19 50 19 Q74 19 73 45 Q72 33 50 32 Q28 33 27 45Z"/>',
+    ponytail: '<path d="M27 47 Q25 19 52 18 Q75 19 73 45 Q71 34 61 29 Q46 37 32 32 Q29 38 27 47Z"/>',
+    pigtails: '<path d="M27 45 Q26 19 50 19 Q74 19 73 45 Q70 31 50 26 Q30 31 27 45Z"/><path d="M50 20 V27" fill="none" stroke="' + ink + '" stroke-width=".8" opacity=".5"/>',
+    braids: '<path d="M27 46 Q25 18 50 18 Q75 18 73 46 Q68 31 50 30 Q32 31 27 46Z"/><g stroke="' + ink + '" stroke-width=".8"><circle cx="25" cy="53" r="4.6"/><circle cx="24" cy="61" r="4.4"/><circle cx="24" cy="69" r="4.2"/><circle cx="25" cy="76.5" r="3.8"/><circle cx="75" cy="53" r="4.6"/><circle cx="76" cy="61" r="4.4"/><circle cx="76" cy="69" r="4.2"/><circle cx="75" cy="76.5" r="3.8"/></g><circle cx="25" cy="81.5" r="2.4" fill="' + shirt + '" stroke="' + ink + '" stroke-width=".8"/><circle cx="75" cy="81.5" r="2.4" fill="' + shirt + '" stroke="' + ink + '" stroke-width=".8"/>',
+    bun: '<path d="M27 45 Q26 19 50 19 Q74 19 73 45 Q67 30 50 30 Q33 30 27 45Z"/>',
+    buns: '<path d="M27 45 Q26 19 50 19 Q74 19 73 45 Q67 30 50 30 Q33 30 27 45Z"/>',
+    flow: '<path d="M27 47 Q25 19 52 18 Q75 19 73 45 Q71 34 61 29 Q46 37 32 32 Q29 38 27 47Z"/>',
+    afro: '<circle cx="31" cy="33" r="8"/><circle cx="40" cy="25" r="8"/><circle cx="50" cy="22" r="8"/><circle cx="60" cy="25" r="8"/><circle cx="69" cy="33" r="8"/>',
     // mascots only: thick hair swept up and across, and a short neat cut with a side parting
     sweep: '<path d="M26 47 Q22 25 42 16 Q58 7 73 14 Q71 18 77 21 Q78 34 74 47 Q72 37 65 31 Q50 26 34 35 Q29 40 26 47Z"/><path d="M40 20 Q56 12 70 18" fill="none" stroke="#3a3a44" stroke-width="1.6" stroke-linecap="round"/>',
     neat: '<path d="M27 45 Q24 21 48 18 Q74 17 74 45 Q71 33 61 30 Q50 26 39 31 Q31 35 27 45Z"/><path d="M41 30 Q44 23 52 21" fill="none" stroke="#3a3a44" stroke-width="1.4" stroke-linecap="round"/>'
   }[a.hair] || '';
-  const hairBack = a.hair === 'long' ? '<path fill="' + hc + '" d="M26 42 Q24 20 50 20 Q76 20 74 42 L79 76 Q71 82 65 74 L66 50 L34 50 L35 74 Q29 82 21 76Z"/>' : '';
+  const tieDot = (x, y) => '<circle cx="' + x + '" cy="' + y + '" r="3" fill="' + shirt + '" stroke="' + ink + '" stroke-width="1"/>';
+  const hairBack = '<g fill="' + hc + '">' + ({
+    long: '<path d="M26 42 Q24 20 50 20 Q76 20 74 42 L79 76 Q71 82 65 74 L66 50 L34 50 L35 74 Q29 82 21 76Z"/>',
+    bob: '<path d="M25 44 Q23 17 50 17 Q77 17 75 44 L77 61 Q72 68 66 63 L66 48 L34 48 L34 63 Q28 68 23 61Z"/>',
+    ponytail: '<path d="M68 27 Q86 20 90 38 Q92 56 83 68 Q82 54 77 47 Q74 37 66 33Z"/>' + tieDot(74, 28),
+    pigtails: '<path d="M28 38 Q9 40 11 60 Q13 72 22 69 Q29 60 29 48Z"/><path d="M72 38 Q91 40 89 60 Q87 72 78 69 Q71 60 71 48Z"/>' + tieDot(24, 40) + tieDot(76, 40),
+    bun: '<circle cx="50" cy="14" r="10"/>' + '<path d="M42 21 Q50 25 58 21" fill="none" stroke="' + shirt + '" stroke-width="2.4" stroke-linecap="round"/>',
+    buns: '<circle cx="31" cy="19" r="9"/><circle cx="69" cy="19" r="9"/>',
+    flow: '<path d="M25 44 Q22 16 50 16 Q78 16 75 44 Q81 58 79 75 Q73 85 64 79 L66 50 L34 50 L36 79 Q27 85 21 75 Q19 58 25 44Z"/>',
+    afro: '<circle cx="50" cy="38" r="31"/>'
+  }[a.hair] || '') + '</g>';
   const dome = '<path fill="' + shirt + '" stroke="' + ink + '" stroke-width="1.5" d="M27 39 Q27 16 50 16 Q73 16 73 39Z"/>';
   const head = {
     cap: dome + '<path fill="' + shirt + '" stroke="' + ink + '" stroke-width="1.5" d="M26 38 H82 Q88 44 80 44 H26Z"/>',
     capback: dome + '<path d="M41 39 Q50 30 59 39" fill="none" stroke="' + ink + '" stroke-width="1.5"/><path fill="' + shirt + '" stroke="' + ink + '" stroke-width="1.5" d="M27 37 H16 Q12 41 18 43 H27Z"/>',
     beanie: '<circle cx="50" cy="12" r="5.5" fill="#fff" stroke="' + ink + '" stroke-width="1.5"/><path fill="' + shirt + '" stroke="' + ink + '" stroke-width="1.5" d="M26 40 Q26 14 50 14 Q74 14 74 40Z"/><rect x="24" y="34" width="52" height="9" rx="4.5" fill="#fff" stroke="' + ink + '" stroke-width="1.5"/>',
     bandana: '<path fill="#e0453c" stroke="' + ink + '" stroke-width="1.5" d="M27 35 Q50 24 73 35 L73 42 Q50 31 27 42Z"/><path fill="#e0453c" stroke="' + ink + '" stroke-width="1.5" d="M73 37 L84 33 L80 40 L85 46 L73 42Z"/><circle cx="40" cy="33" r="1.3" fill="#fff"/><circle cx="50" cy="31" r="1.3" fill="#fff"/><circle cx="60" cy="33" r="1.3" fill="#fff"/>',
+    bow: '<path fill="#f06aa8" stroke="' + ink + '" stroke-width="1.2" stroke-linejoin="round" d="M63 23 L52 16 V30Z M63 23 L74 16 V30Z"/><circle cx="63" cy="23" r="3" fill="#ff9cc8" stroke="' + ink + '" stroke-width="1.2"/>',
+    flower: '<g fill="#ff9cc8" stroke="' + ink + '" stroke-width=".9"><circle cx="66" cy="19.5" r="3.6"/><circle cx="70.6" cy="23" r="3.6"/><circle cx="68.8" cy="28.4" r="3.6"/><circle cx="63.2" cy="28.4" r="3.6"/><circle cx="61.4" cy="23" r="3.6"/></g><circle cx="66" cy="24.5" r="3" fill="#ffd84a" stroke="' + ink + '" stroke-width=".9"/>',
+    headband: '<path d="M27 41 Q50 13 73 41" fill="none" stroke="' + ink + '" stroke-width="6.4" stroke-linecap="round"/><path d="M27 41 Q50 13 73 41" fill="none" stroke="' + shirt + '" stroke-width="4" stroke-linecap="round"/>',
+    catears: '<g fill="' + hc + '" stroke="' + ink + '" stroke-width="1.3" stroke-linejoin="round"><path d="M29 31 L30 11 L44 22Z"/><path d="M71 31 L70 11 L56 22Z"/></g><path fill="#ff9cc8" d="M32.5 26 L33 16.5 L39.5 22Z M67.5 26 L67 16.5 L60.5 22Z"/>',
+    crown: '<path fill="#ffd84a" stroke="' + ink + '" stroke-width="1.3" stroke-linejoin="round" d="M35 24 L37 8 L44 17 L50 5 L56 17 L63 8 L65 24Z"/><circle cx="50" cy="18.5" r="2.2" fill="#e0453c"/><circle cx="41" cy="20" r="1.6" fill="#3f7fe0"/><circle cx="59" cy="20" r="1.6" fill="#1c9d58"/>',
     headphones: '<path d="M25 48 Q25 13 50 13 Q75 13 75 48" fill="none" stroke="' + ink + '" stroke-width="4.5" stroke-linecap="round"/><rect x="19" y="40" width="11" height="18" rx="5" fill="' + stick + '" stroke="' + ink + '" stroke-width="1.5"/><rect x="70" y="40" width="11" height="18" rx="5" fill="' + stick + '" stroke="' + ink + '" stroke-width="1.5"/>'
   }[a.head] || '';
   const starAt = (x, y, s) => '<path transform="translate(' + x + ' ' + y + ') scale(' + s + ')" d="M0 -10 L2.9 -3.1 L10 -3.1 L4.3 1.6 L6.2 9 L0 4.6 L-6.2 9 L-4.3 1.6 L-10 -3.1 L-2.9 -3.1Z"/>';
+  const heartAt = (x, y, s) => '<path transform="translate(' + x + ' ' + y + ') scale(' + s + ')" d="M0 6 Q-8.5 -0.5 -6 -4.8 Q-3.4 -8 0 -4.4 Q3.4 -8 6 -4.8 Q8.5 -0.5 0 6Z"/>';
   const glasses = {
     round: '<g fill="rgba(255,255,255,.35)" stroke="' + ink + '" stroke-width="2"><circle cx="41" cy="46" r="7.5"/><circle cx="59" cy="46" r="7.5"/><path d="M48.5 46 H51.5" fill="none"/></g>',
     shades: '<g fill="' + ink + '" stroke="' + ink + '" stroke-width="1.5"><rect x="32" y="40.5" width="16" height="11" rx="4"/><rect x="52" y="40.5" width="16" height="11" rx="4"/><path d="M48 44 H52 M32 44 L28 43 M68 44 L72 43" fill="none"/></g><path d="M35 43 L39 43 M55 43 L59 43" stroke="#fff" stroke-width="1.4" stroke-linecap="round" opacity=".7"/>',
-    star: '<g fill="#ffd84a" stroke="' + ink + '" stroke-width="1.2">' + starAt(41, 46.5, 0.9) + starAt(59, 46.5, 0.9) + '<path d="M47 46 H53" fill="none"/></g>'
+    star: '<g fill="#ffd84a" stroke="' + ink + '" stroke-width="1.2">' + starAt(41, 46.5, 0.9) + starAt(59, 46.5, 0.9) + '<path d="M47 46 H53" fill="none"/></g>',
+    heart: '<g fill="#f06aa8" stroke="' + ink + '" stroke-width="1.2" stroke-linejoin="round">' + heartAt(41, 46.5, 1.25) + heartAt(59, 46.5, 1.25) + '<path d="M47.5 45.5 H52.5" fill="none"/></g>'
   }[a.glasses] || '';
   const logo = {
     star: '<g fill="' + onShirt + '">' + starAt(50, 90, 0.62) + '</g>',
+    heart: '<g fill="#f06aa8" stroke="' + ink + '" stroke-width="1" stroke-linejoin="round">' + heartAt(50, 90, 1.05) + '</g>',
+    rainbow: '<g fill="none" stroke-width="2.2" stroke-linecap="round"><path stroke="#e0453c" d="M41 95 A9 9 0 0 1 59 95"/><path stroke="#f2c230" d="M43.6 95 A6.4 6.4 0 0 1 56.4 95"/><path stroke="#3f7fe0" d="M46.2 95 A3.8 3.8 0 0 1 53.8 95"/></g>',
     bolt: '<path fill="#ffd84a" stroke="' + ink + '" stroke-width="1" d="M53 81 L45 91 H50 L47 99 L56 88 H51Z"/>',
     flame: '<path fill="#f2a100" stroke="' + ink + '" stroke-width="1" d="M50 81 Q57 88 55 94 Q54 99 50 99 Q46 99 45 94 Q44 90 47 87 Q48 90 50 89 Q49 85 50 81Z"/>',
     note: '<path fill="' + onShirt + '" d="M48 83 L57 81 V92 A3.2 3.2 0 1 1 55 89.2 V85 L50 86 V94 A3.2 3.2 0 1 1 48 91.2Z"/>',
@@ -207,20 +250,48 @@ function avatarSvg(a, cheer) {
   // mascots only: the patterns of the shirts in their photos (blue and white tie-dye, red with dinosaurs)
   const pattern = a.pattern === 'tiedye' ? '<g fill="#e4edff" opacity=".8"><circle cx="36" cy="88" r="5"/><circle cx="64" cy="85" r="4.5"/><circle cx="28" cy="97" r="4"/><circle cx="73" cy="96" r="4.5"/><circle cx="50" cy="81" r="3.5"/></g>'
     : a.pattern === 'dino' ? '<g><path d="M42 92 Q44 85 52 86 Q58 86 60 90 L65 88 L63 92 Q62 96 56 96 L56 99 H54 L53.5 96 H48 L47.5 99 H45.5 L45 95 Q41 95 38 91Z" fill="#f6b27a" stroke="' + ink + '" stroke-width=".7" stroke-linejoin="round"/><path d="M47 86 L48.5 83 L50 86 L51.5 83 L53 86 L54.5 83.5 L56 86.5" fill="#4f7fe0" stroke="' + ink + '" stroke-width=".5" stroke-linejoin="round"/><path d="M27 90 L29 87 L31 90 L33 87 M68 97 L70 94 L72 97 L74 94" fill="none" stroke="#fff" stroke-width="1.1" stroke-linecap="round"/><circle cx="61.5" cy="89.5" r=".7" fill="' + ink + '"/></g>' : '';
+  const pattern2 = a.pattern === 'stripes' ? '<g stroke="' + onShirt + '" stroke-width="2.6" opacity=".5" stroke-linecap="round"><path d="M27 81 H73 M21 88 H79 M18.5 95 H81.5"/></g>'
+    : a.pattern === 'dots' ? '<g fill="' + onShirt + '" opacity=".6"><circle cx="31" cy="85" r="2"/><circle cx="41" cy="80.5" r="2"/><circle cx="59" cy="80.5" r="2"/><circle cx="69" cy="85" r="2"/><circle cx="24" cy="94" r="2"/><circle cx="36" cy="93" r="2"/><circle cx="64" cy="93" r="2"/><circle cx="76" cy="94" r="2"/></g>'
+    : a.pattern === 'hearts' ? '<g fill="#ff9cc8" opacity=".9">' + heartAt(30, 87, 0.5) + heartAt(70, 87, 0.5) + heartAt(38, 96, 0.45) + heartAt(62, 96, 0.45) + heartAt(22, 96, 0.4) + heartAt(78, 96, 0.4) + '</g>' : '';
+  // eyes, cheeks, earrings and what goes round the neck
+  const eyeR = a.eyes === 'sparkle' ? 4.1 : 3.2;
+  const eyes = a.eyes === 'happy'
+    ? '<path d="M37.4 47 Q41 42.4 44.6 47 M55.4 47 Q59 42.4 62.6 47" fill="none" stroke="' + ink + '" stroke-width="2.4" stroke-linecap="round"/>'
+    : '<circle cx="41" cy="46" r="' + eyeR + '" fill="' + ink + '"/><circle cx="59" cy="46" r="' + eyeR + '" fill="' + ink + '"/><circle cx="42.2" cy="44.8" r="' + (a.eyes === 'sparkle' ? 1.4 : 1) + '" fill="#fff"/><circle cx="60.2" cy="44.8" r="' + (a.eyes === 'sparkle' ? 1.4 : 1) + '" fill="#fff"/>' +
+      (a.eyes === 'sparkle' ? '<circle cx="39.6" cy="47.6" r=".7" fill="#fff"/><circle cx="57.6" cy="47.6" r=".7" fill="#fff"/>' : '') +
+      (a.eyes === 'lashes' || a.eyes === 'sparkle' ? '<path d="M37.8 44 L35.4 42.4 M38.8 42.7 L37.2 40.4 M62.2 44 L64.6 42.4 M61.2 42.7 L62.8 40.4" fill="none" stroke="' + ink + '" stroke-width="1.2" stroke-linecap="round"/>' : '');
+  const cheeks = a.face === 'rosy' ? '<circle cx="35.5" cy="54" r="5" fill="#ff7f9f" opacity=".55"/><circle cx="64.5" cy="54" r="5" fill="#ff7f9f" opacity=".55"/>'
+    : '<circle cx="36" cy="54" r="4" fill="#ff8f8f" opacity=".35"/><circle cx="64" cy="54" r="4" fill="#ff8f8f" opacity=".35"/>';
+  const facePaint = {
+    freckles: '<g fill="#8a4f2e" opacity=".7"><circle cx="34.5" cy="52.5" r=".8"/><circle cx="37.2" cy="54.4" r=".8"/><circle cx="33.4" cy="55.4" r=".8"/><circle cx="65.5" cy="52.5" r=".8"/><circle cx="62.8" cy="54.4" r=".8"/><circle cx="66.6" cy="55.4" r=".8"/></g>',
+    starpaint: '<g fill="#ffd84a" stroke="' + ink + '" stroke-width="1.2">' + starAt(64.5, 55, 0.4) + '</g>',
+    heartpaint: '<g fill="#f06aa8" stroke="' + ink + '" stroke-width="1.4">' + heartAt(64.5, 55, 0.5) + '</g>',
+    boltpaint: '<path fill="#e0453c" stroke="' + ink + '" stroke-width=".6" stroke-linejoin="round" d="M66.5 50 L62 55.5 H64.8 L63 60.5 L68 54.5 H65.4Z"/>'
+  }[a.face] || '';
+  const earring = {
+    studs: '<g fill="#ffd84a" stroke="' + ink + '" stroke-width=".6"><circle cx="27" cy="53" r="1.7"/><circle cx="73" cy="53" r="1.7"/></g>',
+    hoops: '<g fill="none" stroke="#e0a800" stroke-width="1.5"><circle cx="26.5" cy="55.5" r="3.2"/><circle cx="73.5" cy="55.5" r="3.2"/></g>',
+    stars: '<g fill="#ffd84a" stroke="' + ink + '" stroke-width="1.4">' + starAt(26.5, 55.5, 0.33) + starAt(73.5, 55.5, 0.33) + '</g>'
+  }[a.ear] || '';
+  const neckwear = {
+    bowtie: '<path fill="#e0453c" stroke="' + ink + '" stroke-width="1" stroke-linejoin="round" d="M50 79 L42 74.5 V83.5Z M50 79 L58 74.5 V83.5Z"/><circle cx="50" cy="79" r="2" fill="#ff7a70" stroke="' + ink + '" stroke-width="1"/>',
+    necklace: '<path d="M42 76 Q50 86.5 58 76" fill="none" stroke="#e0a800" stroke-width="1.5" stroke-linecap="round"/><circle cx="50" cy="81.6" r="2.2" fill="#22b8c4" stroke="' + ink + '" stroke-width=".6"/>',
+    scarf: '<path fill="#f06aa8" stroke="' + ink + '" stroke-width="1.1" stroke-linejoin="round" d="M39 74 Q50 82 61 74 L62.5 79.5 Q50 88 37.5 79.5Z"/><path fill="#f06aa8" stroke="' + ink + '" stroke-width="1.1" stroke-linejoin="round" d="M56 82 L61 95 L54.5 93.5Z"/>',
+    tie: '<path fill="#e0453c" stroke="' + ink + '" stroke-width="1" stroke-linejoin="round" d="M47.6 77 H52.4 L51.4 80.5 L53.6 93 L50 97.5 L46.4 93 L48.6 80.5Z"/>'
+  }[a.neck] || '';
   const tip = '#f3d9a6';
   const oneStick = (cls, x1, y1, x2, y2) => '<g class="' + cls + '"><path d="M' + x1 + ' ' + y1 + ' L' + x2 + ' ' + y2 + '" stroke="' + stick + '" stroke-width="4.5" stroke-linecap="round"/><circle cx="' + x2 + '" cy="' + y2 + '" r="3.4" fill="' + tip + '" stroke="' + ink + '" stroke-width=".8"/></g>';
   return '<svg class="av" data-mood="' + (cheer ? 'cheer' : 'happy') + '" viewBox="0 0 100 100" aria-hidden="true">' + (a.bare ? '' : a.scene ? '<g transform="translate(-105 0) scale(1.1905)">' + VENUE_BACK[a.scene - 1] + '</g>' : '<rect width="100" height="100" fill="#cfe8ff"/>') +
     '<g class="avStars" fill="#ffd84a" stroke="#e0b400" stroke-width=".6">' + starAt(16, 14, 0.7) + starAt(84, 14, 0.7) + starAt(50, 7, 0.5) + '</g>' +
-    '<path d="M16 101 Q18 75 50 75 Q82 75 84 101Z" fill="' + shirt + '" stroke="' + ink + '" stroke-width="1.5"/>' + pattern + logo +
-    '<rect x="44" y="64" width="12" height="14" rx="4" fill="' + skin + '"/>' +
+    '<path d="M16 101 Q18 75 50 75 Q82 75 84 101Z" fill="' + shirt + '" stroke="' + ink + '" stroke-width="1.5"/>' + pattern + pattern2 + (a.neck === 'tie' ? '' : logo) +
+    '<rect x="44" y="64" width="12" height="14" rx="4" fill="' + skin + '"/>' + neckwear +
     '<g class="sDown">' + oneStick('stL', 13, 97, 31, 70) + oneStick('stR', 87, 97, 69, 70) + '</g>' +
     '<g class="sUp">' + oneStick('', 17, 62, 8, 28) + oneStick('', 83, 62, 92, 28) + '</g>' +
     '<g class="avHead">' + hairBack +
     '<circle cx="28" cy="48" r="' + (a.ears || 4.5) + '" fill="' + skin + '" stroke="' + ink + '" stroke-width="1.2"/><circle cx="72" cy="48" r="' + (a.ears || 4.5) + '" fill="' + skin + '" stroke="' + ink + '" stroke-width="1.2"/>' +
     '<ellipse cx="50" cy="46" rx="22" ry="24" fill="' + skin + '" stroke="' + ink + '" stroke-width="1.5"/>' +
-    '<g fill="' + hc + '">' + hair + '</g>' + head +
-    '<circle cx="36" cy="54" r="4" fill="#ff8f8f" opacity=".35"/><circle cx="64" cy="54" r="4" fill="#ff8f8f" opacity=".35"/>' +
-    '<circle cx="41" cy="46" r="3.2" fill="' + ink + '"/><circle cx="59" cy="46" r="3.2" fill="' + ink + '"/><circle cx="42.2" cy="44.8" r="1" fill="#fff"/><circle cx="60.2" cy="44.8" r="1" fill="#fff"/>' +
+    earring + '<g fill="' + hc + '">' + hair + '</g>' + head +
+    cheeks + facePaint + eyes +
     (a.brows ? '<path d="M35 40 Q41 37 46 40 M54 40 Q59 37 65 40" fill="none" stroke="' + (a.hairHex || ink) + '" stroke-width="2.4" stroke-linecap="round"/>' : '') +
     '<path class="brow" d="M36 39 Q41 35 46 39 M54 39 Q59 35 64 39" fill="none" stroke="' + ink + '" stroke-width="1.8" stroke-linecap="round"/>' +
     glasses +
@@ -455,7 +526,7 @@ function buildMe() {
   const box = $('#meOpts');
   Object.keys(AV_LABEL).forEach(k => {
     const row = document.createElement('div');
-    row.className = 'row optRow';
+    row.className = 'row optRow'; row.dataset.tab = AV_TAB_OF[k] || 'extras';
     row.innerHTML = '<span class="optName"></span>';
     row.firstChild.textContent = AV_LABEL[k];
     AV[k].forEach((val, i) => {
@@ -463,7 +534,7 @@ function buildMe() {
       const c = document.createElement('button');
       c.className = 'chip'; c.dataset.k = k; c.dataset.v = String(v);
       if (isColour) { c.classList.add('swatch'); c.style.background = val; c.setAttribute('aria-label', AV_LABEL[k] + ' ' + (i + 1)); }
-      else c.textContent = k === 'logo' && val === 'star' ? 'Star' : AV_WORD[val];
+      else c.textContent = AV_WORD[k + '.' + val] || AV_WORD[val];
       c.onclick = () => setAv(k, v);
       row.appendChild(c);
     });
@@ -471,7 +542,7 @@ function buildMe() {
   });
   // Backgrounds are not chosen freely: each one is earned by playing the gig at that Tour stop.
   const bgRow = document.createElement('div');
-  bgRow.className = 'row optRow';
+  bgRow.className = 'row optRow'; bgRow.dataset.tab = 'extras';
   bgRow.innerHTML = '<span class="optName">Background</span>';
   ['Plain'].concat(VENUES).forEach((name, k) => {
     const c = document.createElement('button');
@@ -485,6 +556,20 @@ function buildMe() {
     bgRow.appendChild(c);
   });
   box.appendChild(bgRow);
+  // the four tabs above the styles
+  const tabs = document.createElement('div');
+  tabs.className = 'avTabs'; tabs.setAttribute('role', 'tablist');
+  const pickTab = (id) => { box.dataset.tab = id; tabs.querySelectorAll('button').forEach(b => { const on = b.dataset.t === id; b.classList.toggle('active', on); b.setAttribute('aria-selected', String(on)); }); };
+  AV_TABS.forEach(t => {
+    const b = document.createElement('button');
+    b.dataset.t = t[0]; b.setAttribute('role', 'tab');
+    b.innerHTML = '<span class="ti"></span><span></span>';
+    b.firstChild.textContent = t[1]; b.lastChild.textContent = t[2];
+    b.onclick = () => pickTab(t[0]);
+    tabs.appendChild(b);
+  });
+  box.parentNode.insertBefore(tabs, box);
+  pickTab('face');
   $('#meNameIn').oninput = (e) => { prof().name = e.target.value.trim(); saveProf(); renderMe(); };
   $('#mePhoto').onclick = () => { $('#mePhotoFile').value = ''; $('#mePhotoFile').click(); };
   $('#mePhotoOff').onclick = () => { delete prof().photo; saveProf(); renderMe(); };
@@ -588,7 +673,12 @@ const GEAR_RANK = {
   'hair.mohawk': 1, 'head.bandana': 1, 'glasses.shades': 1, 'logo.bolt': 1, 'sticks.3': 1, 'hairCol.6': 1,
   'hair.long': 2, 'head.capback': 2, 'logo.flame': 2, 'sticks.5': 2, 'hairCol.7': 2,
   'head.headphones': 3, 'glasses.star': 3, 'logo.skull': 3, 'hairCol.8': 3,
-  'sticks.4': 4
+  'sticks.4': 4,
+  // the newer styles follow the same rule: most are free from the start, the special ones are earned rank by rank
+  'hair.buns': 1, 'eyes.sparkle': 1, 'face.starpaint': 1, 'ear.hoops': 1, 'pattern.hearts': 1, 'neck.scarf': 1,
+  'head.catears': 2, 'face.heartpaint': 2, 'logo.rainbow': 2, 'ear.stars': 2, 'neck.tie': 2,
+  'glasses.heart': 3, 'face.boltpaint': 3, 'pattern.tiedye': 3,
+  'head.crown': 4
 };
 const gearName = (key) => { const k = key.split('.')[0], v = key.split('.')[1]; return AV_WORD[v] ? AV_WORD[v].toLowerCase() + (k === 'logo' ? ' badge' : k === 'hair' ? ' hair' : '') : k === 'hairCol' ? 'a new hair colour' : k === 'sticks' ? 'a new drumstick colour' : 'a new ' + AV_LABEL[k].toLowerCase(); };
 const gearLocked = (k, v) => (GEAR_RANK[k + '.' + v] || 0) > rankOf(prof().xp).k;
@@ -618,7 +708,8 @@ function venueSvg(k, plain) {
     '<text x="254" y="13" text-anchor="end" font-size="9" font-weight="700" fill="#fff" opacity=".85">' + VENUES[k] + '</text></svg>';
 }
 
-// ---------- The buddy: the player's own drummer, alive beside the notes ----------
+// ---------- The buddy: a Beat Brother, alive beside the notes ----------
+// (It used to be the player's own drummer; the brothers are the ones who coach, so one of them sits here now.)
 // It nods on every beat, plays a stick on every right hit, pulls a face on a miss, cheers at 10, 20, 30... in a row,
 // and says a short, kind word now and then, the way a teacher sitting next to you would.
 const Buddy = {
@@ -626,8 +717,20 @@ const Buddy = {
   calm: !!(window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches),
   box() { return $('#buddyFace' + this.sfx); },
   svg() { return this.box().querySelector('svg'); },
+  img() { return this.box().querySelector('img.buddyImg'); },
+  // One pose for a moment, then back to standing.
+  pose(p, ms) {
+    const i = this.img();
+    if (!i) return;
+    clearTimeout(this.poseT);
+    i.src = 'art/b' + i.dataset.b + '-' + p + '.png';
+    if (ms) this.poseT = setTimeout(() => { const x = this.img(); if (x) x.src = 'art/b' + x.dataset.b + '-idle.png'; }, ms);
+  },
   mount() {
-    this.box().innerHTML = faceHtml(prof(), false);
+    // lessons: the brothers take turns, lesson by lesson; the Tour: the host of the chosen difficulty
+    const who = this.sfx === 'T' ? (Tour.pro() ? 0 : 1) : ((typeof G !== 'undefined' && G.idx) || 0) % 2;
+    this.moodOn = false;
+    this.box().innerHTML = '<img class="buddyImg" alt="" draggable="false" data-b="' + who + '" src="art/b' + who + '-idle.png">';
     $('#venue' + this.sfx).innerHTML = venueSvg(Math.max(0, avOf(prof()).scene - 1));
     this.fans(0);
   },
@@ -643,12 +746,20 @@ const Buddy = {
   play() {
     const s = this.svg();
     this.side = 1 - this.side;
+    if (!this.moodOn) this.pose(this.side ? 'druma' : 'drumb', 220);   // he drums along with every right hit
     if (s) this.move(s.querySelector(this.side ? '.stL' : '.stR'), [{ transform: 'rotate(0)' }, { transform: 'rotate(' + (this.side ? 34 : -34) + 'deg)' }, { transform: 'rotate(0)' }], 170);
     else this.move(this.box(), [{ transform: 'scale(1)' }, { transform: 'scale(1.06)' }, { transform: 'scale(1)' }], 170);
   },
   mood(m, ms) {
     const s = this.svg();
     clearTimeout(this.moodT);
+    if (this.img()) {
+      const p = { cheer: 'cheer', oops: 'think', wow: 'wow' }[m] || 'idle';
+      this.moodOn = p !== 'idle';
+      this.pose(p, ms);
+      if (ms) this.moodT = setTimeout(() => { this.moodOn = false; }, ms);
+      return;
+    }
     if (!s) return;
     s.dataset.mood = m;
     if (ms) this.moodT = setTimeout(() => { const x = this.svg(); if (x) x.dataset.mood = 'happy'; }, ms);
