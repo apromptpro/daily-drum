@@ -13,7 +13,7 @@ const Online = {
   blocked() { return this.gate && !this.ok(); },
   keep() { store.set('session', this.ses); },
   err(code) {
-    return ({ nick: 'A nickname has 3 to 16 letters or numbers.', pin: 'A PIN has at least 4 numbers or letters.', taken: 'That nickname is taken. Try another one.',
+    return ({ nick: 'A nickname has 3 to 16 small letters or numbers.', pin: 'A PIN has at least 4 numbers or letters.', taken: 'That nickname is taken. Try another one.',
       join: 'That join code is not right. Ask the grown-up who looks after Daily Drum.', full: 'Too many accounts are waiting. Try again later.',
       wrong: 'The nickname or the PIN is not right.', locked: 'Too many wrong tries. Wait ten minutes, or ask the grown-up for a new PIN.',
       code: 'No player has that friend code. Check it and try again.', self: 'That is your own code. Give it to a friend!', many: 'You have a lot of friends already. Remove one first.',
@@ -123,7 +123,7 @@ const Online = {
     await this.refresh(false);
     if (!this.ok()) return '';
     const cloud = await Net.rpc('dd_load', { p_token: this.ses.token });
-    const mine = prof().acct === this.ses.nick, has = Object.keys(progress).length > 0 || prof().xp > 0;
+    const mine = String(prof().acct || '').toLowerCase() === String(this.ses.nick || '').toLowerCase(), has = Object.keys(progress).length > 0 || prof().xp > 0;
     if (cloud.ok && cloud.data) {
       if (has && !mine && !confirm('This device already has stars for "' + (prof().name || 'this player') + '".\n\nOK = use the stars saved in the account "' + this.ses.nick + '" (the stars on this device are replaced).\nCancel = keep the stars on this device and save them to the account.')) {
         prof().acct = this.ses.nick; saveProf(); await this.push();
@@ -174,7 +174,7 @@ const Online = {
     $('#acIn').classList.toggle('hidden', st !== 'in' || !!this.pinOpen);
     document.body.classList.toggle('locked', this.blocked());
     // A player who has logged in on this device before only types the PIN: the nickname is filled in already.
-    const known = st === 'out' ? (prof().acct || '') : '';
+    const known = st === 'out' ? String(prof().acct || '').toLowerCase() : '';
     if (known && !$('#acNickIn').value) $('#acNickIn').value = known;
     $('#acTitle').textContent = st !== 'out' ? 'Your Daily Drum account' : known ? 'Welcome back, ' + known + '!' : 'Welcome to Daily Drum!';
     if (st === 'wait') {
@@ -336,14 +336,19 @@ const Online = {
       closeMenu(); this.logout();
     };
     document.querySelectorAll('.showPin input').forEach(c => { c.onchange = () => c.dataset.pins.split(',').forEach(id => { $('#' + id).type = c.checked ? 'text' : 'password'; }); });
-    $('#acLoginBtn').onclick = () => busy($('#acLoginBtn'), $('#acMsg'), () => this.login($('#acNickIn').value, $('#acPinIn').value), 'Logging in…');
+    // Nicknames are small letters only: capitals turn into small letters as they are typed.
+    ['#acNickIn', '#acNickNew'].forEach(s => {
+      const el = $(s);
+      el.addEventListener('input', () => { const v = el.value.toLowerCase(); if (v !== el.value) { const a = el.selectionStart, b = el.selectionEnd; el.value = v; try { el.setSelectionRange(a, b); } catch (e) {} } });
+    });
+    $('#acLoginBtn').onclick = () => busy($('#acLoginBtn'), $('#acMsg'), () => this.login($('#acNickIn').value.trim().toLowerCase(), $('#acPinIn').value), 'Logging in…');
     $('#acPinIn').onkeydown = (e) => { if (e.key === 'Enter') $('#acLoginBtn').click(); };
     $('#acNewBtn').onclick = () => busy($('#acNewBtn'), $('#acMsg2'), async () => {
       if ($('#acPinNew').value !== $('#acPinNew2').value) return 'The two PINs are not the same. Type them again.';
       const w = $('#acWordNew').value.trim();
       if (w.length < 3) return 'Pick a secret word with 3 letters or more. You need it if you forget your PIN.';
       if (w.toLowerCase() === $('#acNickNew').value.trim().toLowerCase()) return 'Pick a secret word that is different from your nickname.';
-      return this.signup($('#acNickNew').value, $('#acPinNew').value, $('#acJoin').value, w);
+      return this.signup($('#acNickNew').value.trim().toLowerCase(), $('#acPinNew').value, $('#acJoin').value, w);
     });
     $('#acCheck').onclick = () => busy($('#acCheck'), $('#acWaitMsg'), async () => { await this.refresh(true); if (this.ok()) { show(Online.home()); return ''; } return this.ses && this.ses.status === 'pending' ? 'Not yet. Ask the grown-up, then check again.' : ''; });
     $('#acOutBtn').onclick = () => this.logout();
@@ -352,7 +357,7 @@ const Online = {
     $('#acForgot').onclick = () => $('#acForgotBox').classList.toggle('hidden');
     // With the secret word the player sets a new PIN on the spot and is logged in. Nobody else has to do anything.
     $('#acResetGo').onclick = () => busy($('#acResetGo'), $('#acResetMsg'), async () => {
-      const nick = $('#acNickIn').value.trim(), a = $('#acFPin').value;
+      const nick = $('#acNickIn').value.trim().toLowerCase(), a = $('#acFPin').value;
       if (nick.length < 3) return 'Type your nickname in the box above first.';
       if ($('#acFWord').value.trim().length < 3) return 'Type your secret word.';
       if (a !== $('#acFPin2').value) return 'The two new PINs are not the same. Type them again.';
@@ -378,7 +383,7 @@ const Online = {
       return '';
     }, 'Saving your secret word…');
     $('#acForgotGo').onclick = () => busy($('#acForgotGo'), $('#acForgotMsg'), async () => {
-      const nick = $('#acNickIn').value.trim();
+      const nick = $('#acNickIn').value.trim().toLowerCase();
       if (nick.length < 3) return 'Type your nickname in the box above first.';
       await Net.rpc('dd_pin_help', { p_nick: nick });
       return 'Done. If "' + nick + '" has an account, the grown-up now sees that it needs a new PIN. They will tell you the new PIN themselves.';

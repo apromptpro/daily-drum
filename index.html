@@ -219,7 +219,7 @@
         <div class="card">
           <h2>I have an account</h2>
           <label for="acNickIn">Nickname</label>
-          <div class="inWrap" data-ic="&#128100;"><input id="acNickIn" class="textIn" maxlength="16" autocomplete="username" autocapitalize="off"></div>
+          <div class="inWrap" data-ic="&#128100;"><input id="acNickIn" class="textIn lower" maxlength="16" autocomplete="username" autocapitalize="none" autocorrect="off" spellcheck="false"></div>
           <label for="acPinIn">PIN</label>
           <div class="inWrap" data-ic="&#128273;"><input id="acPinIn" class="textIn" type="password" maxlength="40" autocomplete="current-password"><button type="button" class="eyeBtn" data-pins="acPinIn" aria-label="Show my PIN" aria-pressed="false">&#128065;</button></div>
           <div class="row"><button id="acLoginBtn" class="primary big wideBtn playBtn">&#129345; Let's drum!</button></div>
@@ -246,8 +246,8 @@
         </div>
         <div class="card">
           <h2>I am new here</h2>
-          <label for="acNickNew">Pick a nickname <span class="muted small">(not your full name)</span></label>
-          <input id="acNickNew" class="textIn" maxlength="16" autocomplete="off" autocapitalize="off">
+          <label for="acNickNew">Pick a nickname <span class="muted small">(small letters, not your full name)</span></label>
+          <input id="acNickNew" class="textIn lower" maxlength="16" autocomplete="off" autocapitalize="none" autocorrect="off" spellcheck="false">
           <label for="acPinNew">Pick a PIN <span class="muted small">(4 numbers or more)</span></label>
           <input id="acPinNew" class="textIn" type="password" maxlength="40" autocomplete="new-password">
           <label for="acPinNew2">The same PIN again</label>

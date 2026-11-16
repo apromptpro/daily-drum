@@ -578,3 +578,4 @@ body.locked #acOut > p { display: none; }
 @media (max-height: 520px) { .loadBox .logoBig.wide.loadLogo { width: min(60vw, 280px); margin-bottom: 8px; } }
 #loadMascots { display: flex; flex-direction: column; align-items: center; justify-content: center; }
 #loadMascots .loadLogo { flex: none; max-width: 100%; }
+.textIn.lower { text-transform: lowercase; }
