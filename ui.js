@@ -29,6 +29,7 @@ const UI = {
     renderHome = function () { home0(); UI.lessonsShown(); };   // eslint-disable-line no-global-assign
     $('#hubTour').onclick = () => show('tour');
     this.tabs();
+    this.options();
     this.shown();
     setInterval(() => this.blink(), 2700);
     setInterval(() => this.drum(), 250);
@@ -73,6 +74,38 @@ const UI = {
     let used = false;
     try { used = !!localStorage.getItem('dc.profile') || !!localStorage.getItem('dc.progress'); } catch (e) {}
     pick(used ? 'in' : 'new');
+  },
+
+  // The lesson options are icon buttons. Tapping one says in words what it now does, because an icon alone
+  // does not explain itself and a tablet has no mouse to hover with.
+  METRO: { sound: ['🔔', 'Click', 'Metronome: you hear a click on every beat.'], visual: ['💡', 'Flash', 'Metronome: a silent flash on every beat. Use it if the click confuses the microphone.'], off: ['🔕', 'Off', 'Metronome is off.'] },
+  options() {
+    document.querySelectorAll('#play .controls label.tog').forEach(t => {
+      const inp = t.querySelector('input');
+      inp.addEventListener('change', () => this.ctlSay(inp.checked ? t.dataset.on : t.dataset.off));
+    });
+    const sel = $('#metroMode'), btn = $('#metroBtn');
+    const paint = () => {
+      const m = this.METRO[sel.value] || this.METRO.sound;
+      btn.querySelector('.ci').textContent = m[0]; btn.querySelector('.ct').textContent = m[1];
+      btn.classList.toggle('on', sel.value !== 'off');
+      btn.setAttribute('aria-label', m[2]);
+    };
+    btn.onclick = () => {
+      const order = ['sound', 'visual', 'off'];
+      sel.value = order[(order.indexOf(sel.value) + 1) % order.length];
+      sel.dispatchEvent(new Event('change'));
+      paint();
+      this.ctlSay(this.METRO[sel.value][2]);
+    };
+    paint();
+  },
+  ctlSay(text) {
+    const box = $('#ctlSay');
+    clearTimeout(this._say);
+    box.textContent = text || '';
+    box.classList.toggle('hidden', !text);
+    if (text) { box.style.animation = 'none'; void box.offsetWidth; box.style.animation = ''; this._say = setTimeout(() => box.classList.add('hidden'), 3200); }
   },
 
   mode() {
@@ -219,7 +252,7 @@ const UI = {
     if (document.hidden || this.busy()) return;
     const free = this.visible().filter(i => !i._t && this.base(i) === 'idle');
     if (!free.length) return;
-    const img = free[Math.floor(Math.random() * free.length)], list = ['wave', 'thumb', 'clap', 'hi5', 'flex', 'ready', 'wow', 'cheer'];
+    const img = free[Math.floor(Math.random() * free.length)], list = ['wave', 'thumb', 'clap', 'hi5', 'flex', 'ready'];   // friendly gestures only: no surprised face without a reason
     this.act(img, list[Math.floor(Math.random() * list.length)], 1500);
   },
   // The other poses are fetched one after another, and never while a lesson is being played.

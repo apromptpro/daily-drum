@@ -343,7 +343,7 @@ html.appMode body { display: flex; flex-direction: column; height: 100dvh; min-h
 .appMode #play #alignBox { position: absolute; right: 12px; bottom: calc(8px + env(safe-area-inset-bottom)); z-index: 8; max-width: calc(100% - 24px); padding: 6px 14px; }
 .appMode #play #alignBox[open] { left: 12px; padding: 12px 16px; box-shadow: 0 -6px 30px rgba(10, 5, 40, .5); }
 .appMode #play #alignBox:not([open]) summary { font-size: 13px; }
-@media (max-width: 900px) { .appMode #play .stage { flex-direction: column; } .appMode #play #lane { flex: 1 1 0; min-height: 0; height: auto; width: 100%; } .appMode #play .side { flex: none; flex-direction: row; align-items: center; flex-wrap: wrap; } .appMode #play .side .padSvg { width: 240px; max-width: 34%; } .appMode #play .side .sideTitle, .appMode #play .side .padHint { display: none; } .appMode #play .side .buddy { flex: 1; min-width: 220px; } }
+@media (max-width: 900px) and (min-height: 820px) { .appMode #play .stage { flex-direction: column; } .appMode #play #lane { flex: 1 1 0; min-height: 0; height: auto; width: 100%; } .appMode #play .side { flex: none; flex-direction: row; align-items: center; flex-wrap: wrap; } .appMode #play .side .padSvg { width: 240px; max-width: 34%; } .appMode #play .side .sideTitle, .appMode #play .side .padHint { display: none; } .appMode #play .side .buddy { flex: 1; min-width: 220px; } }
 
 /* after a lesson */
 .appMode #recap { gap: 0; }
@@ -451,3 +451,51 @@ body[data-screen="play"] #sceneBg i, body[data-tour="tourPlay"] #sceneBg i { ani
 .appMode .flow #quizCard > p.muted:first-of-type { font-size: 14.5px; margin: 4px 0 8px; }
 .appMode .flow .quizStaff { max-width: 250px; }
 @media (max-height: 730px) { .appMode .flow .quizStaff { max-width: 210px; } .appMode .flow #quizCard .labSay { min-height: 0; font-size: 16px; } .appMode .flow #quizLevels button { padding: 6px 12px; font-size: 14px; } }
+
+/* ============ 4. the lesson screen: options as icon buttons ============ */
+.controls { position: relative; gap: 10px 14px; padding: 8px 12px; }
+.controls .ctl { flex: 1 1 260px; min-width: 0; flex-wrap: nowrap; white-space: nowrap; gap: 8px; }
+.controls .tempoCtl input[type=range], body.touch .controls .tempoCtl input[type=range] { flex: 1 1 90px; min-width: 70px; max-width: 260px; }
+.controls .tempoCtl .ci { font-size: 20px; }
+.controls .tempoCtl .ct { font-weight: 700; }
+.controls .tempoCtl #tempoTxt { min-width: 2.2em; text-align: right; font-size: 18px; color: var(--accentDark); }
+.controls .tempoCtl .unit { font-size: 12px; font-weight: 700; color: var(--muted); margin-left: -4px; }
+.ctlIcons { display: flex; flex: none; flex-wrap: wrap; gap: 6px; align-items: center; margin-left: auto; }
+.controls .tog, .controls button.tog, body.touch .controls button.tog { position: relative; display: inline-flex; flex-wrap: nowrap; align-items: center; gap: 6px; min-height: 40px; padding: 4px 12px 4px 8px; border: 2px solid var(--line); border-radius: 999px; background: #fff; color: #4a4f6a; font: inherit; font-size: 14px; font-weight: 700; line-height: 1; cursor: pointer; white-space: nowrap; box-shadow: 0 3px 0 rgba(40, 24, 110, .14); user-select: none; -webkit-user-select: none; transition: transform .1s, background .15s, border-color .15s; }
+.controls .tog input { position: absolute; opacity: 0; width: 1px; height: 1px; margin: 0; pointer-events: none; }
+.controls .tog .ci { font-size: 21px; filter: grayscale(.85); opacity: .78; transition: filter .15s, opacity .15s, transform .2s cubic-bezier(.3, 1.8, .5, 1); }
+.controls .tog:active { transform: translateY(2px); }
+.controls .tog:has(input:checked), .controls button.tog.on { background: linear-gradient(#ffe66b, #ffc21a); border-color: #e0a800; color: #3a2200; box-shadow: 0 3px 0 #b98200; }
+.controls .tog:has(input:checked) .ci, .controls button.tog.on .ci { filter: none; opacity: 1; transform: scale(1.12); }
+.controls .tog:has(input:disabled) { opacity: .4; cursor: default; box-shadow: none; }
+.controls .tog:has(input:focus-visible) { outline: 3px solid #8f6cff; outline-offset: 2px; }
+.ctlSay { position: absolute; left: 10px; right: 10px; top: 100%; margin-top: 4px; z-index: 9; padding: 8px 14px; border-radius: 14px; background: #26146e; color: #fff; font-size: 15px; font-weight: 700; text-align: center; box-shadow: 0 8px 20px rgba(10, 5, 40, .45); pointer-events: none; animation: ctlSayIn .2s ease-out; }
+@keyframes ctlSayIn { from { opacity: 0; transform: translateY(-6px); } to { opacity: 1; transform: none; } }
+@media (max-width: 1020px) { .controls #tempoWord { display: none; } .controls .tempoCtl .ct { display: none; } }
+@media (max-width: 900px) { .controls .tog .ct { display: none; } .controls .tog, .controls button.tog, body.touch .controls button.tog { padding: 4px 9px; min-width: 42px; justify-content: center; } }
+@media (max-width: 520px) { .controls .ctl { flex-basis: 100%; } .ctlIcons { margin-left: 0; width: 100%; justify-content: space-between; } }
+/* app mode: one row, nothing cut off */
+.appMode #play .controls { flex-wrap: nowrap; overflow: visible; padding: 5px 10px; gap: 10px; }
+.appMode #play .controls > label.ctl { flex: 1 1 0; }
+.appMode #play .ctlIcons { flex-wrap: nowrap; }
+/* a narrow window that is not tall: the notes stay beside a slimmer pad picture instead of being squeezed away */
+@media (max-width: 900px) and (max-height: 819px) {
+  .appMode #play .stage { flex-direction: row; }
+  .appMode #play #lane { flex: 1 1 0; min-width: 0; width: auto; height: 100%; }
+  .appMode #play .side { flex: none; flex-direction: column; flex-wrap: nowrap; align-items: stretch; width: 200px; border-top: 0; border-left: 1px solid #2f3850; padding: 8px; }
+  .appMode #play .side .padSvg { width: 100%; max-width: none; }
+  .appMode #play .side .buddy { flex: none; min-width: 0; }
+  .appMode #play .playTop { gap: 8px; }
+  .appMode #play .playTop .muted.small { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .appMode #play .playTitle { min-width: 0; }
+}
+/* a very short window: the reminders give their room to the notes */
+@media (max-height: 620px) { .appMode #play .focus:not(.testBar), .appMode #play .tip { display: none; } }
+/* the same for a Tour challenge in a narrow window that is not tall: the pad stays whole, beside the challenge */
+@media (max-width: 900px) and (max-height: 819px) {
+  .appMode #tourPlay .tourStage { display: flex; flex-direction: row; }
+  .appMode #tourPlay .tourArea { flex: 1 1 0; min-width: 0; min-height: 0; }
+  .appMode #tourPlay .side { flex: none; width: 250px; border-top: 0; border-left: 1px solid #2f3850; padding: 8px; }
+  .appMode #tourPlay .side .padSvg { width: 100%; max-width: none; align-self: stretch; }
+  .appMode #tourPlay .hostBig .mascot.spr { --bro: 110px; }
+}

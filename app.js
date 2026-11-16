@@ -1533,7 +1533,7 @@ function renderRecap(st, wasWait, climb) {
   rf.classList.remove('flyIn'); void rf.offsetWidth; rf.classList.add('flyIn');
   $('#recapBros').innerHTML = stars >= 2 ? '<span class="brosSay">' + (stars === 3 ? 'The Beat Brothers say: WOW!' : 'The Beat Brothers say: nice one!') + '</span>' : '';
   // The Beat Brothers stand left and right of the result, in a pose that fits it.
-  const poses = stars === 3 ? ['trophy', 'jump'] : stars === 2 ? ['clap', 'cheer'] : stars === 1 ? ['thumb', 'hi5'] : ['flex', 'think'];
+  const poses = stars === 3 ? ['trophy', 'jump'] : stars === 2 ? ['clap', 'cheer'] : stars === 1 ? ['thumb', 'hi5'] : ['ready', 'think'];   // no stars: "let's try again", not a victory pose
   $('#recapBroL').innerHTML = mascotHtml(0, false, poses[0]); $('#recapBroR').innerHTML = mascotHtml(1, false, poses[1]);
   document.getElementById('recap').dataset.stars = stars;
   $('#recapPoints').textContent = st.points;

@@ -364,6 +364,8 @@ const Bros = {
     bub.classList.remove('pulse'); void bub.offsetWidth; bub.classList.add('pulse');
     // The brother who talks moves: the big one tells the facts, the little one gives the tips.
     if (typeof UI !== 'undefined') { const who = m.fact ? 0 : 1; UI.act($('#brosFaces').querySelector('[data-b="' + who + '"]'), pose || (m.fact ? 'think' : 'wave'), 1500); }
+    // A fact surprises the little brother: this is the one place the "wow" face belongs.
+    if (m.fact && typeof UI !== 'undefined') setTimeout(() => { const lil = $('#brosFaces').querySelector('[data-b="1"]'); if (lil && !lil._t && screen === 'hub') UI.act(lil, 'wow', 1200); }, 500);
   },
   show() {
     this.list = this.build(); this.i = 0;

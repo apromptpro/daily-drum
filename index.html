@@ -619,26 +619,23 @@
       <button id="startBtn" class="primary">Start</button>
     </div>
     <div class="controls">
-      <label id="tempoLabel">Tempo <input id="tempo" type="range" min="40" max="180" step="5" value="60"> <span id="tempoTxt">60</span> BPM <span id="tempoWord" class="muted small"></span> <span id="tempoGoal" class="small goalChip"></span></label>
-      <label id="speedLabel" class="hidden" title="Slower is easier. A slowed-down song also sounds lower.">Song speed <input id="speed" type="range" min="60" max="100" step="5" value="100"> <span id="speedTxt">100</span>%</label>
-      <label id="waitLabel" title="The notes stop and wait until you hit the right pad"><input id="waitMode" type="checkbox"> Wait mode</label>
-      <label id="climbLabel" title="The beat gets 5 BPM faster after every clean round, and the points grow with it. Three hearts: a messy round costs one."><input id="climbMode" type="checkbox"> &#128640; Speed climb</label>
-      <label id="partLabel" class="hidden">Drum part <select id="trackPart"></select></label>
-      <details id="moreBox" class="more">
-        <summary>More options</summary>
-        <div class="moreIn">
-          <label id="sheetOnlyLabel" title="Hides the falling notes, so you play from the sheet music alone"><input id="sheetOnly" type="checkbox"> Sheet only</label>
-          <label id="loopLabel" title="Keep repeating until you press Stop"><input id="loopMode" type="checkbox"> Repeat until I press Stop</label>
-          <label title="Flash only is silent: use it if the click confuses the microphone">Metronome
-            <select id="metroMode">
-              <option value="sound">Click sound</option>
-              <option value="visual">Flash only (silent)</option>
-              <option value="off">Off</option>
-            </select>
-          </label>
-          <label id="musicLabel" class="hidden" title="The app plays the song's tune while you drum"><input id="musicOn" type="checkbox" checked> Play the tune</label>
-        </div>
-      </details>
+      <label id="tempoLabel" class="ctl tempoCtl" title="How fast the beat goes"><span class="ci" aria-hidden="true">&#9201;</span><span class="ct">Tempo</span> <input id="tempo" type="range" min="40" max="180" step="5" value="60" aria-label="Tempo"> <b id="tempoTxt">60</b><span class="unit">BPM</span> <span id="tempoWord" class="muted small"></span> <span id="tempoGoal" class="small goalChip"></span></label>
+      <label id="speedLabel" class="ctl hidden" title="Slower is easier. A slowed-down song also sounds lower.">Song speed <input id="speed" type="range" min="60" max="100" step="5" value="100"> <span id="speedTxt">100</span>%</label>
+      <label id="partLabel" class="ctl hidden">Drum part <select id="trackPart"></select></label>
+      <div class="ctlIcons">
+        <label id="waitLabel" class="tog" title="Wait mode: the notes stop and wait until you hit the right pad" data-on="Wait mode is on: the notes stop and wait until you hit the right pad." data-off="Wait mode is off: the notes keep moving in time."><input id="waitMode" type="checkbox"><span class="ci" aria-hidden="true">&#9995;</span><span class="ct">Wait</span></label>
+        <label id="climbLabel" class="tog" title="Speed climb: the beat gets 5 BPM faster after every clean round" data-on="Speed climb is on: every clean round is 5 BPM faster. Three hearts: a messy round costs one." data-off="Speed climb is off."><input id="climbMode" type="checkbox"><span class="ci" aria-hidden="true">&#128640;</span><span class="ct">Climb</span></label>
+        <label id="loopLabel" class="tog" title="Repeat: keep going round until you press Stop" data-on="Repeat is on: it keeps going round until you press Stop." data-off="Repeat is off: the lesson ends by itself."><input id="loopMode" type="checkbox"><span class="ci" aria-hidden="true">&#128257;</span><span class="ct">Repeat</span></label>
+        <label id="sheetOnlyLabel" class="tog" title="Sheet only: hides the falling notes, so you play from the sheet music" data-on="Sheet only is on: the falling notes are hidden. Read the sheet music!" data-off="Sheet only is off: the falling notes are back."><input id="sheetOnly" type="checkbox"><span class="ci" aria-hidden="true">&#127932;</span><span class="ct">Sheet only</span></label>
+        <label id="musicLabel" class="tog hidden" title="Play the tune: the app plays the song's tune while you drum" data-on="The tune is on: the app plays the song while you drum." data-off="The tune is off: you hear only the click and your drums."><input id="musicOn" type="checkbox" checked><span class="ci" aria-hidden="true">&#127926;</span><span class="ct">Tune</span></label>
+        <button id="metroBtn" type="button" class="tog" title="Metronome: click sound, silent flash, or off"><span class="ci" aria-hidden="true">&#128276;</span><span class="ct">Click</span></button>
+        <select id="metroMode" class="hidden" aria-hidden="true" tabindex="-1">
+          <option value="sound">Click sound</option>
+          <option value="visual">Flash only (silent)</option>
+          <option value="off">Off</option>
+        </select>
+      </div>
+      <div id="ctlSay" class="ctlSay hidden" role="status"></div>
     </div>
     <div id="playNote" class="note hidden"></div>
     <div id="testBar" class="focus testBar hidden"></div>
