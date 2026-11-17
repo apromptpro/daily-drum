@@ -1024,6 +1024,7 @@ async function startRun(demo, fromSong) {
   G.head = 0; G.flash = {}; G.fx = null; G.pops = [];
   G.melIdx = 0; G.melLoop = 0; G.demoIdx = 0;
   G.stats = newStats();
+  missFx(true);
   G.streak = 0;
   G.plan = !own && G.lesson.tempos ? G.lesson.tempos : null;
   if (G.plan) showTempo(G.plan[0][1]);
@@ -1101,6 +1102,20 @@ function climbStep() {
 }
 
 function setFx(text, color) { G.fx = { text, color, t: performance.now() }; }
+// A miss must be impossible to overlook: the stage flashes red, a big MISS appears, and a counter keeps the total.
+// reset = true clears it at the start of a run. wrong = a hit on the wrong pad (flash only, it is counted elsewhere).
+function missFx(reset, wrong) {
+  const stage = document.querySelector('#play .stage'), chip = $('#missChip'), big = $('#missBig');
+  if (reset) { chip.classList.add('hidden'); stage.classList.remove('missFlash'); big.classList.remove('on'); return; }
+  if (G.demo) return;
+  stage.classList.remove('missFlash'); big.classList.remove('on');
+  void stage.offsetWidth;
+  stage.classList.add('missFlash'); big.classList.add('on');
+  big.textContent = wrong ? 'WRONG PAD' : 'MISS';
+  const n = G.stats ? G.stats.miss : 0;
+  chip.textContent = '✗ ' + n + ' missed';
+  chip.classList.toggle('hidden', !n);
+}
 // A word that floats up from the hit line in the lane of the pad, with a little burst for the best hits.
 function pop(pad, text, color, burst) { G.pops.push({ pad, text, color, burst: !!burst, t: performance.now() }); if (G.pops.length > 24) G.pops.shift(); }
 // Ten right hits in a row double the points, twenty triple them, thirty or more give four times.
@@ -1112,7 +1127,7 @@ function flashLane(pad, good) {
   G.streak = good ? was + 1 : 0;   // right hits in a row
   flashPadView(pad, good);
   if (G.demo) Buddy.play();   // "Listen first": the buddy plays the part itself
-  else if (good) Buddy.hit(G.streak); else Buddy.miss(was, true);
+  else if (good) Buddy.hit(G.streak); else { Buddy.miss(was, true); missFx(false, true); }
 }
 
 function frame(run) {
@@ -1168,6 +1183,7 @@ function frame(run) {
         Buddy.miss(G.streak || 0, false);
         G.stats.miss++; G.stats.perPad[n.pad].miss++; G.streak = 0;
         pop(n.pad, 'Miss', '#eb5757');
+        missFx(false, false);
       }
     }
     if (G.climb && G.duePos - W >= G.segEnd && climbStep()) return;

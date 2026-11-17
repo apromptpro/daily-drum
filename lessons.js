@@ -568,6 +568,11 @@ const LESSONS = (() => {
   COURSE.forEach((lv, k) => lv.ids.forEach((id, i) => {
     const l = byId[id];
     l.lv = k;
+    // Long enough to settle into: the pattern repeats until the lesson lasts about (2 minutes + 10 seconds per level) at its own tempo.
+    // reps0 keeps the short version, which the level tests and the points still use.
+    l.reps0 = l.reps;
+    const barSec = (l.beats || 4) * 60 / l.bpm, want = 120 + 10 * k;
+    l.reps = Math.max(l.reps, Math.ceil(want / (l.bars.length * barSec)));
     if (i === 0) l.level = [lv.name, lv.note, lv.stage];
     out.push(l);
   }));

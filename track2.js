@@ -121,7 +121,7 @@ function lockForTest(on) {
 }
 function openTestPart(note) {
   const t = G.test, l = LESSONS.find(x => x.id === t.parts[t.i]);
-  const reps = Math.max(1, Math.min(l.reps, Math.floor(8 / l.bars.length)));   // about eight bars per piece
+  const reps = Math.max(1, Math.min(l.reps0 || l.reps, Math.floor(8 / l.bars.length)));   // about eight bars per piece
   G.idx = LESSONS.indexOf(l); G.track = null;
   G.title = t.title + ', piece ' + (t.i + 1) + ' of ' + t.parts.length + ': ' + l.title;
   setLesson(Object.assign({}, l, { reps }));

@@ -30,6 +30,14 @@ const UI = {
     $('#hubTour').onclick = () => show('tour');
     this.tabs();
     this.options();
+    this.animals();
+    // Home: the badges are folded away; tapping their bar opens and closes them
+    $('#badgeToggle').onclick = () => {
+      const dock = $('#badgeDock'), open = dock.classList.toggle('closed') === false;
+      $('#badgeToggle').setAttribute('aria-expanded', String(open));
+      $('#badgeToggle .bChev').textContent = open ? '▼ hide' : '▲ show';
+      this.arrows();
+    };
     this.shown();
     setInterval(() => this.blink(), 2700);
     setInterval(() => this.drum(), 250);
@@ -125,6 +133,30 @@ const UI = {
       this.ctlSay(this.METRO[sel.value][2]);
     };
     paint();
+  },
+  // The secret word is "my favourite animal": a row of animals to tap, and the child can still type any other.
+  ANIMALS: [['🐶', 'dog'], ['🐱', 'cat'], ['🐯', 'tiger'], ['🦁', 'lion'], ['🐘', 'elephant'], ['🐼', 'panda'], ['🐰', 'rabbit'], ['🐴', 'horse'], ['🐵', 'monkey'], ['🐬', 'dolphin'], ['🐧', 'penguin'], ['🦜', 'parrot']],
+  animals() {
+    // the same row under every box that asks for the secret word
+    [['acFWord', 'My favourite animal'], ['acWordIn', '']].forEach(x => {
+      const inp = document.getElementById(x[0]);
+      if (!inp || inp.parentNode.querySelector('.animalPick[data-for="' + x[0] + '"]')) return;
+      const d = document.createElement('div');
+      d.className = 'animalPick'; d.dataset.for = x[0];
+      inp.parentNode.insertBefore(d, inp.nextSibling);
+    });
+    document.querySelectorAll('.animalPick').forEach(box => {
+      const inp = document.getElementById(box.dataset.for);
+      this.ANIMALS.forEach(a => {
+        const b = document.createElement('button');
+        b.type = 'button'; b.className = 'animal'; b.title = a[1];
+        b.innerHTML = '<i></i><span></span>';
+        b.firstChild.textContent = a[0]; b.lastChild.textContent = a[1];
+        b.onclick = () => { inp.value = a[1]; inp.dispatchEvent(new Event('input', { bubbles: true })); box.querySelectorAll('.animal').forEach(q => q.classList.toggle('on', q === b)); };
+        box.appendChild(b);
+      });
+      inp.addEventListener('input', () => box.querySelectorAll('.animal').forEach(q => q.classList.toggle('on', q.title === inp.value.trim().toLowerCase())));
+    });
   },
   ctlSay(text) {
     const box = $('#ctlSay');

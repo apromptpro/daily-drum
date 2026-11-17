@@ -19,7 +19,7 @@
   <button class="brand" id="brandName" title="Home"><span id="brandMark" class="logoMark"></span><span id="brandTxt">Daily Drum</span></button>
   <nav>
     <button id="navHub" class="tab"><span class="ti">&#127968;</span><span class="tx">Home</span></button>
-    <button id="navLearn" class="tab"><span class="ti">&#129517;</span><span class="tx">Start here</span></button>
+    <button id="navLearn" class="tab"><span class="ti">&#129517;</span><span class="tx">Basics</span></button>
     <button id="navHome" class="tab"><span class="ti">&#129345;</span><span class="tx">Lessons</span></button>
     <button id="navSongs" class="tab"><span class="ti">&#127925;</span><span class="tx">Songs</span></button>
     <button id="navTour" class="tab"><span class="ti">&#127942;</span><span class="tx">Tour</span></button>
@@ -70,9 +70,9 @@
         </div>
       </div>
     </div>
-    <div class="badgeDock">
-      <div class="badgeHead"><b>&#127941; Badges to collect</b><span id="hubCount" class="muted small"></span></div>
-      <div class="badgeStrip hscroll">
+    <div class="badgeDock closed" id="badgeDock">
+      <button class="badgeHead" id="badgeToggle" aria-expanded="false" aria-controls="badgeStrip"><b>&#127941; Badges to collect</b><span id="hubCount" class="muted small"></span><span class="bChev" aria-hidden="true">&#9650; show</span></button>
+      <div class="badgeStrip hscroll" id="badgeStrip">
         <div class="bGroup"><h3>&#127942; The big ones</h3><div id="hubBig" class="badgeWall"></div></div>
         <div class="bGroup"><h3>All the others</h3><div id="hubRest" class="badgeWall"></div></div>
         <div class="bGroup"><h3 title="Play the same lesson cleanly again and again to earn its medal.">&#127941; Practice medals</h3><div id="hubMedals" class="badgeWall"></div></div>
@@ -101,7 +101,7 @@
       <div id="badges" class="badges"></div>
     </div>
     <h1>Lessons</h1>
-    <p class="muted">Go from top to bottom. Two stars or more? Move on to the next one! New to drums? Open <a href="#" id="learnLink">Start here</a> first.</p>
+    <p class="muted">Go from top to bottom. Two stars or more? Move on to the next one! New to drums? Open <a href="#" id="learnLink">Basics</a> first.</p>
     <div id="lessonList" class="lessons"></div>
   </section>
 
@@ -137,7 +137,7 @@
 
   <!-- Start here: the drum kit and the basics, to click and hear rather than read -->
   <section id="learn" class="hidden">
-    <h1>Start here</h1>
+    <h1>Basics <span class="muted small">(the drum kit, the beat, reading notes, how to sit)</span></h1>
     <div class="card">
       <h2>1. Meet the drum kit</h2>
       <p class="muted">This is a real drum kit. Your roll-up pad is a small, flat version of it. Tap any part to hear it and to see where it is on your pad.</p>
@@ -227,8 +227,8 @@
           <div id="acMsg" class="small acMsg"></div>
           <button id="acForgot" class="linkBtn">Forgot my PIN?</button>
           <div id="acForgotBox" class="forgotBox hidden">
-            <p>No problem! Type your <b>nickname</b> in the box above. Then type your secret word and pick a new PIN.</p>
-            <label for="acFWord">My secret word</label>
+            <p>No problem! Type your <b>nickname</b> in the box above. Then tell us your favourite animal (your secret word) and pick a new PIN.</p>
+            <label for="acFWord">My favourite animal</label>
             <input id="acFWord" class="textIn" maxlength="40" autocomplete="off" autocapitalize="off">
             <label for="acFPin">My new PIN <span class="muted small">(4 numbers or more)</span></label>
             <input id="acFPin" class="textIn" type="password" maxlength="40" autocomplete="new-password">
@@ -237,7 +237,7 @@
             <label class="showPin"><input type="checkbox" data-pins="acFPin,acFPin2"><span>&#128065; Show my PIN</span></label>
             <button id="acResetGo" class="primary big">&#128273; Set my new PIN</button>
             <div id="acResetMsg" class="small acMsg"></div>
-            <button id="acForgotBoth" class="linkBtn">I forgot my secret word too</button>
+            <button id="acForgotBoth" class="linkBtn">I forgot which animal I chose</button>
             <div id="acForgotAsk" class="hidden">
               <p>Then a grown-up helps. Press this button, and the grown-up who looks after Daily Drum will give you a new PIN themselves.</p>
               <button id="acForgotGo" class="big">Ask the grown-up for a new PIN</button>
@@ -253,8 +253,9 @@
           <input id="acPinNew" class="textIn" type="password" maxlength="40" autocomplete="new-password">
           <label for="acPinNew2">The same PIN again</label>
           <input id="acPinNew2" class="textIn" type="password" maxlength="40" autocomplete="new-password">
-          <label for="acWordNew">Pick a secret word <span class="muted small">(like your favourite animal. You need it if you forget your PIN)</span></label>
-          <input id="acWordNew" class="textIn" maxlength="40" autocomplete="off" autocapitalize="off">
+          <label for="acWordNew">My favourite animal <span class="muted small">(your secret word, if you forget your PIN)</span></label>
+          <input id="acWordNew" class="textIn" maxlength="40" autocomplete="off" autocapitalize="off" placeholder="tap one, or type your own">
+          <div class="animalPick" data-for="acWordNew"></div>
           <label for="acJoin">Join code <span class="muted small">(only if a grown-up gave you one)</span></label>
           <input id="acJoin" class="textIn" maxlength="30" autocomplete="off">
           <label class="showPin"><input type="checkbox" data-pins="acPinNew,acPinNew2"><span>&#128065; Show my PIN</span></label>
@@ -635,9 +636,12 @@
     <div id="sheet" class="sheet notation"></div>
     <div class="stage">
       <canvas id="lane"></canvas>
+      <div id="missChip" class="missChip hidden" role="status"></div>
+      <div id="missBig" class="missBig" aria-hidden="true">MISS</div>
       <div class="side">
         <div class="sideTitle">Your pad</div>
         <svg id="padView" class="padSvg view tap" viewBox="0 0 420 340" aria-label="Your drum pad. Tap a pad to play it without the real pad."></svg>
+        <div id="limbPic" class="limbPic" aria-hidden="true"><span data-l="LF"><i>&#129462;</i><b>Left foot</b></span><span data-l="LH"><i>&#9995;</i><b>Left hand</b></span><span data-l="RH"><i>&#9995;</i><b>Right hand</b></span><span data-l="RF"><i>&#129462;</i><b>Right foot</b></span></div>
         <div id="nextUp" class="nextUp"></div>
         <div id="climbHud" class="climbHud hidden"></div>
         <div class="buddy">

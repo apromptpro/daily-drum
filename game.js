@@ -77,7 +77,9 @@ function awardRun(r) {
   touchDay();
   p.hits += st.hit;
   p.bestCombo = Math.max(p.bestCombo, st.bestCombo || 0);
-  const xp = Math.round(st.hit * (r.wasWait ? 0.5 : 1)) + 25 * Math.max(0, r.stars - r.prevStars) + (r.stars === 3 ? 10 : 0);
+  // Lessons became several times longer; points for hits are scaled back so that the ranks are reached at the same pace as before.
+  const longer = r.lesson && r.lesson.reps0 && r.lesson.reps > r.lesson.reps0 && !r.loop ? r.lesson.reps0 / r.lesson.reps : 1;
+  const xp = Math.round(st.hit * longer * (r.wasWait ? 0.5 : 1)) + 25 * Math.max(0, r.stars - r.prevStars) + (r.stars === 3 ? 10 : 0);
   p.xp += xp;
   const stars = (id) => (progress[id] ? progress[id].stars : 0);
   if (r.stars >= 1) giveBadge(r.own ? 'own' : 'first', got);
@@ -952,7 +954,15 @@ function updatePadView() {
     txt = 'Next: ' + G.notes.filter(n => n.t === next && n.state === 0).map(n => PAD[n.pad].name + (n.limb ? ' (' + LIMB_WORD[n.limb] + ')' : '')).join(' + ');
   }
   if (txt !== nextUpLast) { nextUpLast = txt; $('#nextUp').textContent = txt; }
+  // the four hands and feet: the ones that play the next note light up (one, two or three at once)
+  const lim = G.running && next !== null ? G.notes.filter(n => n.t === next && n.state === 0 && n.limb).map(n => n.limb).sort().join(',') : '';
+  if (lim !== limbLast) {
+    limbLast = lim;
+    const on = lim ? lim.split(',') : [];
+    document.querySelectorAll('#limbPic span').forEach(s => s.classList.toggle('on', on.indexOf(s.dataset.l) >= 0));
+  }
 }
+let limbLast = '';
 function flashPadView(pad, good) {
   viewSpots(pad).forEach(s => {
     const el = $('#pv-' + s.key);

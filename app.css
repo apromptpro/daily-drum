@@ -732,3 +732,36 @@ button.fcClose, body.touch button.fcClose { position: absolute; right: 12px; top
 .fcBar b { position: absolute; right: 8px; top: 0; font-size: 12px; line-height: 16px; color: #25304f; }
 @media (max-width: 699px) { .fcIn { grid-template-columns: 1fr; padding: 14px; gap: 12px; } .fcRight { padding-right: 0; } .fcTiles { grid-template-columns: repeat(2, minmax(0, 1fr)); } .fcFace { width: 110px; height: 110px; } }
 @media (max-height: 720px) and (min-width: 700px) { .fcIn { padding: 14px; gap: 14px; } .fcFace { width: 110px; height: 110px; } .fcTile { padding: 5px 4px; } .fcTile .fi { font-size: 18px; } .fcTile b { font-size: 17px; } .fcRight { gap: 8px; } }
+
+/* ============ 13. favourite animal, folded badges, a clear miss, hands and feet ============ */
+.animalPick { display: flex; gap: 6px; overflow-x: auto; overflow-y: hidden; padding: 2px 0 4px; scrollbar-width: none; -webkit-overflow-scrolling: touch; }
+.animalPick::-webkit-scrollbar { display: none; }
+button.animal, body.touch button.animal { flex: none; display: inline-flex; align-items: center; gap: 5px; padding: 4px 11px 4px 7px; border-radius: 999px; border: 2px solid var(--line); background: #fff; box-shadow: none; font-size: 13.5px; font-weight: 700; color: #4a4f6a; }
+button.animal i { font-style: normal; font-size: 20px; line-height: 1; }
+button.animal.on { background: linear-gradient(#ffe66b, #ffc21a); border-color: #e0a800; color: #3a2200; }
+/* Home: the badge bar is closed until it is tapped; the brothers still stand on it */
+button.badgeHead, body.touch button.badgeHead { width: 100%; display: flex; align-items: baseline; gap: 12px; margin: 0; padding: 4px 6px; background: none; border: 0; border-radius: 14px; box-shadow: none; text-align: left; font-size: 17px; color: var(--accentDark); cursor: pointer; }
+button.badgeHead:active { transform: none; background: rgba(106, 92, 240, .08); }
+.badgeHead .bChev { margin-left: auto; flex: none; font-size: 13px; font-weight: 800; color: var(--accent); white-space: nowrap; }
+.badgeDock.closed .badgeStrip { display: none; }
+.badgeDock.closed { padding: 8px 12px; }
+.badgeDock:not(.closed) .badgeHead { margin-bottom: 6px; }
+/* a miss: the stage flashes red, a big word appears, and a counter keeps the total */
+#play .stage { position: relative; }
+#play .stage.missFlash::after { content: ""; position: absolute; inset: 0; border-radius: inherit; pointer-events: none; z-index: 4; box-shadow: inset 0 0 0 9px #ff3b3b; background: rgba(255, 40, 40, .20); animation: missFlash .5s ease-out forwards; }
+@keyframes missFlash { 0% { opacity: 1; } 100% { opacity: 0; } }
+.missBig { position: absolute; left: 14px; top: 10px; z-index: 5; padding: 2px 14px; border-radius: 12px; background: #ff3b3b; color: #fff; font-size: 30px; font-weight: 800; letter-spacing: 1px; line-height: 1.25; opacity: 0; pointer-events: none; transform-origin: 0 50%; }
+.missBig.on { animation: missBig .75s cubic-bezier(.2, 1.5, .4, 1); }
+@keyframes missBig { 0% { opacity: 0; transform: scale(.5) rotate(-6deg); } 18% { opacity: 1; transform: scale(1.15) rotate(-3deg); } 70% { opacity: 1; transform: scale(1) rotate(-3deg); } 100% { opacity: 0; transform: scale(1) rotate(-3deg); } }
+.missChip { position: absolute; left: 14px; top: 58px; z-index: 5; padding: 3px 12px; border-radius: 999px; background: rgba(255, 59, 59, .18); border: 2px solid #ff6b6b; color: #ffb3b3; font-size: 14px; font-weight: 800; pointer-events: none; }
+@media (prefers-reduced-motion: reduce) { #play .stage.missFlash::after, .missBig.on { animation-duration: .01s; } }
+/* which hand or foot plays the next note */
+.limbPic { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 4px; flex: none; }
+.limbPic span { display: flex; flex-direction: column; align-items: center; gap: 1px; padding: 4px 1px 3px; border-radius: 12px; background: #1f2740; border: 2px solid #2f3850; color: #7d87ab; transition: transform .08s, background .08s, box-shadow .08s; }
+.limbPic i { font-style: normal; font-size: 22px; line-height: 1.05; filter: grayscale(1); opacity: .5; }
+.limbPic span[data-l="LH"] i, .limbPic span[data-l="LF"] i { transform: scaleX(-1); }
+.limbPic b { font-size: 9.5px; font-weight: 700; white-space: nowrap; }
+.limbPic span.on { background: #ffd84a; border-color: #fff; color: #3a2200; transform: scale(1.07); box-shadow: 0 0 14px rgba(255, 216, 74, .95); }
+.limbPic span.on i { filter: none; opacity: 1; }
+.appMode #play .side .limbPic { flex: none; }
+@media (max-height: 720px) { .appMode #play .limbPic b { display: none; } .appMode #play .limbPic i { font-size: 19px; } }
