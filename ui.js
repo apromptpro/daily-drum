@@ -43,6 +43,7 @@ const UI = {
     setInterval(() => this.drum(), 250);
     setInterval(() => this.idleAct(), 6500);
     setInterval(() => this.arrows(), 500);
+    setInterval(() => this.hud(), 160);
     setTimeout(() => this.preload(), 2500);
     document.addEventListener('wheel', (e) => {   // a mouse wheel moves the sideways strips
       const s = e.target.closest && e.target.closest('.flow, .hscroll');
@@ -61,7 +62,6 @@ const UI = {
       sec.appendChild(flow);
     };
     ['songs', 'learn', 'friends', 'inbox', 'progress', 'setup', 'testDone'].forEach(id => wrap(id, id === 'songs' || id === 'progress'));
-    $('#lessonList').classList.add('flow', 'wideCols');
     $('#tourStops').classList.add('hscroll');
     // My drummer: the picture, the name and "Not you?" sit in a slim panel on the left.
     // All the rest of the page belongs to the drummer's styles.
@@ -215,20 +215,29 @@ const UI = {
   },
   // The lesson that comes next glows, and the list opens at it.
   lessonsShown() {
-    const list = $('#lessonList');
-    const next = Array.from(list.querySelectorAll('details[open] .lesson:not(.test)')).find(b => b.querySelectorAll('.s .off').length === 3);
-    if (!next) return;
-    next.classList.add('next');
-    // open the strip at the column that holds the level's heading (or the lesson itself, when the heading is far back)
-    if (this.app && screen === 'home') requestAnimationFrame(() => {
-      const l = list.getBoundingClientRect(), step = this.colStep(list);
-      const at = (el) => Math.floor((el.getBoundingClientRect().left - l.left + list.scrollLeft + 4) / step);
-      const head = next.closest('details').querySelector('summary');
-      const col = at(next) - at(head) <= 1 ? at(head) : at(next);
-      list.scrollLeft = col * step;
+    const act = document.querySelector('#lessonList .lvStep.active'), path = act && act.parentElement;
+    if (act && act.offsetParent) requestAnimationFrame(() => {
+      if (path.scrollHeight > path.clientHeight) path.scrollTop = Math.max(0, act.offsetTop - path.offsetTop - (path.clientHeight - act.offsetHeight) / 2);
+      if (path.scrollWidth > path.clientWidth) path.scrollLeft = Math.max(0, act.offsetLeft - path.offsetLeft - 16);
     });
+    const next = document.querySelector('#lessonList .lTile.next');
+    if (!next || !next.offsetParent) return;
+    const s = next.closest('.lvTiles');
+    requestAnimationFrame(() => { if (s.scrollWidth > s.clientWidth) s.scrollLeft = Math.max(0, next.offsetLeft - s.offsetLeft - 16); });
   },
-  // How far one column of a flowing strip is from the next.
+  // ----- the scoreboard on the lesson screen: right, missed, in a row, points, and how far through the lesson -----
+  hud() {
+    const b = document.body, on = screen === 'play' && typeof G !== 'undefined' && G.running && !G.demo && !!G.stats;
+    if ((b.dataset.playing === '1') !== on) { if (on) b.dataset.playing = '1'; else delete b.dataset.playing; }
+    if (!on) return;
+    const st = G.stats, set = (id, v) => { const e = $(id); if (e.textContent !== String(v)) { e.textContent = v; e.parentNode.classList.remove('bump'); void e.offsetWidth; e.parentNode.classList.add('bump'); } };
+    set('#hudHit', st.hit); set('#hudMiss', st.miss); set('#hudRun', G.streak || 0); set('#hudPts', st.points);
+    const endless = G.loop || G.track, frac = endless || !G.totalBeats ? 0 : Math.max(0, Math.min(1, G.viewPos / G.totalBeats));
+    const beat = 60 / (G.bpm || 60), fmt = (s) => Math.floor(s / 60) + ':' + ('0' + Math.floor(s % 60)).slice(-2);
+    $('#hudFill').style.width = (frac * 100) + '%';
+    $('#hudBro').style.left = (frac * 100) + '%';
+    $('#hudTime').textContent = fmt(Math.max(0, G.viewPos) * beat) + (endless ? '' : ' / ' + fmt(G.totalBeats * beat));
+  },  // How far one column of a flowing strip is from the next.
   colStep(s) {
     const cs = getComputedStyle(s), gap = parseFloat(cs.columnGap) || 16, want = parseFloat(cs.columnWidth) || 340;
     const inner = s.clientWidth - parseFloat(cs.paddingLeft) - parseFloat(cs.paddingRight);

@@ -6,7 +6,7 @@
 const RANKS = [[0, 'Beginner Tapper', '🥁'], [150, 'Beat Keeper', '🎵'], [500, 'Groove Rider', '🎶'], [1200, 'Fill Master', '⚡'],
   [2500, 'Rhythm Pro', '🔥'], [5000, 'Drum Hero', '🌟'], [9000, 'Drum Legend', '👑']];
 const BADGES = [
-  { id: 'kit', icon: '🧭', name: 'Kit explorer', how: 'Tap every part of the drum kit in "Start here"' },
+  { id: 'kit', icon: '🧭', name: 'Kit explorer', how: 'Tap every part of the drum kit in "Basics"' },
   { id: 'first', icon: '🎉', name: 'First beat', how: 'Earn a star in any lesson' },
   { id: 'star3', icon: '⭐', name: 'Three stars', how: 'Get three stars in a lesson' },
   { id: 'combo25', icon: '🔗', name: '25 in a row', how: 'Hit 25 notes in a row' },
@@ -660,14 +660,20 @@ function renderHub() {
     c.querySelector('i').textContent = note;
     return c;
   };
-  $('#hubBig').innerHTML = ''; $('#hubRest').innerHTML = '';
+  // The badges the player has come first, so opening the bar shows something won, not a wall of locks.
+  $('#hubMine').innerHTML = ''; $('#hubBig').innerHTML = ''; $('#hubRest').innerHTML = '';
   BADGES.forEach(b => {
     const got = !!p.badges[b.id];
-    $(BIG_BADGES[b.id] ? '#hubBig' : '#hubRest').appendChild(card(b.icon, b.name, b.how, got, got ? '✔ Collected' : '🔒 Still to collect'));
+    $(got ? '#hubMine' : BIG_BADGES[b.id] ? '#hubBig' : '#hubRest').appendChild(card(b.icon, b.name, b.how, got, got ? '✔ Yours' : '🔒 How to earn it: see above'));
   });
-  const n = Object.keys(p.badges).length;
-  $('#hubCount').textContent = n === 0 ? 'There are ' + BADGES.length + ' badges. Your first one is waiting: earn a star in any lesson.'
-    : 'You have ' + n + ' of ' + BADGES.length + ' badges. ' + (n === BADGES.length ? 'You collected them all!' : 'The coloured ones are yours.');
+  const n = Object.keys(p.badges).filter(id => BADGES.some(b => b.id === id)).length;
+  [['#hubMine', '⭐ Mine'], ['#hubBig', '🏆 Big ones to earn'], ['#hubRest', 'More to earn']].forEach(g => {
+    const box = $(g[0]), k = box.children.length;
+    box.parentNode.classList.toggle('hidden', !k);
+    $(g[0] + 'H').textContent = g[1] + ' (' + k + ')';
+  });
+  $('#hubCount').textContent = n === 0 ? 'None yet. Your first one is waiting: earn a star in any lesson.'
+    : n + ' of ' + BADGES.length + (n === BADGES.length ? '. You collected them all!' : ' collected');
   const reps = Object.keys(progress).map(id => progress[id].reps || 0);
   $('#hubMedals').innerHTML = '';
   REP_TIERS.forEach((t, i) => {

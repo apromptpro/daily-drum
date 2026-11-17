@@ -765,3 +765,143 @@ button.badgeHead:active { transform: none; background: rgba(106, 92, 240, .08); 
 .limbPic span.on i { filter: none; opacity: 1; }
 .appMode #play .side .limbPic { flex: none; }
 @media (max-height: 720px) { .appMode #play .limbPic b { display: none; } .appMode #play .limbPic i { font-size: 19px; } }
+
+/* ============ 14. All lessons: stage tabs, a level path, lesson tiles ============ */
+#lessonList, .appMode #lessonList { display: flex; flex-direction: column; gap: 10px; margin: 0; }
+.appMode #lessonList { flex: 1 1 0; min-height: 0; }
+.stageTabs { display: flex; gap: 8px; flex: none; }
+button.stageTab, body.touch button.stageTab { flex: 1 1 0; min-width: 0; display: flex; align-items: center; justify-content: center; gap: 8px; padding: 9px 8px; border-radius: 18px; border: 3px solid #fff; background: rgba(255, 255, 255, .8); color: #4a4f6a; box-shadow: 0 4px 0 rgba(40, 24, 110, .16); font-size: 17px; }
+button.stageTab .ti { font-size: 24px; line-height: 1; }
+button.stageTab .small { font-size: 12.5px; font-weight: 700; opacity: .85; white-space: nowrap; }
+button.stageTab.active { background: linear-gradient(#8f6cff, #5a36d6); color: #fff; box-shadow: 0 4px 0 #3a1f9c, 0 0 16px rgba(143, 108, 255, .7); transform: translateY(-2px); }
+.lvBody { display: grid; grid-template-columns: 236px minmax(0, 1fr); gap: 12px; flex: 1 1 0; min-height: 0; }
+.lvPath { display: flex; flex-direction: column; gap: 8px; min-height: 0; position: relative; padding-left: 4px; }
+.lvPath::before { content: ""; position: absolute; left: 27px; top: 18px; bottom: 18px; width: 5px; border-radius: 3px; background: repeating-linear-gradient(#fff 0 8px, transparent 8px 14px); opacity: .9; }
+button.lvStep, body.touch button.lvStep { position: relative; flex: 0 1 auto; display: flex; align-items: center; gap: 10px; text-align: left; padding: 7px 10px 7px 7px; border-radius: 18px; border: 3px solid #fff; background: rgba(255, 255, 255, .92); box-shadow: 0 3px 0 rgba(40, 24, 110, .16); min-height: 0; }
+button.lvStep .lvNo { flex: none; width: 40px; height: 40px; border-radius: 50%; display: grid; place-items: center; background: var(--lv); color: #fff; font-weight: 800; font-size: 19px; border: 3px solid #fff; box-shadow: 0 2px 0 rgba(0, 0, 0, .18); }
+button.lvStep .lvT { min-width: 0; display: flex; flex-direction: column; line-height: 1.2; }
+button.lvStep .lvT b { font-size: 15px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+button.lvStep .lvT .small { font-size: 12px; color: var(--muted); }
+button.lvStep .lvMark { margin-left: auto; color: var(--lv); font-size: 16px; animation: nudgeR 1.4s ease-in-out infinite; }
+button.lvStep.done .lvNo { background: #1c9d58; }
+button.lvStep.active { background: var(--lv); color: #fff; box-shadow: 0 3px 0 rgba(0, 0, 0, .25), 0 0 16px var(--lv); transform: translateX(4px); }
+button.lvStep.active .lvT .small { color: rgba(255, 255, 255, .92); }
+button.lvStep.active .lvNo { background: #fff; color: var(--lv); }
+button.lvStep.active .lvMark { color: #fff; }
+.lvMain { min-width: 0; min-height: 0; display: flex; flex-direction: column; gap: 8px; background: rgba(255, 255, 255, .9); border: 3px solid #fff; border-top: 8px solid var(--lv); border-radius: 22px; padding: 10px 12px 8px; box-shadow: 0 8px 22px rgba(20, 10, 60, .2); position: relative; }
+.lvHead { display: flex; align-items: baseline; gap: 10px; flex: none; }
+.lvHead b { font-size: 19px; color: var(--lv); white-space: nowrap; filter: brightness(.8); }
+.lvHead .lvNote { flex: 1; min-width: 0; font-size: 14px; color: var(--muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+button.lvTip, body.touch button.lvTip { flex: none; padding: 4px 12px; font-size: 13.5px; border-radius: 999px; box-shadow: none; }
+.lvTiles { flex: 1 1 0; min-height: 0; display: grid; grid-auto-flow: column; grid-template-rows: repeat(var(--tRows, 3), minmax(0, 1fr)); grid-auto-columns: 172px; gap: 8px; padding: 4px 2px 6px; }
+@media (max-height: 760px) { .appMode .lvTiles { --tRows: 2; } }
+@media (min-height: 940px) { .appMode .lvTiles { --tRows: 4; } }
+button.lesson.lTile, body.touch button.lesson.lTile { position: relative; display: grid; grid-template-columns: auto minmax(0, 1fr); grid-template-rows: auto auto auto; align-items: center; column-gap: 8px; row-gap: 2px; padding: 8px 10px; border-radius: 18px; border: 3px solid var(--line); background: #fff; box-shadow: 0 3px 0 var(--line); min-height: 0; width: auto; text-align: left; overflow: hidden; }
+.lTile .n { grid-row: 1 / span 2; width: 36px; height: 36px; font-size: 16px; background: var(--lv, var(--sun)); color: #fff; }
+.lTile .tt { font-size: 14.5px; line-height: 1.15; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.lTile .s { grid-column: 2; font-size: 17px; letter-spacing: 1px; }
+.lTile .mm { grid-column: 1 / -1; font-size: 11.5px; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-weight: 700; }
+.lTile.solid { border-color: #8fd9ae; background: #f1fff6; box-shadow: 0 3px 0 #8fd9ae; }
+.lTile.tried { border-color: #f2c230; background: #fffbe8; box-shadow: 0 3px 0 #f2c230; }
+.lTile.next, .appMode .lesson.lTile.next { border-color: #ffc21a; background: #fff6cf; box-shadow: 0 3px 0 #b98200, 0 0 16px rgba(255, 214, 60, .9); animation: hereGlow 1.8s ease-in-out infinite; }
+.lTile .go { position: absolute; right: 6px; top: 6px; padding: 2px 8px; border-radius: 999px; background: #ff7a00; color: #fff; font-size: 11px; font-weight: 800; animation: nudgeR 1.2s ease-in-out infinite; }
+.lTile.next .tt { padding-right: 0; margin-top: 16px; }
+.lTile.next .n { margin-top: 16px; }
+.lTile.test { grid-template-columns: auto minmax(0, 1fr); background: #f3efff; border-color: #b9a8ff; box-shadow: 0 3px 0 #b9a8ff; }
+.lTile.test .n { background: #fff; }
+.lTile.test .t { min-width: 0; }
+.lTile.test .t b { font-size: 14.5px; }
+.lTile.test .t .muted { display: none; }
+.lTile.test .s { grid-column: 1 / -1; font-size: 12px; letter-spacing: 0; color: var(--accentDark); font-weight: 700; }
+.lTile.test.passed { background: #f1fff6; border-color: #8fd9ae; box-shadow: 0 3px 0 #8fd9ae; }
+.fcIn.tipIn { display: block; width: min(100%, 720px); padding: 22px 26px; }
+html:not(.appMode) .lvBody { grid-template-columns: 1fr; }
+html:not(.appMode) .lvPath { flex-direction: row; overflow-x: auto; padding: 2px 2px 8px; scrollbar-width: none; }
+html:not(.appMode) .lvPath::before { display: none; }
+html:not(.appMode) button.lvStep { flex: none; }
+html:not(.appMode) .lvTiles { grid-auto-flow: row; grid-template-rows: none; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); overflow: visible; }
+html:not(.appMode) .lvHead { flex-wrap: wrap; } html:not(.appMode) .lvHead .lvNote { white-space: normal; flex-basis: 100%; }
+@media (max-width: 699px) { button.stageTab { flex-direction: column; gap: 0; padding: 6px 2px; font-size: 14px; } }
+@media (max-width: 900px) { .appMode .lvBody { grid-template-columns: 190px minmax(0, 1fr); } .appMode button.lvStep .lvNo { width: 34px; height: 34px; font-size: 16px; } }
+@media (orientation: portrait) { .appMode .lvTiles { --tRows: 5; } }
+
+/* ============ 15. Lesson screen: the scoreboard that shows while playing ============ */
+.hud { display: none; align-items: stretch; gap: 8px; margin: 10px 0; }
+body[data-playing="1"] .hud { display: flex; }
+body[data-playing="1"] #play .controls, body[data-playing="1"] #play #focusLine, body[data-playing="1"] #play .missChip { display: none; }
+.hudTile { flex: 0 0 auto; min-width: 104px; display: grid; grid-template-columns: auto auto; grid-template-rows: auto auto; column-gap: 8px; align-items: center; justify-content: center; padding: 5px 14px; border-radius: 18px; border: 3px solid #fff; box-shadow: 0 4px 0 rgba(10, 5, 40, .35); color: #fff; }
+.hudTile i { grid-row: 1 / span 2; font-style: normal; font-size: 26px; line-height: 1; }
+.hudTile b { font-size: 26px; line-height: 1; font-weight: 800; }
+.hudTile span { font-size: 11.5px; font-weight: 700; letter-spacing: .3px; opacity: .95; white-space: nowrap; }
+.hudTile.ok { background: linear-gradient(#35c27a, #1c9d58); }
+.hudTile.bad { background: linear-gradient(#ff7a6b, #e0453c); }
+.hudTile.run { background: linear-gradient(#ffb23e, #f08a24); }
+.hudTile.pts { background: linear-gradient(#8f6cff, #5a36d6); }
+.hudTile.bump b { animation: hudBump .22s ease-out; }
+@keyframes hudBump { 0% { transform: scale(1.35); } 100% { transform: scale(1); } }
+.hudTile.shake { animation: shakeNo .4s; box-shadow: 0 4px 0 rgba(10, 5, 40, .35), 0 0 22px #ff3b3b; }
+.hudProg { flex: 1 1 0; min-width: 120px; display: flex; align-items: center; gap: 10px; padding: 4px 14px 4px 22px; border-radius: 18px; border: 3px solid #fff; background: rgba(255, 255, 255, .94); box-shadow: 0 4px 0 rgba(10, 5, 40, .35); }
+.hudBar { position: relative; flex: 1; height: 14px; border-radius: 7px; background: #e6e0fb; }
+.hudBar i { display: block; height: 100%; width: 0; border-radius: 7px; background: linear-gradient(90deg, #8f6cff, #f06aa8); }
+#hudBro { position: absolute; top: 50%; left: 0; width: 44px; height: 44px; object-fit: contain; transform: translate(-50%, -62%); pointer-events: none; filter: drop-shadow(0 2px 2px rgba(20, 10, 60, .4)); }
+#hudTime { font-weight: 800; font-size: 15px; color: var(--accentDark); white-space: nowrap; }
+.hudFlag { font-size: 22px; }
+.appMode #play .hud { margin: 0; }
+@media (max-width: 900px) { .hudTile { min-width: 0; padding: 4px 9px; } .hudTile i { font-size: 20px; } .hudTile b { font-size: 21px; } .hudTile span { display: none; } .hudProg { padding-left: 18px; } }
+@media (max-width: 560px) { .hud { flex-wrap: wrap; } .hudProg { flex-basis: 100%; } .hudTile { flex: 1 1 0; } }
+
+/* Home: the row of shortcuts is gone; the dock at the bottom and the name button at the top do that job */
+.homePanel .quick { display: none; }
+
+/* the opened badge bar: what is mine first (gold), then what can still be earned (grey, with how to earn it) */
+.badgeStrip .bGroup.mine h3 { color: #a66f00; }
+.badgeStrip .bGroup.mine .bCard { border-color: #f2c230; background: #fff8dc; }
+.badgeStrip .bCard:not(.got) { background: #f4f5fa; border-style: dashed; }
+.badgeStrip .bCard:not(.got) .bIcon { filter: grayscale(1); opacity: .45; }
+.badgeStrip .bCard:not(.got) i { display: none; }
+.badgeStrip .bCard:not(.got) b::before { content: "🔒 "; font-size: 12px; }
+.badgeStrip .bCard .small { color: #4a4f6a; }
+.bGroup.hidden { display: none; }
+/* lesson tiles: the states win over the base tile, the columns fill the width, "Play next" sits in the corner */
+.lvTiles { grid-auto-columns: minmax(176px, 1fr); }
+button.lesson.lTile.solid, body.touch button.lesson.lTile.solid { border-color: #8fd9ae; background: #eafff2; box-shadow: 0 3px 0 #8fd9ae; }
+button.lesson.lTile.tried, body.touch button.lesson.lTile.tried { border-color: #f2c230; background: #fffbe8; box-shadow: 0 3px 0 #f2c230; }
+button.lesson.lTile.next, body.touch button.lesson.lTile.next { border-color: #ffc21a; background: #fff6cf; box-shadow: 0 3px 0 #b98200, 0 0 16px rgba(255, 214, 60, .9); }
+button.lesson.lTile.test, body.touch button.lesson.lTile.test { background: #f3efff; border-color: #b9a8ff; box-shadow: 0 3px 0 #b9a8ff; }
+button.lesson.lTile.test.passed, body.touch button.lesson.lTile.test.passed { background: #eafff2; border-color: #8fd9ae; box-shadow: 0 3px 0 #8fd9ae; }
+.lTile .go { top: auto; right: 6px; bottom: 6px; }
+.lTile.next .tt, .lTile.next .n { margin-top: 0; }
+.lTile.next .mm { padding-right: 84px; }
+/* level path: names may wrap to two lines; the dotted path only joins one level to the next */
+button.lvStep .lvT b { white-space: normal; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
+.lvPath::before { display: none; }
+.appMode button.lvStep:not(:last-child)::after { content: ""; position: absolute; left: 25px; top: calc(100% + 3px); width: 5px; height: 8px; border-radius: 3px; background: #fff; opacity: .9; }
+.appMode .lvPath { overflow-y: auto; scrollbar-width: none; }
+.appMode button.lvStep { flex: none; }
+.appMode button.lvStep:not(:last-child)::after { display: none; }
+@media (max-height: 740px) {
+  .appMode .lvPath { gap: 6px; }
+  .appMode button.lvStep { padding: 4px 8px 4px 5px; border-radius: 16px; }
+  .appMode button.lvStep .lvNo { width: 32px; height: 32px; font-size: 15px; }
+  .appMode button.lvStep .lvT b { font-size: 14px; -webkit-line-clamp: 1; }
+  .appMode button.lvStep .lvT .small { font-size: 11px; }
+}
+/* Lessons, top card: on a narrow screen the two buttons go under the name instead of running off the edge */
+@media (max-width: 900px) {
+  #profile { flex-wrap: wrap; row-gap: 8px; }
+  #profile .pbtns { flex: 1 1 100%; flex-wrap: wrap; min-width: 0; }
+  #profile .pbtns button { flex: 1 1 200px; min-width: 0; white-space: normal; }
+}
+/* Lessons on a phone: nothing is squeezed to fit a screen; levels slide sideways, tiles stack in two columns */
+html:not(.appMode) .lvBody { display: flex; flex-direction: column; flex: none; min-height: auto; gap: 10px; }
+html:not(.appMode) .lvPath { flex: none; min-height: auto; gap: 8px; }
+html:not(.appMode) button.lvStep { min-width: 190px; }
+html:not(.appMode) .lvMain { flex: none; min-height: auto; }
+html:not(.appMode) .lvTiles { flex: none; min-height: auto; grid-auto-rows: auto; grid-auto-columns: auto; grid-template-columns: repeat(2, minmax(0, 1fr)); }
+html:not(.appMode) button.lesson.lTile { min-height: 76px; }
+html:not(.appMode) .stageTabs { flex: none; }
+/* touch screens: the chosen stage and level keep their colour, and the short-screen sizes still apply */
+html body button.stageTab.active { background: linear-gradient(#8f6cff, #5a36d6); color: #fff; box-shadow: 0 4px 0 #3a1f9c, 0 0 16px rgba(143, 108, 255, .7); }
+html body button.lvStep.active { background: var(--lv); color: #fff; box-shadow: 0 3px 0 rgba(0, 0, 0, .25), 0 0 16px var(--lv); }
+html.appMode body button.lvStep { flex: none; }
+@media (max-height: 740px) { html.appMode body button.lvStep { padding: 4px 8px 4px 5px; border-radius: 16px; } }

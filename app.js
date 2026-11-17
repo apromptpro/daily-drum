@@ -176,65 +176,114 @@ function micProblem() {
 Ear.onLost = () => { updateStatus(); if (Cal.active) calPause(micProblem()); if (screen === 'play') updatePlayNote(true); };
 
 // ---------- Lessons list ----------
-const openLevels = {};   // levels the user folded or unfolded by hand, for this visit
+const homeSel = { lv: null };   // the level whose lessons are shown; empty = the one the player is working on
+const LV_COLORS = ['#ef6a5b', '#f08a24', '#d9a400', '#33a852', '#1f9bd1', '#6a5cf0', '#c153d6'];
+// What a teacher would say about a level, in a sheet over the page.
+function tipSheet(k) {
+  const box = $('#frCard');
+  box.innerHTML = '<div class="fcIn tipIn"><button class="fcClose" aria-label="Close">✕</button></div>';
+  box.firstChild.appendChild(teachBlock(k));
+  const close = () => { box.classList.add('hidden'); box.innerHTML = ''; };
+  box.onclick = (e) => { if (e.target === box) close(); };
+  box.querySelector('.fcClose').onclick = close;
+  box.classList.remove('hidden');
+}
 function renderHome() {
   $('#setupBanner').classList.toggle('hidden', calibrated());
   $('#lessonList').innerHTML = '';
   $('#songList').innerHTML = '';
   renderProfile();
-  let nLesson = 0, nSong = 0;
-  // Lessons are grouped into levels. Levels up to the one being worked on start open; later ones start folded.
-  const done = (l) => !!(progress[l.id] && progress[l.id].stars > 0);
-  const levels = [];
-  LESSONS.forEach(l => { if (l.song) return; if (l.level) levels.push({ name: l.level[0], note: l.level[1], stage: l.level[2], items: [] }); levels[levels.length - 1].items.push(l); });
-  let current = levels.findIndex(v => !v.items.every(done));
-  if (current < 0) current = levels.length - 1;
-  levels.forEach((v, k) => {
-    const d = document.createElement('details');
-    d.className = 'level';
-    d.open = openLevels[v.name] !== undefined ? openLevels[v.name] : k <= current;
-    d.ontoggle = () => { openLevels[v.name] = d.open; };
-    const s = document.createElement('summary');
-    const n = v.items.filter(done).length;
-    s.innerHTML = '<b></b><span class="muted small"></span><span class="cnt small"></span>';
-    s.querySelector('b').textContent = v.name;
-    s.querySelector('.muted').textContent = v.note;
-    s.querySelector('.cnt').textContent = n + ' of ' + v.items.length + ' done';
-    if (n === v.items.length) s.querySelector('.cnt').classList.add('all');
-    d.appendChild(s);
-    if (TEACH[k]) d.appendChild(teachBlock(k));
-    const box = document.createElement('div');
-    box.className = 'lessons';
-    d.appendChild(box);
-    v.box = box; v.el = d;
-    if (v.stage && (k === 0 || levels[k - 1].stage !== v.stage)) {
-      const h = document.createElement('h2');
-      h.className = 'stageHead';
-      h.textContent = v.stage;
-      $('#lessonList').appendChild(h);
-    }
-    $('#lessonList').appendChild(d);
-  });
-  let lv = -1;
+  let nSong = 0;
+  // ----- the songs (their own page) -----
   LESSONS.forEach((l, i) => {
-    if (!l.song && l.level) lv++;
-    const list = l.song ? $('#songList') : levels[lv].box;
+    if (!l.song) return;
     const b = document.createElement('button');
     b.className = 'lesson';
     const p = progress[l.id];
-    b.innerHTML = '<span class="n">' + (l.song ? '♪' + (++nSong) : ++nLesson) + '</span><span class="t"><b></b><span class="muted small"></span></span>' +
-      '<span class="mm small">' + (p && repTier(p.reps) ? '<span title="' + p.reps + ' clean runs">' + repTier(p.reps)[2] + '×' + p.reps + '</span> ' : '') + (!l.song && p && p.bpm ? (mastered(l) ? '👑 ' : '⚡ ') + p.bpm + ' BPM' : '') + '</span>' +
-      '<span class="s">' + starsHtml(p ? p.stars : 0) + '</span>';
+    b.innerHTML = '<span class="n">♪' + (++nSong) + '</span><span class="t"><b></b><span class="muted small"></span></span><span class="s">' + starsHtml(p ? p.stars : 0) + '</span>';
     b.querySelector('b').textContent = l.title;
     b.querySelector('.t span').textContent = feelOf(l) + '. ' + l.goal;
     b.onclick = () => openLesson(i);
-    list.appendChild(b);
+    $('#songList').appendChild(b);
   });
-  // Every level ends with a test, every stage with an exam. Nothing is locked.
-  levels.forEach((v, k) => {
-    v.box.appendChild(testRow('level', k));
-    if (k === levels.length - 1 || levels[k + 1].stage !== v.stage) v.el.after(testRow('exam', v.stage));
+  // ----- the lessons: pick a stage, pick a level, then the lessons of that level as tiles. Nothing is locked. -----
+  const played = (l) => !!(progress[l.id] && progress[l.id].stars > 0);
+  const solid = (l) => !!(progress[l.id] && progress[l.id].stars >= 2);
+  const levels = [];
+  let num = 0;
+  LESSONS.forEach((l, i) => {
+    if (l.song) return;
+    if (l.level) levels.push({ k: levels.length, name: l.level[0], note: l.level[1], stage: l.level[2], items: [] });
+    levels[levels.length - 1].items.push({ l, i, n: ++num });
   });
+  let nextItem = null;
+  levels.forEach(v => v.items.forEach(x => { if (!nextItem && !solid(x.l)) nextItem = x; }));
+  let current = levels.findIndex(v => !v.items.every(x => solid(x.l)));
+  if (current < 0) current = levels.length - 1;
+  if (homeSel.lv === null || !levels[homeSel.lv]) homeSel.lv = current;
+  const sel = levels[homeSel.lv], list = $('#lessonList');
+  const mk = (tag, cls, text) => { const e = document.createElement(tag); if (cls) e.className = cls; if (text !== undefined) e.textContent = text; return e; };
+  const STAGE_ICON = { Beginner: '🌱', Intermediate: '🚀', Advanced: '👑' };
+  const tabs = mk('div', 'stageTabs');
+  ['Beginner', 'Intermediate', 'Advanced'].forEach(sg => {
+    const lv = levels.filter(v => v.stage === sg);
+    if (!lv.length) return;
+    const got = lv.reduce((a, v) => a + v.items.reduce((c, x) => c + (progress[x.l.id] ? progress[x.l.id].stars || 0 : 0), 0), 0);
+    const all = lv.reduce((a, v) => a + v.items.length * 3, 0);
+    const b = mk('button', 'stageTab' + (sel.stage === sg ? ' active' : ''));
+    b.innerHTML = '<span class="ti"></span><b></b><span class="small"></span>';
+    b.children[0].textContent = STAGE_ICON[sg]; b.children[1].textContent = sg; b.children[2].textContent = '⭐ ' + got + ' / ' + all;
+    b.onclick = () => { homeSel.lv = (lv.find(v => !v.items.every(x => solid(x.l))) || lv[0]).k; renderHome(); };
+    tabs.appendChild(b);
+  });
+  list.appendChild(tabs);
+  const body = mk('div', 'lvBody'), path = mk('div', 'lvPath');
+  levels.filter(v => v.stage === sel.stage).forEach(v => {
+    const n = v.items.filter(x => played(x.l)).length, full = v.items.every(x => solid(x.l));
+    const b = mk('button', 'lvStep' + (v === sel ? ' active' : '') + (full ? ' done' : '') + (v.k === current ? ' here' : ''));
+    b.style.setProperty('--lv', LV_COLORS[v.k % LV_COLORS.length]);
+    b.innerHTML = '<span class="lvNo"></span><span class="lvT"><b></b><span class="small"></span></span><span class="lvMark"></span>';
+    b.querySelector('.lvNo').textContent = full ? '✓' : v.k + 1;
+    b.querySelector('b').textContent = v.name.replace(/^Level \d+: /, '');
+    b.querySelector('.small').textContent = n + ' of ' + v.items.length + ' played';
+    b.querySelector('.lvMark').textContent = v.k === current && !full ? '▶' : '';
+    b.onclick = () => { homeSel.lv = v.k; renderHome(); };
+    path.appendChild(b);
+  });
+  body.appendChild(path);
+  const main = mk('div', 'lvMain');
+  main.style.setProperty('--lv', LV_COLORS[sel.k % LV_COLORS.length]);
+  const head = mk('div', 'lvHead');
+  head.innerHTML = '<b></b><span class="lvNote"></span>';
+  head.querySelector('b').textContent = sel.name;
+  head.querySelector('.lvNote').textContent = sel.note;
+  if (TEACH[sel.k]) {
+    const tip = mk('button', 'lvTip', '🎓 Tips');
+    tip.title = 'What a teacher would say about this level';
+    tip.onclick = () => tipSheet(sel.k);
+    head.appendChild(tip);
+  }
+  main.appendChild(head);
+  const tiles = mk('div', 'lvTiles hscroll');
+  sel.items.forEach(x => {
+    const l = x.l, p = progress[l.id], secs = l.reps * l.bars.length * barBeats(l) * 60 / l.bpm;
+    const b = mk('button', 'lesson lTile' + (solid(l) ? ' solid' : played(l) ? ' tried' : '') + (x === nextItem ? ' next' : ''));
+    b.innerHTML = '<span class="n"></span><b class="tt"></b><span class="s">' + starsHtml(p ? p.stars : 0) + '</span><span class="mm small"></span>' + (x === nextItem ? '<span class="go">▶ Play next</span>' : '');
+    b.querySelector('.n').textContent = x.n;
+    b.querySelector('.tt').textContent = l.title;
+    b.querySelector('.mm').textContent = (p && p.bpm ? (mastered(l) ? '👑 ' : '⚡ ') + p.bpm + ' BPM · ' : '') + '⏱ ' + fmtTime(secs) + (p && repTier(p.reps) ? ' · ' + repTier(p.reps)[2] + '×' + p.reps : '');
+    b.title = feelOf(l) + '. ' + l.goal;
+    b.onclick = () => openLesson(x.i);
+    tiles.appendChild(b);
+  });
+  // every level ends with a test, every stage with an exam
+  const test = testRow('level', sel.k);
+  test.classList.add('lTile');
+  tiles.appendChild(test);
+  if (sel.k === levels.length - 1 || levels[sel.k + 1].stage !== sel.stage) { const ex = testRow('exam', sel.stage); ex.classList.add('lTile'); tiles.appendChild(ex); }
+  main.appendChild(tiles);
+  body.appendChild(main);
+  list.appendChild(body);
   renderTracks();
 }
 
@@ -1115,6 +1164,7 @@ function missFx(reset, wrong) {
   const n = G.stats ? G.stats.miss : 0;
   chip.textContent = '✗ ' + n + ' missed';
   chip.classList.toggle('hidden', !n);
+  const tile = $('#hudMissT'); tile.classList.remove('shake'); void tile.offsetWidth; tile.classList.add('shake');
 }
 // A word that floats up from the hit line in the lane of the pad, with a little burst for the best hits.
 function pop(pad, text, color, burst) { G.pops.push({ pad, text, color, burst: !!burst, t: performance.now() }); if (G.pops.length > 24) G.pops.shift(); }

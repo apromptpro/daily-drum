@@ -71,10 +71,11 @@
       </div>
     </div>
     <div class="badgeDock closed" id="badgeDock">
-      <button class="badgeHead" id="badgeToggle" aria-expanded="false" aria-controls="badgeStrip"><b>&#127941; Badges to collect</b><span id="hubCount" class="muted small"></span><span class="bChev" aria-hidden="true">&#9650; show</span></button>
+      <button class="badgeHead" id="badgeToggle" aria-expanded="false" aria-controls="badgeStrip"><b>&#127941; My badges</b><span id="hubCount" class="muted small"></span><span class="bChev" aria-hidden="true">&#9650; show</span></button>
       <div class="badgeStrip hscroll" id="badgeStrip">
-        <div class="bGroup"><h3>&#127942; The big ones</h3><div id="hubBig" class="badgeWall"></div></div>
-        <div class="bGroup"><h3>All the others</h3><div id="hubRest" class="badgeWall"></div></div>
+        <div class="bGroup mine"><h3 id="hubMineH">&#11088; Mine</h3><div id="hubMine" class="badgeWall"></div></div>
+        <div class="bGroup"><h3 id="hubBigH">&#127942; Big ones to earn</h3><div id="hubBig" class="badgeWall"></div></div>
+        <div class="bGroup"><h3 id="hubRestH">More to earn</h3><div id="hubRest" class="badgeWall"></div></div>
         <div class="bGroup"><h3 title="Play the same lesson cleanly again and again to earn its medal.">&#127941; Practice medals</h3><div id="hubMedals" class="badgeWall"></div></div>
       </div>
     </div>
@@ -629,6 +630,13 @@
         </select>
       </div>
       <div id="ctlSay" class="ctlSay hidden" role="status"></div>
+    </div>
+    <div id="hud" class="hud" aria-live="off">
+      <div class="hudTile ok"><i>&#9989;</i><b id="hudHit">0</b><span>right</span></div>
+      <div class="hudTile bad" id="hudMissT"><i>&#10060;</i><b id="hudMiss">0</b><span>missed</span></div>
+      <div class="hudTile run"><i>&#128293;</i><b id="hudRun">0</b><span>in a row</span></div>
+      <div class="hudTile pts"><i>&#11088;</i><b id="hudPts">0</b><span>points</span></div>
+      <div class="hudProg"><div class="hudBar"><i id="hudFill"></i><img id="hudBro" src="art/b1-walk.png" alt=""></div><span id="hudTime">0:00</span><span class="hudFlag">&#127937;</span></div>
     </div>
     <div id="playNote" class="note hidden"></div>
     <div id="testBar" class="focus testBar hidden"></div>
