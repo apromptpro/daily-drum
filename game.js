@@ -422,7 +422,7 @@ function fillMascots() {
   const logo = (cls, file) => '<span class="' + cls + '"><img alt="Daily Drum, by the Beat Brothers" draggable="false" src="art/' + file + '"></span>';
   $('#acMascots').innerHTML = logo('logoBig wide', 'logo-wide.png');
   $('#acHello').textContent = 'Drum along with the Beat Brothers!';
-  $('#loadMascots').innerHTML = logo('logoBig wide loadLogo', 'logo-wide.png') + '<span class="loadBros drumming">' + mascotHtml(0, false, 'druma') + mascotHtml(1, false, 'drumb') + '</span>';
+  $('#loadMascots').innerHTML = '<span class="loadBros drumming">' + mascotHtml(0, false, 'druma') + mascotHtml(1, false, 'drumb') + '</span>';
   $('#certMascots').innerHTML = logo('logoBig wide certLogo', 'logo-wide.png');   // the wide logo already says "by Beat Brothers"
   $('#brandMark').innerHTML = '<img alt="" draggable="false" src="art/logo-s.png">';
 }
