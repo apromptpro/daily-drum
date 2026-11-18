@@ -1114,3 +1114,34 @@ button.rgTap, body.touch button.rgTap { height: 84px; font-size: 34px; margin-to
 #rgCard h2 { margin-bottom: 2px; } #rgCard #rgHow { margin: 0 0 6px; } #rgCard .row { margin: 6px 0; } #rgCard #rgBest { margin: 4px 0 0; }
 @media (max-height: 720px) { .appMode #rgCard #rgHow { display: none; } .appMode button.rgTap { height: 64px; font-size: 26px; } .appMode #rgCard #rgPad { max-height: 200px; } }
 @media (max-height: 720px) { .appMode button.bmCell { min-height: 21px; height: 21px; } .appMode #beatCard p { display: none; } }
+
+/* ---------- 20. Games: picture steps, round dots and the rhythm lane ---------- */
+.rgHead { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+#rgCard .rgHead h2 { margin: 0; }
+.rgDots { display: flex; gap: 7px; flex: none; }
+.rgDots i { width: 16px; height: 16px; border-radius: 50%; background: #e3e5f3; }
+.rgDots i.ok { background: #2e9d5e; } .rgDots i.bad { background: #d6453a; }
+.rgDots i.now { background: #fff; box-shadow: 0 0 0 3px #8f6cff; }
+.rgSteps { display: flex; align-items: center; justify-content: center; flex-wrap: wrap; gap: 6px; margin: 8px 0 4px; }
+.rgSteps span { display: flex; align-items: center; gap: 6px; padding: 5px 12px; border-radius: 999px; background: #f1f2fa; color: #6b6f8a; font-weight: 800; font-size: 15px; transition: transform .15s; }
+.rgSteps span em { font-style: normal; font-size: 22px; line-height: 1; }
+.rgSteps u { text-decoration: none; color: #b9bcd3; font-weight: 800; }
+.rgSteps span.on { background: #ffd84d; color: #3a2200; transform: scale(1.1); box-shadow: 0 3px 0 #c47a00; }
+#rgCard.rgOn #rgTopics, #rgCard.rgOn #rgBest { display: none; }
+.rgLane { max-width: 520px; height: 60px; margin: 8px auto 4px; padding: 0 28px; border-radius: 16px; background: #f4f1ff; border: 3px solid #d9d0ff; }
+.rgLane.hidden { display: none; }
+.rgLane .trk { position: relative; height: 100%; }
+.rgLane b { position: absolute; top: 4px; width: 22px; height: 22px; margin-left: -11px; line-height: 22px; border-radius: 50%; font-size: 13px; text-align: center; color: #8f6cff; background: #fff; transition: transform .1s; }
+.rgLane b.on { background: #8f6cff; color: #fff; transform: scale(1.3); }
+.rgLane span { position: absolute; bottom: 5px; width: 20px; height: 20px; margin-left: -10px; border-radius: 50%; box-sizing: border-box; }
+.rgLane .tg { background: #7d55ff; animation: rgPop .25s; }
+.rgLane .tp { background: #ffb52e; border: 2px solid #fff; }
+.rgLane .tg.ok { background: #2e9d5e; } .rgLane .tg.bad { background: #d6453a; }
+.rgLane .tp.bad { width: 12px; height: 12px; margin-left: -6px; bottom: 9px; background: #d6453a; border: 0; }
+.rgLane .ph { position: absolute; top: 2px; bottom: 2px; width: 4px; margin-left: -2px; border-radius: 2px; background: #ff5a8a; display: none; }
+@keyframes rgPop { from { transform: scale(2.2); opacity: .3; } }
+html body button.rgTap:not(.go) span { letter-spacing: 2px; }
+@media (max-height: 720px) { .appMode .rgLane { height: 50px; margin: 4px auto; } .appMode .rgSteps { margin: 4px 0 2px; } }.rgPlay { display: flex; align-items: center; justify-content: center; gap: 12px; margin-top: 6px; }
+.rgPlay button.rgTap, body.touch .rgPlay button.rgTap { flex: 1 1 auto; max-width: 360px; width: auto; margin: 0; }
+#rgCard .rgPlay .rgRow { margin: 0; flex: none; }
+#rgCard.rgOn .rgPlay #rgGo { min-height: 0; padding: 10px 16px; font-size: 16px; }

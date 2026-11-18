@@ -205,15 +205,18 @@
       <div class="row bmGoRow"><button id="bmGo" class="playBtn">&#127919; Practise this beat</button><span id="bmSay" class="small bmSay"></span></div>
     </div>
     <div class="card" id="rgCard">
-      <h2 id="rgTitle"></h2>
-      <p id="rgHow" class="muted"></p>
+      <div class="rgHead"><h2 id="rgTitle"></h2><div id="rgDots" class="rgDots" aria-label="Rounds"></div></div>
+      <div id="rgSteps" class="rgSteps"></div>
       <div class="row" id="rgTopics"></div>
       <div id="rgSay" class="labSay">Press Start.</div>
       <div id="rgStaff" class="notation readKey rgStaff"></div>
+      <div id="rgLane" class="rgLane hidden" aria-hidden="true"><div class="trk"></div></div>
       <div id="rgOpts" class="rgOpts"></div>
       <svg id="rgPad" class="padSvg quizPad" viewBox="0 0 420 340" aria-label="Your drum pad. Tap the drum you heard."></svg>
-      <div class="row rgRow"><button id="rgGo" class="primary big">&#9654; Start</button><button id="rgAgain" class="hidden">&#128266; Hear it again</button><b id="rgScore" class="quizScore"></b></div>
-      <button id="rgTap" class="rgTap hidden" aria-label="Tap the rhythm here">&#129345;<span>TAP</span></button>
+      <div class="rgPlay">
+        <button id="rgTap" class="rgTap hidden" aria-label="Tap the rhythm here">&#129345;<span>WAIT</span></button>
+        <div class="row rgRow"><button id="rgGo" class="primary big">&#9654; Start</button><button id="rgAgain" class="hidden">&#128266; Hear it again</button></div>
+      </div>
       <p id="rgBest" class="muted small"></p>
     </div>
     <div class="card" id="quizCard">

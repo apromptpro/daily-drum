@@ -1564,14 +1564,15 @@ const RG_TOPICS = [
   { name: 'Sixteenth notes', div: 4, bpm: 60, pats: ['x---xxxxx---x---', 'xxxxx---x-x-x---', 'x-x-xxxxx---x---', 'x-xxx-x-x-xxx---', 'xxx-x-x-xxx-x---', 'x---x-xxx---xxxx'] }
 ];
 const RG_GAMES = {
-  drum: { title: '🎧 Name that drum', how: 'You hear a drum. Tap that drum in the picture, or hit it on your pad.' },
-  hear: { title: '👂 Which one was it?', how: 'You hear a rhythm. Tap the written rhythm that matches it.' },
-  copy: { title: '🔁 Copy me', how: 'Listen to the rhythm. Then play it back: tap the big drum, press Space, or hit any pad.' },
-  read: { title: '📖 Read and play', how: 'Read the rhythm. After four clicks, play it: tap the big drum, press Space, or hit any pad.' }
+  // steps: the three things that happen in every round, shown as pictures; the one happening now lights up
+  drum: { title: '🎧 Name that drum', idle: 'A drum plays. Find it in the picture.', steps: [['👂', 'Listen'], ['👆', 'Tap that drum'], ['⭐', 'Right?']] },
+  hear: { title: '👂 Which one was it?', idle: 'A rhythm plays. Pick the picture that matches.', steps: [['👂', 'Listen'], ['👆', 'Pick A, B or C'], ['⭐', 'Right?']] },
+  copy: { title: '🔁 Copy me', idle: 'The app plays a short rhythm. Then you tap the same rhythm back.', steps: [['👂', 'Listen'], ['🥁', 'Tap it back'], ['⭐', 'Right?']] },
+  read: { title: '📖 Read and play', idle: 'A rhythm is shown. After four clicks, you tap it.', steps: [['👀', 'Read it'], ['🥁', 'Tap it'], ['⭐', 'Right?']] }
 };
 const RG_DRUMS = ['snare', 'kick', 'hihat', 'crash', 'tom1', 'tom3', 'ride'];
 const RG_LEN = 5;
-const RG = { game: 'hear', topic: 0, on: false, n: 0, score: 0, pat: '', opts: [], want: '', phase: '', taps: [], t1: 0, timers: [], deaf: 0, lastT: 0 };
+const RG = { game: 'hear', topic: 0, on: false, n: 0, score: 0, res: [], pat: '', opts: [], want: '', phase: '', taps: [], t1: 0, timers: [], deaf: 0, lastT: 0, q: [], tick: 0, run: 0, bars: null };
 const rgTopic = () => RG_TOPICS[RG.topic];
 const rgKey = () => RG.game + (RG.game === 'drum' ? '' : '.' + RG.topic);
 const rgPick = (list, not) => { let v; do { v = list[Math.floor(Math.random() * list.length)]; } while (list.length > 1 && v === not); return v; };
@@ -1580,57 +1581,109 @@ function rgLater(fn, ms) { RG.timers.push(setTimeout(fn, ms)); }
 function rgClear() { RG.timers.forEach(clearTimeout); RG.timers = []; }
 function rgStaffHtml(pat) { return staffSvg({ div: rgTopic().div, bars: [{ snare: pat }] }, [0], 450); }
 // One bar: a click on every beat, and the rhythm on the snare when the app plays it itself.
+// Sounds and screen changes wait in a list and are sent off only a moment before they are due. So Stop really stops:
+// nothing is left playing, and the pictures move by the same clock as the sound.
+function rgAt(t, fn, ui) { RG.q.push({ t, fn, ui }); }
+function rgPump() {
+  const ctx = Ear.ctx;
+  if (!ctx) return;
+  const now = ctx.currentTime, heard = now - outLat();   // heard: what is coming out of the speaker at this moment
+  for (let i = 0; i < RG.q.length; i++) {
+    const e = RG.q[i];
+    if (e.ui ? heard >= e.t : now + 0.15 >= e.t) { RG.q.splice(i--, 1); e.fn(Math.max(e.t, now)); }
+  }
+  // the line that travels along the rhythm lane
+  const ph = $('#rgLane .ph'), B = RG.bars;
+  let at = -1;
+  if (ph && B) B.starts.forEach(s => { if (heard >= s && heard < s + B.len) at = (heard - s) / B.len; });
+  if (ph) { ph.style.display = at < 0 ? 'none' : 'block'; if (at >= 0) ph.style.left = (at * 100) + '%'; }
+}
 function rgBar(t0, pat, withDrum) {
   const tp = rgTopic(), spb = 60 / tp.bpm, step = spb / tp.div;
-  for (let b = 0; b < 4; b++) Ear.click(t0 + b * spb, b === 0, 0.25);
-  if (withDrum) for (let i = 0; i < pat.length; i++) if (pat[i] === 'x') Ear.drum('snare', t0 + i * step);
+  for (let b = 0; b < 4; b++) {
+    rgAt(t0 + b * spb, (t) => Ear.click(t, b === 0, 0.25));
+    rgAt(t0 + b * spb, () => { const e = document.querySelectorAll('#rgLane b')[b]; if (e) { e.classList.add('on'); setTimeout(() => e.classList.remove('on'), 200); } }, true);
+  }
+  if (withDrum) for (let i = 0; i < pat.length; i++) if (pat[i] === 'x') {
+    rgAt(t0 + i * step, (t) => Ear.drum('snare', t));
+    if (RG.game === 'copy') rgAt(t0 + i * step, () => rgDot(i / pat.length, 'tg'), true);   // each note pops up as it sounds
+  }
   return t0 + 4 * spb;
 }
+// The rhythm lane: one bar drawn as a strip with the four beats on it. Dots show what was played and what was tapped.
+function rgLaneReset() {
+  $('#rgLane .trk').innerHTML = '<i class="ph"></i>' + [1, 2, 3, 4].map((n, b) => '<b style="left:' + (b * 25) + '%">' + n + '</b>').join('');
+}
+function rgDot(frac, cls) {
+  const d = document.createElement('span');
+  d.className = cls; d.style.left = (Math.max(0, Math.min(1, frac)) * 100) + '%';
+  $('#rgLane .trk').appendChild(d);
+  return d;
+}
+function rgStep(i) { Array.from($('#rgSteps').querySelectorAll('span')).forEach((e, k) => e.classList.toggle('on', k === i)); }
+function rgTapLabel(go) { const b = $('#rgTap'); b.classList.toggle('go', go); b.lastChild.textContent = go ? 'TAP!' : 'WAIT'; }
 function rgScoreUi() {
-  $('#rgScore').textContent = RG.on ? 'Round ' + Math.min(RG_LEN, RG.n + 1) + ' of ' + RG_LEN + ' · ' + RG.score + ' right' : '';
+  let dots = '';
+  for (let i = 0; i < RG_LEN; i++) dots += '<i class="' + (i < RG.res.length ? (RG.res[i] ? 'ok' : 'bad') : RG.on && i === RG.n ? 'now' : '') + '"></i>';
+  $('#rgDots').innerHTML = RG.on || RG.res.length ? dots : '';
   const best = ((prof().rg || {})[rgKey()]) || 0;
   $('#rgBest').textContent = best ? 'Your best here: ' + '★'.repeat(best) + '☆'.repeat(3 - best) : '';
 }
 // Put one of the four games on the page.
 function rgSet(game) {
   rgStop();
-  RG.game = game;
+  RG.game = game; RG.res = [];
   const g = RG_GAMES[game];
   $('#rgTitle').textContent = g.title;
-  $('#rgHow').textContent = g.how;
+  $('#rgSteps').innerHTML = g.steps.map(s => '<span><em>' + s[0] + '</em>' + s[1] + '</span>').join('<u>➜</u>');
   $('#rgTopics').classList.toggle('hidden', game === 'drum');
   $('#rgPad').classList.toggle('hidden', game !== 'drum');
   $('#rgStaff').innerHTML = ''; $('#rgOpts').innerHTML = '';
-  rgSay('Press Start. ' + RG_LEN + ' rounds.');
+  $('#rgLane').classList.add('hidden');
+  rgSay(g.idle + ' Press Start.');
   rgScoreUi();
 }
 function rgStop() {
   rgClear();
+  clearInterval(RG.tick); RG.tick = 0; RG.q = []; RG.bars = null; RG.run++;
   RG.on = false; RG.phase = '';
   $('#rgGo').textContent = '▶ Start';
+  $('#rgCard').classList.remove('rgOn');
   $('#rgAgain').classList.add('hidden');
   $('#rgTap').classList.add('hidden');
+  rgTapLabel(false); rgStep(-1);
+  const ph = $('#rgLane .ph'); if (ph) ph.style.display = 'none';
   document.querySelectorAll('#rgPad .spot').forEach(e => e.classList.remove('target'));
 }
 function rgStart() {
   rgStop();
-  Ear.ensureCtx();
-  RG.on = true; RG.n = 0; RG.score = 0;
+  const ctx = Ear.ensureCtx(), run = RG.run;
+  RG.on = true; RG.n = 0; RG.score = 0; RG.res = [];
   $('#rgGo').textContent = '■ Stop';
+  $('#rgGo').blur();   // or the space bar, used for tapping, would press Stop
+  $('#rgCard').classList.add('rgOn');
+  $('#rgLane').classList.add('hidden');
   if (RG.game !== 'hear' && calibrated() && !micUserOff) ensureListening();   // the real pad can answer too
-  rgRound();
+  RG.tick = setInterval(rgPump, 30);
+  // On a tablet the sound may still be asleep: begin only once it is really running, or the round would start mid-way.
+  const go = () => { if (RG.on && RG.run === run) rgRound(); };
+  if (ctx.state === 'running') go();
+  else { rgSay('Starting…'); rgScoreUi(); const p = ctx.resume(); if (p && p.then) p.then(go, go); else go(); }
 }
 function rgRound() {
-  rgClear();
-  const now = Ear.ensureCtx().currentTime, game = RG.game;
+  rgClear(); RG.q = []; RG.bars = null;
+  const now = Ear.ensureCtx().currentTime, game = RG.game, taps = game === 'copy' || game === 'read';
   $('#rgStaff').innerHTML = ''; $('#rgOpts').innerHTML = '';
-  $('#rgTap').classList.toggle('hidden', game !== 'copy' && game !== 'read');
-  $('#rgAgain').classList.toggle('hidden', game !== 'drum' && game !== 'hear');
+  $('#rgTap').classList.toggle('hidden', !taps);
+  $('#rgLane').classList.toggle('hidden', !taps);
+  $('#rgAgain').classList.toggle('hidden', taps);
+  rgTapLabel(false);
   rgScoreUi();
   if (game === 'drum') {
     RG.want = rgPick(RG_DRUMS, RG.want);
     RG.phase = 'answer';
-    rgSay('Which drum was that?');
+    rgStep(0);
+    rgSay('👂 Listen… which drum is it?');
     rgHearAgain();
     return;
   }
@@ -1648,38 +1701,54 @@ function rgRound() {
       box.appendChild(b);
     });
     RG.phase = 'answer';
-    rgSay('Listen: four clicks, then the rhythm.');
+    rgStep(0);
+    rgSay('👂 Listen: four clicks, then the rhythm.');
     rgHearAgain();
     return;
   }
-  // Copy me and Read and play: four clicks, (the app plays it,) then the child plays one bar.
+  // Copy me and Read and play: four clicks to get ready, (the app plays the rhythm,) then the child plays one bar.
   RG.taps = [];
-  let t = now + 0.35;
+  rgLaneReset();
+  let t = now + 0.4;
+  const starts = [t];
+  RG.phase = 'wait';
+  rgStep(0);
   t = rgBar(t, RG.pat, false);
   if (game === 'copy') {
-    rgSay('Listen…');
-    rgLater(() => rgSay('Listen… 🔊'), (t - now) * 1000);
+    rgSay('Get ready to listen… 1, 2, 3, 4');
+    rgAt(t - 0.1, () => rgSay('👂 Listen! Do not tap yet.', '#4b2bbf'), true);
+    starts.push(t);
     t = rgBar(t, RG.pat, true);
   } else {
     $('#rgStaff').innerHTML = rgStaffHtml(RG.pat);
-    rgSay('Get ready: 1, 2, 3, 4…');
+    rgSay('👀 Read it. Tap after the four clicks: 1, 2, 3, 4');
   }
+  starts.push(t);
+  RG.bars = { starts, len: bar };
   RG.t1 = t;
   RG.deaf = t - 0.12;   // the app's own drum must not count as a tap
-  RG.phase = 'wait';
-  rgLater(() => { RG.phase = 'tap'; rgSay('Your turn! Play it now.', '#4b2bbf'); $('#rgTap').classList.add('go'); }, (t - 0.25 - now) * 1000);
+  rgAt(t - 0.25, () => {
+    RG.phase = 'tap';
+    rgLaneReset();   // the lane is empty again: now it shows the child's own taps
+    rgStep(1); rgTapLabel(true);
+    rgSay('🥁 Your turn! Tap it now.', '#c47a00');
+  }, true);
   rgBar(t, RG.pat, false);
-  rgLater(rgJudge, (t + bar + 0.3 - now) * 1000);
+  rgAt(t + bar + 0.3, rgJudge, true);
 }
 function rgHearAgain() {
   if (!RG.on || RG.phase !== 'answer') return;
+  RG.q = [];   // pressed twice: the first playing is dropped, they never pile up
   const t = Ear.ensureCtx().currentTime + 0.15;
-  if (RG.game === 'drum') { Ear.drum(RG.want, t); Ear.drum(RG.want, t + 0.6); RG.deaf = t + 1.1; }
-  else if (RG.game === 'hear') rgBar(rgBar(t, RG.pat, false), RG.pat, true);
+  if (RG.game === 'drum') { rgAt(t, (x) => Ear.drum(RG.want, x)); rgAt(t + 0.6, (x) => Ear.drum(RG.want, x)); rgAt(t + 0.9, () => rgStep(1), true); RG.deaf = t + 1.1; }
+  else if (RG.game === 'hear') { const end = rgBar(rgBar(t, RG.pat, false), RG.pat, true); rgAt(end, () => { if (RG.phase === 'answer') { rgStep(1); rgSay('👆 Which one was it? Tap A, B or C.'); } }, true); }
 }
 function rgNext(right) {
   if (right) RG.score++;
+  RG.res.push(!!right);
   RG.n++; RG.phase = 'done';
+  RG.q = []; RG.bars = null;
+  rgStep(2); rgTapLabel(false);
   rgScoreUi();
   rgLater(() => (RG.n >= RG_LEN ? rgEnd() : rgRound()), right ? 1500 : 2400);
 }
@@ -1705,34 +1774,40 @@ function rgTap(time) {
   if (!RG.on || RG.phase !== 'tap') return;
   if (time - RG.lastT < 0.07) return;
   RG.lastT = time;
-  RG.taps.push(time);
+  const bar = 4 * 60 / rgTopic().bpm;
+  RG.taps.push({ t: time, el: rgDot((time - RG.t1) / bar, 'tp') });
   const b = $('#rgTap');
   b.classList.add('hit'); setTimeout(() => b.classList.remove('hit'), 90);
 }
 function rgJudge() {
   const tp = rgTopic(), step = 60 / tp.bpm / tp.div, tol = Math.min(0.2, step * 0.45);
   RG.phase = 'done';
-  $('#rgTap').classList.remove('go');
   const want = [];
   for (let i = 0; i < RG.pat.length; i++) if (RG.pat[i] === 'x') want.push({ i, t: RG.t1 + i * step, ok: false });
-  const taps = RG.taps.map(t => ({ t, used: false }));
+  const taps = RG.taps.map(x => ({ t: x.t, el: x.el, used: false }));
   want.forEach(w => {
     let best = null;
     taps.forEach(x => { if (!x.used && Math.abs(x.t - w.t) <= tol && (!best || Math.abs(x.t - w.t) < Math.abs(best.t - w.t))) best = x; });
     if (best) { best.used = true; w.ok = true; }
   });
   const missed = want.filter(w => !w.ok).length, extra = taps.filter(x => !x.used).length, right = !missed && !extra;
+  // The lane now shows the rhythm itself: green where it was tapped in time, red where it was missed. Taps that
+  // belong to no note stay as red marks.
+  taps.forEach(x => { if (x.used) x.el.remove(); else x.el.className = 'tp bad'; });
+  want.forEach(w => rgDot(w.i / RG.pat.length, 'tg ' + (w.ok ? 'ok' : 'bad')));
   $('#rgStaff').innerHTML = rgStaffHtml(RG.pat);
   want.forEach(w => { const e = $('#rgStaff').querySelector('[data-n="0-' + w.i + '-snare"]'); if (e) e.setAttribute('class', 'nh ' + (w.ok ? 'ok' : 'bad')); });
-  rgSay(!taps.length ? 'I did not hear any taps. Tap the big drum when it says "Your turn".'
+  rgSay(!taps.length ? 'No taps heard. Tap the big drum when it turns yellow.'
     : right ? '✓ Spot on!'
-    : missed ? 'Nearly: ' + missed + (missed === 1 ? ' note was' : ' notes were') + ' missed or out of time (the red ones).'
-    : extra + (extra === 1 ? ' tap' : ' taps') + ' too many. Play only the notes you see.', right ? '#1c9d58' : '#c0392b');
+    : missed ? 'Nearly! Red dots: missed or out of time.'
+    : extra + (extra === 1 ? ' tap' : ' taps') + ' too many (the small red marks).', right ? '#1c9d58' : '#c0392b');
   rgNext(right);
 }
 function rgEnd() {
-  const s = RG.score, stars = s >= RG_LEN ? 3 : s >= RG_LEN - 1 ? 2 : s >= RG_LEN - 2 ? 1 : 0;
+  const s = RG.score, stars = s >= RG_LEN ? 3 : s >= RG_LEN - 1 ? 2 : s >= RG_LEN - 2 ? 1 : 0, res = RG.res;
   rgStop();
+  RG.res = res;   // the five round dots stay to look at
+  $('#rgLane').classList.add('hidden'); $('#rgStaff').innerHTML = '';
   const p = prof();
   p.rg = p.rg || {};
   if (stars > (p.rg[rgKey()] || 0)) { p.rg[rgKey()] = stars; saveProf(); }
@@ -1771,7 +1846,7 @@ function buildRg() {
     };
     topics.appendChild(b);
   });
-  $('#rgGo').onclick = () => { if (RG.on) { rgStop(); rgSay('Stopped. Press Start for a new go.'); rgScoreUi(); } else rgStart(); };
+  $('#rgGo').onclick = () => { if (RG.on) { rgStop(); RG.res = []; $('#rgLane').classList.add('hidden'); $('#rgStaff').innerHTML = ''; $('#rgOpts').innerHTML = ''; rgSay('Stopped. Press Start for a new go.'); rgScoreUi(); } else rgStart(); };
   $('#rgAgain').onclick = rgHearAgain;
   const tapNow = (e) => {
     e.preventDefault();
