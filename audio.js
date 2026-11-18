@@ -201,10 +201,24 @@ const Ear = {
 
   // The small program that finds hits in the sound. Fetched once; it can be fetched ahead of time, before the
   // microphone is asked for, so pressing Start has nothing left to wait for.
+  // Engine 1 is the hit finder and recogniser the app has always used, and the one used unless engine 2 is asked for.
+  // Engine 2 (worklet2.js + ear2.js) finds quick repeated hits and hits under a ringing cymbal more often; it is
+  // switched on with "?ear=2" at the end of the address and off again with "?ear=1". Setup always works as engine 1.
+  engine: (() => {
+    try {
+      const q = /[?&]ear=([12])\b/.exec(location.search);
+      if (q) localStorage.setItem('dc.ear', q[1]);
+      return localStorage.getItem('dc.ear') === '2' ? 2 : 1;
+    } catch (e) { return 1; }
+  })(),
   loadModule() {
     if (this.moduleLoaded) return Promise.resolve();
     if (!this._mod) {
-      this._mod = this.ensureCtx().audioWorklet.addModule('worklet.js').then(() => { this.moduleLoaded = true; }, (e) => { this._mod = null; throw e; });
+      const ctx = this.ensureCtx(), classic = () => { this.engine = 1; return ctx.audioWorklet.addModule('worklet.js'); };
+      const extra = () => new Promise((ok, no) => { const s = document.createElement('script'); s.src = 'ear2.js'; s.onload = ok; s.onerror = no; document.head.appendChild(s); });
+      // If anything of engine 2 cannot be fetched (offline, for one), the app carries on with engine 1.
+      const load = this.engine === 2 ? extra().then(() => ctx.audioWorklet.addModule('worklet2.js')).catch(classic) : classic();
+      this._mod = load.then(() => { this.moduleLoaded = true; }, (e) => { this._mod = null; throw e; });
     }
     return this._mod;
   },
@@ -227,13 +241,17 @@ const Ear = {
     // Microphone unplugged or taken away by another program: say so instead of silently hearing nothing.
     if (track) track.onended = () => { if (this.stream === stream) { this.stop(); if (this.onLost) this.onLost(); } };
     this.src = ctx.createMediaStreamSource(stream);
-    this.node = new AudioWorkletNode(ctx, 'onset-processor', { numberOfInputs: 1, numberOfOutputs: 1, outputChannelCount: [1] });
+    this.node = new AudioWorkletNode(ctx, this.engine === 2 ? 'onset-processor-2' : 'onset-processor', { numberOfInputs: 1, numberOfOutputs: 1, outputChannelCount: [1] });
     this.node.port.onmessage = (e) => {
       const d = e.data;
       if (d.type === 'level') { if (this.onLevel) this.onLevel(d.rms); }
       else if (d.type === 'onset') { if (this.onOnset) this.onOnset(d.time); }
       else if (d.type === 'hit' && this.onHit) {
         const feat = fingerprint(d.samples, ctx.sampleRate);
+        if (d.pre && typeof Ear2 !== 'undefined') {   // engine 2: was something still ringing when this hit came?
+          const abs = Ear2.bandEnergies(d.samples, ctx.sampleRate), bg = Ear2.background(d.pre, ctx.sampleRate);
+          if (Ear2.total(bg) >= 0.03 * Ear2.total(abs)) feat.clean = Ear2.cleaned(abs, bg);
+        }
         feat.snd = packSound(d.samples, null, ctx.sampleRate);   // the first 43 ms now; the rest follows in a moment
         this._last = { time: d.time, feat, head: d.samples };
         if (d.time < this.deafUntil) return;   // the app is playing a saved hit back: that is not the player
@@ -416,8 +434,10 @@ const Ear = {
     const T = this.templates;
     const ids = this.padIds();
     if (!ids.length) return { pads: [], keys: [], score: 0 };
-    const x = shape(feat);
-    const expected = (opts.expected || []).map(p => p.slice().sort().join('+'));
+    // Engine 2, in lessons and games only: judge the hit without the sound that was already ringing. Setup (allPairs,
+    // teaching, the pad check) always gets the plain fingerprint, so it behaves exactly as before.
+    const x = shape(opts.expected && !opts.allPairs && feat.clean ? feat.clean : feat);
+    const expected =(opts.expected || []).map(p => p.slice().sort().join('+'));
     const isExpected = (keys) => expected.indexOf(canonPads(keys).sort().join('+')) >= 0;
     const click = T._click ? T._click.mean : null;
     // Prepared comparison shapes are kept until the calibration changes, so each hit costs only a few dot products.
