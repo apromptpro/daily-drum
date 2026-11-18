@@ -585,7 +585,7 @@ function calHear() {
   if (!Cal.active || Cal.phase !== 'pads') return;
   const t = Ear.ctx.currentTime + 0.06;
   if (Cal.key === 'hihatopen') Ear._noiseHit(t, 0.9, 7000, 0.25);
-  else (SPOT[Cal.key].combo || [SPOT[Cal.key].pad]).forEach(p => Ear.drum(p, t));
+  else (SPOT[Cal.key].combo || [SPOT[Cal.key].pad]).forEach(p => Ear.drum(p, t, true));
   Cal.deafUntil = t + 0.5;
 }
 const calNeed = () => Cal.need || CAL_NEED;

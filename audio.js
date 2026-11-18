@@ -309,8 +309,43 @@ const Ear = {
     o.connect(g).connect(ctx.destination);
     o.start(time); o.stop(time + dur + 0.02);
   },
-  drum(pad, time) {
+  // The player's own pad, when it has been taught: the most typical of the recorded hits of that drum.
+  // So what the app plays in demos and games is the sound the child will hear from the real pad.
+  _own(pad, time) {
+    const T = this.templates;
+    if (this._ownFor !== T) { this._ownFor = T; this._ownPick = {}; }
+    let pick = this._ownPick[pad];
+    if (pick === undefined) {
+      pick = null;
+      const keys = this.taughtIds().filter(k => canon(k) === pad && k !== 'hihatopen').sort(   // the ringing open hi-hat is not what "hi-hat" means in a demo
+(a, b) => (a === pad ? -1 : b === pad ? 1 : 0));
+      for (const k of keys) {
+        const m = shape(T[k].mean);
+        let best = null, bs = -2;
+        T[k].samples.forEach(s => { const d = dot(shape(s), m); if (d > bs) { bs = d; best = s; } });
+        if (best) { pick = { feat: best }; break; }
+      }
+      this._ownPick[pad] = pick;
+    }
+    if (!pick || !pick.feat.snd) return false;
+    if (pick.snd !== pick.feat.snd) {   // decoded once; again only if a longer recording of the hit has arrived
+      const snd = pick.feat.snd, at = snd.indexOf(':'), rate = +snd.slice(0, at), bin = atob(snd.slice(at + 1));
+      if (!(rate > 0) || bin.length < 200) return false;
+      const buf = this.ctx.createBuffer(1, bin.length, rate), d = buf.getChannelData(0), fade = Math.min(bin.length, Math.round(rate * 0.02));
+      for (let i = 0; i < bin.length; i++) d[i] = (bin.charCodeAt(i) - 128) / 127;
+      for (let i = 0; i < fade; i++) d[bin.length - 1 - i] *= i / fade;   // no click where the recording ends
+      pick.snd = snd; pick.buf = buf;
+    }
+    const s = this.ctx.createBufferSource(), g = this.ctx.createGain();
+    s.buffer = pick.buf; g.gain.value = 0.7;
+    s.connect(g).connect(this.ctx.destination);
+    s.start(time);
+    return true;
+  },
+  // plain: always the app's own drum sound (Setup uses it while a pad is being taught).
+  drum(pad, time, plain) {
     this.ensureCtx();
+    if (!plain && this._own(pad, time)) return;
     const v = 0.7;
     if (pad === 'kick') this._thump(time, 150, 45, 0.28, v);
     else if (pad === 'snare') { this._noiseHit(time, 0.16, 1500, v * 0.6); this._thump(time, 220, 160, 0.1, v * 0.5); }
