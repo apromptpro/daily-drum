@@ -1251,7 +1251,6 @@ function buildQuiz() {
       if (Quiz.on) quizStart();
     };
   });
-  $('#setupQuiz').onclick = () => { show('learn'); UI.reveal($('#quizCard')); };
   quizDraw('');
   quizScoreUi();
 }

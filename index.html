@@ -507,97 +507,112 @@
     <div class="row noPrint"><button id="certPrint" class="primary">Print</button><button id="certBack">Back</button></div>
   </section>
 
-  <!-- Setup -->
-  <section id="setup" class="hidden">
-    <h1>Setup <span class="muted small">(a job for a grown-up)</span></h1>
-
-    <div class="card">
-      <h2>1. Microphone</h2>
-      <p class="muted">The app listens to your pad through this device's microphone. Turn the pad's volume up, keep it close to the device, and keep the room quiet.</p>
-      <div class="row">
-        <button id="connectBtn" class="primary">Turn on microphone</button>
-        <select id="deviceSel" class="hidden" aria-label="Choose microphone"><option value="">Default microphone</option></select>
-      </div>
-      <div class="meterWrap">
-        <div class="meter"><div id="meterBar"></div><div id="meterMark"></div></div>
-        <span id="meterTxt" class="muted small">Hit a pad: the bar should jump past the line.</span>
-      </div>
-      <div class="row">
-        <label for="sens">Sensitivity</label>
-        <input id="sens" type="range" min="0" max="100" value="50">
-        <span class="muted small">Raise it if soft hits are missed; lower it if noise triggers hits.</span>
-      </div>
-    </div>
-
-    <div class="card">
-      <h2>2. Teach the app your pads</h2>
-      <p class="muted">The app already knows ready-made drum sounds, so you can go straight to step 3 and check your pad. Teach a pad here when the check says it needs it. Tap a pad in the picture, then hit that pad 8 times: some soft, some hard. Or press "Teach all pads" and the app walks you through them one by one.
-        You can pause at any time, and tap any pad to teach it again. Teach a pad again if you change its volume or drum-kit sound, or use a different device.</p>
-      <div class="calGrid">
-        <svg id="padMap" class="padSvg" viewBox="0 0 420 340" aria-label="Your drum pad. Tap a pad to teach it."></svg>
-        <div>
+  <!-- Setup: "My pad" -->
+  <section id="setup" class="hidden" data-mode="idle">
+    <h1>My pad <span class="muted small">Does the app hear every drum?</span></h1>
+    <div class="padDash">
+      <div class="card padMain">
+        <div class="micRow">
+          <button id="connectBtn" class="primary">Turn on microphone</button>
+          <div class="meterWrap">
+            <div class="meter"><div id="meterBar"></div><div id="meterMark"></div></div>
+            <span id="meterTxt" class="muted small">Hit a pad: the bar should pass the line.</span>
+          </div>
+          <button id="setMoreBtn" title="Microphone choice, sensitivity, timing, left hand">&#9881; More</button>
+        </div>
+        <svg id="padMap" class="padSvg" viewBox="0 0 420 340" aria-label="Your drum pad. Tap a drum to see how well the app hears it."></svg>
+        <div class="padSay">
+          <div id="testOut" class="testOut">Hit any pad</div>
+          <div id="chkPrompt" class="chkPrompt"></div>
           <div id="calPrompt" class="calPrompt"></div>
           <div id="calDots" class="dots"></div>
-          <div class="row">
-            <button id="calStart" class="primary">Teach all pads</button>
-            <button id="calPause" class="primary hidden">Pause</button>
+          <div class="row calBtns">
+            <button id="calPause" class="primary hidden">Stop teaching</button>
             <button id="calHear" class="hidden" title="Plays the app's own example of this drum. Your pad will sound a little different.">&#128266; Hear an example</button>
-            <button id="calSkip" class="hidden">Skip this pad</button>
-            <button id="calRedo" class="hidden">Start this pad again</button>
-            <button id="calMore" class="hidden" title="Keeps what the app already knows about this pad and adds eight more hits (up to 32 in all). Use it for a pad that is sometimes misheard.">Add 8 more hits instead</button>
-            <button id="calForget" class="hidden">Forget this pad</button>
-            <button id="calReset" class="hidden">Forget all pads</button>
+            <button id="calSkip" class="hidden">Skip this drum</button>
+            <button id="calRedo" class="hidden">Start this drum again</button>
+            <button id="calMore" class="hidden" title="Keeps what the app already knows about this drum and adds eight more hits (up to 32 in all).">Add 8 more hits instead</button>
+            <button id="calForget" class="hidden">Forget this drum</button>
           </div>
-          <div id="calResult" class="muted"></div>
         </div>
       </div>
-      <h3>Pads hit together (optional)</h3>
-      <p class="muted small">Many beats hit two or three pads at the same moment. The app can work these out from the single pads, but it is more exact if it has heard them together. Teach the single pads first, then tap a pair and hit both pads at once, 8 times.</p>
-      <div id="comboList" class="comboList"></div>
-    </div>
-
-    <div class="card">
-      <h2>3. Test</h2>
-      <p class="muted">Hit any pad. The app shows what it heard, and the pad lights up in the picture above.</p>
-      <div id="testOut" class="testOut">-</div>
-      <h3>Check every pad</h3>
-      <p class="muted small">The app asks for each pad in turn, three hits each, and keeps score. Every pad gets two numbers: how many hits were recognised, and the match (how close the hits were to the sound the app knows). Green pads are fine, yellow ones are shaky, red ones need teaching. Afterwards every hit can be played back with &#9654;. A hit that was heard wrongly can be taught to the app on its own, and a bad hit among the taught ones can be removed.</p>
-      <div class="row"><button id="chkStart" class="primary">Check all pads</button><button id="hitsShow">&#127911; Listen to the taught hits</button><span id="chkPrompt" class="chkPrompt"></span></div>
-      <div id="chkOut" class="chkOut"></div>
-      <h3>&#127932; New to drum music?</h3>
-      <p class="muted small">Once the pads are taught, the Note quiz shows one written note at a time and the player hits that drum. It is the quickest way to get used to the sheet music before the first lesson.</p>
-      <div class="row"><button id="setupQuiz">&#127932; Open the Note quiz</button></div>
-    </div>
-
-    <div class="card">
-      <h2>4. Timing</h2>
-      <p class="muted">Every device delays sound a little. Measure it once so "early" and "late" are judged fairly. Takes about 5 seconds.</p>
-      <div class="row">
-        <button id="latBtn" class="primary">Measure delay</button>
-        <span id="latOut" class="small"></span>
-      </div>
-      <div class="row">
-        <label for="offset">Timing offset</label>
-        <input id="offset" type="range" min="-50" max="400" value="60">
-        <span id="offsetTxt" class="small">60 ms</span>
-      </div>
-      <p class="muted small">Set by "Measure delay"; you can also adjust it by hand. After a lesson, the app suggests a better value if your hits are consistently early or late.</p>
-      <div class="row">
-        <label for="clickVol">Metronome volume</label>
-        <input id="clickVol" type="range" min="0" max="100" value="50">
+      <div class="card padSide">
+        <div id="padSum" class="padSum"></div>
+        <div id="padHealth" class="padHealth"></div>
+        <div class="padActs">
+          <button id="chkStart" class="primary big">&#9989; Check my pad</button>
+          <button id="chkFix" class="big hidden"></button>
+       </div>
+        <div id="calResult" class="muted small"></div>
       </div>
     </div>
 
-    <div class="card">
-      <h2>5. Left or right hand</h2>
-      <div class="row">
-        <label for="handSel">The drummer is</label>
-        <select id="handSel"><option value="R">right-handed</option><option value="L">left-handed</option></select>
-        <span class="muted small">Every note shows which hand or foot plays it.</span>
+    <!-- one drum: how it did in the check, the hits it was taught, teach or forget -->
+    <div id="padCard" class="frCard hidden" role="dialog" aria-modal="true" aria-label="One drum">
+      <div class="card padCardBox">
+        <button id="padCardX" class="xBtn" aria-label="Close">&#10005;</button>
+        <h2 id="padCardT"></h2>
+        <p id="padCardS" class="muted"></p>
+        <div class="row">
+          <button id="padCardTeach" class="primary big"></button>
+          <button id="padCardForget" class="hidden">Forget what was taught</button>
+        </div>
+        <div id="chkOut" class="chkOut"></div>
       </div>
+    </div>
 
-      <p class="muted small keysHint">No pad nearby? Any lesson can be tried by tapping the pad picture beside the notes, or with the keyboard:
-        <kbd>A</kbd> hi-hat, <kbd>S</kbd> snare, <kbd>Space</kbd> kick, <kbd>Q</kbd> crash, <kbd>E</kbd> <kbd>D</kbd> <kbd>F</kbd> toms, <kbd>R</kbd> ride.</p>
+    <!-- everything that is needed once, or seldom -->
+    <div id="setMore" class="frCard hidden" role="dialog" aria-modal="true" aria-label="More settings">
+      <div class="card setMoreBox">
+        <button id="setMoreX" class="xBtn" aria-label="Close">&#10005;</button>
+        <h2>More settings</h2>
+        <div class="setGrid">
+          <div>
+            <h3>Microphone</h3>
+            <div class="row">
+              <select id="deviceSel" class="hidden" aria-label="Choose microphone"><option value="">Default microphone</option></select>
+            </div>
+            <div class="row">
+              <label for="sens">Sensitivity</label>
+              <input id="sens" type="range" min="0" max="100" value="50">
+            </div>
+            <p class="muted small">Raise it if soft hits are missed; lower it if noise counts as hits.</p>
+            <h3>Left or right hand</h3>
+            <div class="row">
+              <label for="handSel">The drummer is</label>
+              <select id="handSel"><option value="R">right-handed</option><option value="L">left-handed</option></select>
+            </div>
+            <h3>All drums at once</h3>
+            <div class="row">
+              <button id="calStart">Teach all pads</button>
+              <button id="calReset" class="hidden">Forget all pads</button>
+            </div>
+            <p class="muted small">"Teach all pads" walks through every drum that has not been taught, 8 hits each. "Forget all pads" goes back to the ready-made sounds.</p>
+          </div>
+          <div>
+            <h3>Timing</h3>
+            <p class="muted small">Every device delays sound a little. Measure it once so "early" and "late" are judged fairly. Takes about 5 seconds.</p>
+            <div class="row">
+              <button id="latBtn" class="primary">Measure delay</button>
+              <span id="latOut" class="small"></span>
+            </div>
+            <div class="row">
+              <label for="offset">Timing offset</label>
+              <input id="offset" type="range" min="-50" max="400" value="60">
+              <span id="offsetTxt" class="small">60 ms</span>
+            </div>
+            <div class="row">
+              <label for="clickVol">Metronome volume</label>
+              <input id="clickVol" type="range" min="0" max="100" value="50">
+            </div>
+            <h3>Pads hit together (optional)</h3>
+            <p class="muted small">The app works these out from the single drums. It is more exact if it has heard them together: tap a pair, then hit both pads at once, 8 times.</p>
+            <div id="comboList" class="comboList"></div>
+            <p class="muted small keysHint">No pad nearby? Any lesson can be tried by tapping the pad picture beside the notes, or with the keyboard:
+              <kbd>A</kbd> hi-hat, <kbd>S</kbd> snare, <kbd>Space</kbd> kick, <kbd>Q</kbd> crash, <kbd>E</kbd> <kbd>D</kbd> <kbd>F</kbd> toms, <kbd>R</kbd> ride.</p>
+          </div>
+        </div>
+      </div>
     </div>
   </section>
 

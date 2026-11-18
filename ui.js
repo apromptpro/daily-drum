@@ -61,7 +61,7 @@ const UI = {
       Array.from(sec.children).forEach(c => { if (c.tagName !== 'H1') flow.appendChild(c); });
       sec.appendChild(flow);
     };
-    ['songs', 'learn', 'friends', 'inbox', 'progress', 'setup', 'testDone'].forEach(id => wrap(id, id === 'songs' || id === 'progress'));
+    ['songs', 'learn', 'friends', 'inbox', 'progress', 'testDone'].forEach(id => wrap(id, id === 'songs' || id === 'progress'));
     $('#tourStops').classList.add('hscroll');
     // My drummer: the picture, the name and "Not you?" sit in a slim panel on the left.
     // All the rest of the page belongs to the drummer's styles.
