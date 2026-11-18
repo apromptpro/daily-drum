@@ -748,7 +748,7 @@ const Buddy = {
   },
   mount() {
     // lessons: the brothers take turns, lesson by lesson; the Tour: the host of the chosen difficulty
-    const who = this.sfx === 'T' ? (Tour.pro() ? 0 : 1) : ((typeof G !== 'undefined' && G.idx) || 0) % 2;
+    const who = this.sfx === 'T' ? (Tour.pro() ? 0 : 1) : Math.abs((typeof G !== 'undefined' && G.idx) || 0) % 2;
     this.moodOn = false;
     this.box().innerHTML = '<img class="buddyImg" alt="" draggable="false" data-b="' + who + '" src="art/b' + who + '-idle.png">';
     $('#venue' + this.sfx).innerHTML = venueSvg(Math.max(0, avOf(prof()).scene - 1));
@@ -1384,6 +1384,140 @@ function buildLab() {
       if (Lab.on) labStart();
     };
   });
+}
+
+// ---------- Basics: the beat maker ----------
+// A grid of squares, one row for each drum and one column for each step of the bar. Tap squares to build a beat,
+// hear it, and then practise it on the pad like any lesson.
+const BEAT_ROWS = ['crash', 'ride', 'hihat', 'tom1', 'tom3', 'snare', 'kick'];
+const BEAT_HANDS = { crash: 1, ride: 1, hihat: 1, tom1: 1, tom3: 1, snare: 1 };   // played with a stick: two at most at one moment
+const BEAT_READY = {
+  'Rock': { div: 2, rows: { hihat: 'xxxxxxxx', snare: '--x---x-', kick: 'x---x---' } },
+  'Boom tap': { div: 2, rows: { snare: '--x---x-', kick: 'x---x---' } },
+  'Busy kick': { div: 2, rows: { hihat: 'xxxxxxxx', snare: '--x---x-', kick: 'x--xx---' } },
+  'Disco': { div: 4, rows: { hihat: '--x---x---x---x-', snare: '----x-------x---', kick: 'x---x---x---x---' } },
+  'Tom run': { div: 2, rows: { hihat: 'xxxx----', snare: '--x-----', kick: 'x---x---', tom1: '----xx--', tom3: '------xx' } }
+};
+const Beat = { on: false, div: 2, bpm: 90, rows: {}, t0: 0, next: 0, raf: 0 };
+const beatSteps = () => 4 * Beat.div;
+const beatRow = (pad) => { const s = Beat.rows[pad] || ''; return (s + '-'.repeat(beatSteps())).slice(0, beatSteps()); };
+function beatSave() { store.set('beat', { div: Beat.div, bpm: Beat.bpm, rows: Beat.rows }); }
+function beatLoad(b) {
+  Beat.div = b.div === 4 ? 4 : 2;
+  if (b.bpm) Beat.bpm = Math.max(50, Math.min(140, b.bpm));
+  Beat.rows = {};
+  BEAT_ROWS.forEach(p => { if (b.rows && b.rows[p] && b.rows[p].indexOf('x') >= 0) Beat.rows[p] = b.rows[p]; });
+}
+function beatSay(text) { $('#bmSay').textContent = text || ''; }
+function beatGrid() {
+  const box = $('#bmGrid'), n = beatSteps();
+  box.innerHTML = '';
+  box.style.setProperty('--n', n);
+  BEAT_ROWS.forEach(pad => {
+    const name = document.createElement('span');
+    name.className = 'bmName'; name.textContent = PAD[pad].name;
+    name.style.setProperty('--c', PAD[pad].color);
+    box.appendChild(name);
+    const row = beatRow(pad);
+    for (let i = 0; i < n; i++) {
+      const b = document.createElement('button');
+      b.className = 'bmCell' + (row[i] === 'x' ? ' on' : '') + (i % Beat.div === 0 ? ' beat' : '');
+      b.dataset.i = i;
+      b.style.setProperty('--c', PAD[pad].color);
+      b.textContent = i % Beat.div === 0 ? i / Beat.div + 1 : '';
+      b.setAttribute('aria-label', PAD[pad].name + ', step ' + (i + 1));
+      b.onclick = () => beatTap(pad, i);
+      box.appendChild(b);
+    }
+  });
+  $('#bmSteps').textContent = Beat.div === 2 ? '8 squares' : '16 squares';
+  $('#bmTempo').value = Beat.bpm; $('#bmTempoTxt').textContent = Beat.bpm;
+}
+function beatTap(pad, i) {
+  const row = beatRow(pad).split(''), on = row[i] !== 'x';
+  if (on && BEAT_HANDS[pad]) {
+    const hands = BEAT_ROWS.filter(p => p !== pad && BEAT_HANDS[p] && beatRow(p)[i] === 'x').length;
+    if (hands >= 2) { beatSay('Two hands can hit only two drums at the same moment. Take one away first.'); return; }
+  }
+  row[i] = on ? 'x' : '-';
+  if (row.indexOf('x') >= 0) Beat.rows[pad] = row.join(''); else delete Beat.rows[pad];
+  if (on) Ear.drum(pad, Ear.ensureCtx().currentTime + 0.01);
+  beatSay('');
+  beatSave(); beatGrid();
+}
+function beatStart() {
+  const ctx = Ear.ensureCtx();
+  Beat.on = true; Beat.t0 = ctx.currentTime + 0.12; Beat.next = 0;
+  $('#bmPlay').textContent = '■ Stop';
+  cancelAnimationFrame(Beat.raf);
+  beatFrame();
+}
+function beatStop() {
+  Beat.on = false;
+  cancelAnimationFrame(Beat.raf);
+  $('#bmPlay').textContent = '▶ Play';
+  Beat.col = -2;
+  document.querySelectorAll('#bmGrid .now').forEach(e => e.classList.remove('now'));
+}
+function beatFrame() {
+  if (!Beat.on) return;
+  if (screen !== 'learn') { beatStop(); return; }
+  const ctx = Ear.ctx, step = 60 / Beat.bpm / Beat.div, n = beatSteps();
+  while (Beat.t0 + Beat.next * step < ctx.currentTime + 0.15) {
+    const k = Beat.next++, t = Beat.t0 + k * step;
+    if (t < ctx.currentTime) continue;
+    BEAT_ROWS.forEach(p => { if (beatRow(p)[k % n] === 'x') Ear.drum(p, t); });
+  }
+  const cur = Math.floor((ctx.currentTime - outLat() - Beat.t0) / step);
+  const col = cur < 0 ? -1 : cur % n;
+  if (col !== Beat.col) {
+    Beat.col = col;
+    document.querySelectorAll('#bmGrid .bmCell').forEach(e => e.classList.toggle('now', +e.dataset.i === col));
+  }
+  Beat.raf = requestAnimationFrame(beatFrame);
+}
+// The beat as a lesson: the same bar again and again, for about a minute.
+function beatLesson() {
+  const bar = {};
+  BEAT_ROWS.forEach(p => { if (Beat.rows[p]) bar[p] = beatRow(p); });
+  if (!Object.keys(bar).length) return null;
+  const reps = Math.max(8, Math.round(Beat.bpm / 4 / 4) * 4);
+  return { id: 'beat', custom: true, title: 'My beat', bpm: Beat.bpm, div: Beat.div, reps, reps0: 8, bars: [bar],
+    goal: 'The beat you built in the Beat maker.',
+    tip: 'Start slow. If it falls apart, switch on Wait mode and learn the order first. Go back to Basics to change the beat.' };
+}
+function buildBeat() {
+  beatLoad(store.get('beat', null) || Object.assign({ bpm: 90 }, BEAT_READY.Rock));
+  beatGrid();
+  const ready = $('#bmReady');
+  Object.keys(BEAT_READY).forEach(name => {
+    const b = document.createElement('button');
+    b.textContent = name;
+    b.onclick = () => { beatLoad(Object.assign({ bpm: Beat.bpm }, BEAT_READY[name])); beatSay(''); beatSave(); beatGrid(); if (Beat.on) beatStart(); };
+    ready.appendChild(b);
+  });
+  $('#bmPlay').onclick = () => (Beat.on ? beatStop() : beatStart());
+  $('#bmTempo').oninput = () => { Beat.bpm = +$('#bmTempo').value; $('#bmTempoTxt').textContent = Beat.bpm; beatSave(); if (Beat.on) beatStart(); };
+  $('#bmSteps').onclick = () => {
+    // 8 squares <-> 16 squares: the beat stays the same, only the grid gets finer or coarser
+    const to = Beat.div === 2 ? 4 : 2;
+    Object.keys(Beat.rows).forEach(p => {
+      const r = beatRow(p);
+      let out = '';
+      if (to === 4) for (let i = 0; i < r.length; i++) out += r[i] + '-';
+      else for (let i = 0; i < r.length; i += 2) out += r[i] === 'x' || r[i + 1] === 'x' ? 'x' : '-';
+      if (out.indexOf('x') >= 0) Beat.rows[p] = out; else delete Beat.rows[p];
+    });
+    Beat.div = to;
+    beatSave(); beatGrid(); if (Beat.on) beatStart();
+  };
+  $('#bmClear').onclick = () => { Beat.rows = {}; beatSay(''); beatSave(); beatGrid(); };
+  $('#bmGo').onclick = () => {
+    const l = beatLesson();
+    if (!l) { beatSay('Tap some squares first.'); return; }
+    beatStop();
+    openCustom(l);
+  };
 }
 
 // ---------- Celebration ----------

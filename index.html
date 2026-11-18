@@ -189,6 +189,19 @@
       <div class="row"><button id="readPlay" class="primary">&#9654; Play it</button></div>
       <p class="muted small">In every lesson the sheet music runs above the falling notes with the same moving line. When a lesson feels easy, tick "Sheet only" to hide the falling notes and play from the sheet.</p>
     </div>
+    <div class="card" id="beatCard">
+      <h2>&#129345; Beat maker</h2>
+      <p class="muted small">Tap squares to build a beat, hear it, then practise it on your pad like a lesson.</p>
+      <div class="row">
+        <button id="bmPlay" class="primary">&#9654; Play</button>
+        <label class="bmTempo"><input id="bmTempo" aria-label="Tempo" type="range" min="50" max="140" step="5" value="90"> <b id="bmTempoTxt">90</b> BPM</label>
+        <button id="bmSteps" title="Switch between 8 and 16 squares in a bar">8 squares</button>
+        <button id="bmClear">Clear</button>
+      </div>
+      <div id="bmGrid" class="bmGrid"></div>
+      <div class="row" id="bmReady"><span class="muted small">Start from:</span></div>
+      <div class="row bmGoRow"><button id="bmGo" class="playBtn">&#127919; Practise this beat</button><span id="bmSay" class="small bmSay"></span></div>
+    </div>
     <div class="card" id="quizCard">
       <h2>&#127932; Note quiz: which drum is it?</h2>
       <p class="muted">A note appears on the staff. Tap that drum in the pad picture, or hit it on your real pad. Ten notes make one round.</p>

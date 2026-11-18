@@ -29,7 +29,9 @@ function addPractice(seconds, perPad) {
 }
 
 // ---------- Tempo goals: every lesson has a faster tempo to grow into ----------
-const goalBpm = (l) => Math.min(180, Math.round(l.bpm * 1.25 / 5) * 5);
+// The goal is the speed real songs are played at, not just a little above the slow start: by how many notes fit in a beat.
+const SONG_SPEED = { 1: 100, 2: 100, 3: 90, 4: 80, 6: 60 };
+const goalBpm = (l) => Math.min(180, Math.max(Math.round(l.bpm * 1.25 / 5) * 5, SONG_SPEED[l.div] || 0));
 const mastered = (l) => !!(progress[l.id] && progress[l.id].bpm >= goalBpm(l));
 
 // ---------- Practice medals: playing a lesson again and again, even after it is finished ----------

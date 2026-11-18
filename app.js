@@ -1053,7 +1053,7 @@ function setLesson(l) {
   if (teach) $('#focusLine').textContent = '🎓 Focus: ' + teach.focus;
   showNotation(l);
   const pg = progress[l.id];
-  $('#tempoGoal').textContent = own || l.song ? '' : (mastered(l) ? '👑 ' : '') + 'Goal ' + goalBpm(l) + ' BPM' + (pg && pg.bpm ? ', your top ' + pg.bpm : '');
+  $('#tempoGoal').textContent = own || l.song || l.custom ? '' : (mastered(l) ? '👑 ' : '') + 'Goal ' + goalBpm(l) + ' BPM' + (pg && pg.bpm ? ', your top ' + pg.bpm : '');
   $('#musicLabel').classList.toggle('hidden', !l.song);
   ['#tempoLabel', '#waitLabel', '#loopLabel', '#sheetOnlyLabel'].forEach(s => $(s).classList.toggle('hidden', own));
   ['#speedLabel', '#partLabel', '#alignBox'].forEach(s => $(s).classList.toggle('hidden', !own));
@@ -1078,13 +1078,21 @@ function gigLock(on, sheet, noDemo) {
 // The tempo a written piece wants in this bar (a gig speeds up and slows down as it goes).
 function planTempo(bar) { let want = G.plan[0][1]; G.plan.forEach(x => { if (bar >= x[0]) want = x[1]; }); return want; }
 // Where "back" leads: songs go back to the Songs page, lessons to the Lessons page.
-const listOf = () => (G.gig ? 'tour' : G.track || (G.lesson && G.lesson.song) ? 'songs' : 'home');
-const backLabel = () => (listOf() === 'tour' ? '← Tour' : listOf() === 'songs' ? '← All songs' : '← All lessons');
+const listOf = () => (G.gig ? 'tour' : G.track || (G.lesson && G.lesson.song) ? 'songs' : G.lesson && G.lesson.custom ? 'learn' : 'home');
+const backLabel = () => (listOf() === 'tour' ? '← Tour' : listOf() === 'songs' ? '← All songs' : listOf() === 'learn' ? '← Beat maker' : '← All lessons');
 function openLesson(i) {
   const l = LESSONS[i];
   G.idx = i; G.track = null;
   if (G.gig) { G.gig = null; gigLock(false); }
   G.title = l.song ? 'Song: ' + l.title : (LESSONS.filter(x => !x.song).indexOf(l) + 1) + '. ' + l.title;
+  setLesson(l);
+  show('play');
+}
+// A beat from the Beat maker, played like a lesson. It is not part of the course: no number, no next lesson.
+function openCustom(l) {
+  G.idx = -1; G.track = null;
+  if (G.gig) { G.gig = null; gigLock(false); }
+  G.title = '🥁 ' + l.title;
   setLesson(l);
   show('play');
 }
@@ -1896,7 +1904,8 @@ function renderRecap(st, wasWait, climb) {
       };
     }
   }
-  $('#nextBtn').classList.toggle('hidden', own || !!G.gig || G.idx >= LESSONS.length - 1);
+  $('#nextBtn').classList.toggle('hidden', own || !!G.gig || G.idx < 0 || G.idx >= LESSONS.length - 1);
+  $('#homeBtn').textContent = G.lesson.custom ? 'Beat maker' : 'All lessons';
   show('recap');
 }
 
@@ -1989,7 +1998,7 @@ $('#againBtn').onclick = () => {
   if (G.track) { openTrack(false); return; }
   const bpm = G.bpm;   // keep the tempo the player had chosen
   if (G.gig) { Tour.k = G.gig.stop; Tour.lesson(G.gig.kind); return; }
-  openLesson(G.idx);
+  if (G.lesson && G.lesson.custom) openCustom(G.lesson); else openLesson(G.idx);
   G.bpm = bpm; $('#tempo').value = bpm; $('#tempoTxt').textContent = bpm; $('#tempoWord').textContent = '(' + tempoWord(bpm) + ')';
 };
 $('#handSel').value = settings.lefty ? 'L' : 'R';
@@ -2071,6 +2080,7 @@ buildPadMap('#padKit', 'pk-', false);
 buildCombos();
 buildKit();
 buildLab();
+buildBeat();
 buildHow();
 buildRead();
 buildQuiz();

@@ -1015,3 +1015,23 @@ button.xBtn, body.touch button.xBtn { position: absolute; right: 10px; top: 10px
   .appMode button.phRow { grid-template-columns: 16px minmax(0, 1fr) auto 52px; }
   .appMode .phRow .res { display: none; }
 }
+
+/* ---------- 17. the beat maker ---------- */
+.bmGrid { display: grid; grid-template-columns: 78px repeat(var(--n, 8), minmax(0, 1fr)); gap: 4px; margin: 8px 0; }
+.bmName { display: flex; align-items: center; font-size: 12.5px; font-weight: 800; color: #23264a; padding-left: 8px; border-left: 6px solid var(--c); border-radius: 4px; white-space: nowrap; overflow: hidden; }
+button.bmCell, body.touch button.bmCell { min-height: 30px; height: 30px; min-width: 0; padding: 0; border-radius: 8px; border: 2px solid #dfe2f2; background: #f6f7fd; box-shadow: none; font-size: 11px; font-weight: 800; color: #b3b8d2; }
+button.bmCell.beat { border-color: #c5c9e6; background: #eceefa; }
+html body button.bmCell.on { background: var(--c); border-color: #fff; color: #fff; box-shadow: 0 2px 0 rgba(40, 24, 110, .25); }
+html body button.bmCell.now { outline: 3px solid #ffd84a; outline-offset: -1px; }
+html body button.bmCell.on.now { transform: scale(1.12); }
+.bmSay { color: #c0392b; font-weight: 700; }
+#bmReady button { padding: 5px 13px; font-size: 13.5px; min-height: 0; }
+.appMode .flow #beatCard { break-inside: avoid; }
+@media (max-width: 699px) { .bmGrid { grid-template-columns: 58px repeat(var(--n, 8), minmax(0, 1fr)); gap: 2px; } .bmName { font-size: 11px; padding-left: 4px; } }
+#beatCard h2 { margin-bottom: 2px; } #beatCard p { margin: 0 0 6px; }
+#beatCard .row { margin: 6px 0; gap: 8px; }
+#beatCard .row > button { padding: 7px 14px; min-height: 0; font-size: 14.5px; }
+.bmTempo { display: flex; align-items: center; gap: 6px; font-size: 14px; } .bmTempo input { width: 110px; }
+button.bmCell, body.touch button.bmCell { min-height: 26px; height: 26px; }
+.bmGrid { margin: 6px 0; }
+#beatCard .bmGoRow > button { padding: 10px 20px; font-size: 16px; }
