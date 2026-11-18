@@ -1843,7 +1843,7 @@ function renderRecap(st, wasWait, climb) {
   const spread = Math.sqrt(st.errs.reduce((a, b) => a + (b - mean) * (b - mean), 0) / Math.max(1, st.errs.length));
   $('#recapTitle').textContent = G.lesson.title + (wasWait ? ' (Wait mode)' : '');
   $('#nextBtn').textContent = G.lesson.song ? 'Next song' : 'Next lesson';
-  $('#homeBtn').textContent = listOf() === 'tour' ? 'Back to the Tour' : listOf() === 'songs' ? 'All songs' : 'All lessons';
+  $('#homeBtn').textContent = listOf() === 'tour' ? 'Back to the Tour' : listOf() === 'songs' ? 'All songs' : listOf() === 'learn' ? 'Beat maker' : 'All lessons';
   $('#recapStars').innerHTML = [0, 1, 2].map(i => '<span class="st' + (i < stars ? ' on" style="animation-delay:' + (i * 0.25) + 's' : '') + '">★</span>').join('');
   $('#recapScore').textContent = Math.round(score * 100) + '%';
   $('#recapAcc').textContent = st.hit + ' / ' + total;
@@ -1904,9 +1904,7 @@ function renderRecap(st, wasWait, climb) {
       };
     }
   }
-  $('#nextBtn').classList.toggle('hidden', own || !!G.gig || G.idx < 0 || G.idx >= LESSONS.length - 1);
-  $('#homeBtn').textContent = G.lesson.custom ? 'Beat maker' : 'All lessons';
-  show('recap');
+  $('#nextBtn').classList.toggle('hidden', own || !!G.gig || G.idx < 0 || G.idx >= LESSONS.length - 1);  show('recap');
 }
 
 // ---------- Wiring ----------
