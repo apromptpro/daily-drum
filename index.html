@@ -84,7 +84,7 @@
   <!-- Lessons -->
   <section id="home" class="hidden">
     <div id="setupBanner" class="banner hidden">
-      <div><strong>Set up your pad first.</strong> The app needs to learn the sound of each pad before it can check your playing.</div>
+      <div><strong>New pad? Check it first.</strong> The app starts with ready-made drum sounds. A two-minute check in Setup shows how well they fit your pad.</div>
       <button id="bannerSetup" class="primary">Open Setup</button>
     </div>
     <div id="profile" class="card profile">
@@ -531,7 +531,7 @@
 
     <div class="card">
       <h2>2. Teach the app your pads</h2>
-      <p class="muted">Tap a pad in the picture, then hit that pad 8 times: some soft, some hard. Or press "Teach all pads" and the app walks you through them one by one.
+      <p class="muted">The app already knows ready-made drum sounds, so you can go straight to step 3 and check your pad. Teach a pad here when the check says it needs it. Tap a pad in the picture, then hit that pad 8 times: some soft, some hard. Or press "Teach all pads" and the app walks you through them one by one.
         You can pause at any time, and tap any pad to teach it again. Teach a pad again if you change its volume or drum-kit sound, or use a different device.</p>
       <div class="calGrid">
         <svg id="padMap" class="padSvg" viewBox="0 0 420 340" aria-label="Your drum pad. Tap a pad to teach it."></svg>
@@ -561,7 +561,7 @@
       <p class="muted">Hit any pad. The app shows what it heard, and the pad lights up in the picture above.</p>
       <div id="testOut" class="testOut">-</div>
       <h3>Check every pad</h3>
-      <p class="muted small">The app asks for each pad in turn, three hits each, and keeps score. Afterwards every hit can be played back with &#9654;. A hit that was heard wrongly can be taught to the app on its own, and a bad hit among the taught ones can be removed.</p>
+      <p class="muted small">The app asks for each pad in turn, three hits each, and keeps score. Every pad gets two numbers: how many hits were recognised, and the match (how close the hits were to the sound the app knows). Green pads are fine, yellow ones are shaky, red ones need teaching. Afterwards every hit can be played back with &#9654;. A hit that was heard wrongly can be taught to the app on its own, and a bad hit among the taught ones can be removed.</p>
       <div class="row"><button id="chkStart" class="primary">Check all pads</button><button id="hitsShow">&#127911; Listen to the taught hits</button><span id="chkPrompt" class="chkPrompt"></span></div>
       <div id="chkOut" class="chkOut"></div>
       <h3>&#127932; New to drum music?</h3>

@@ -927,3 +927,17 @@ html body button.stageTab.active .tp { border-color: #ffd84a; }
 .recapBro .recapPic.try.r { -webkit-mask-image: linear-gradient(to left, #000 74%, transparent 99%); mask-image: linear-gradient(to left, #000 74%, transparent 99%); }
 @media (max-width: 699px) { .recapBro .recapPic { height: 110px; } }
 @media (prefers-reduced-motion: reduce) { .recapBro .recapPic { animation: none !important; } }
+
+/* ---------- 15. the pad check: the two numbers on top, and the match of each pad ---------- */
+.chkTop { padding: 10px 14px; border-radius: 16px; border: 3px solid #8fd9ae; background: #eafff2; break-inside: avoid; }
+.chkTop.warn { border-color: #f2c230; background: #fff9de; }
+.chkTop.bad { border-color: #f0a39d; background: #fff0ee; }
+.chkNums { display: flex; flex-wrap: wrap; gap: 6px 26px; }
+.chkNums span { display: flex; flex-direction: column; font-size: 13px; font-weight: 700; color: #4a4f6a; }
+.chkNums b { font-size: 26px; line-height: 1.15; color: #23264a; min-width: 0; }
+.chkTop p { margin: 6px 0 8px; font-size: 14px; }
+.chkTop p:last-child { margin-bottom: 0; }
+.chkRow .hitHead { position: relative; padding-right: 64px; }
+.chkScore { position: absolute; right: 0; top: -2px; font-style: normal; font-weight: 800; font-size: 18px; padding: 1px 9px; border-radius: 999px; background: #2e9d5e; color: #fff; }
+.chkRow.warn .chkScore { background: #c98a00; }
+.chkRow.bad .chkScore { background: #d6453a; }

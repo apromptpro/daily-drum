@@ -116,7 +116,67 @@ const ALIAS = { crash2: 'crash', kickpad: 'kick', hihatopen: 'hihat' };   // hih
 const canon = (k) => ALIAS[k] || k;
 const canonPads = (keys) => keys.map(canon).filter((p, i, a) => a.indexOf(p) === i);
 
+// ----- ready-made drum sounds -----
+// A new player has taught nothing yet. So that the app can listen from the first minute, it starts with its own idea
+// of what each drum sounds like: typical kick, snare, cymbal and tom sounds, worked out here with plain arithmetic.
+// They are a guess. A real pad plays its own recordings through its own small speaker, so the pad check in Setup
+// shows how well they fit, and any pad can be taught properly, which then replaces the ready-made sound.
+const STARTER_BELOW = 0.45;   // ready-made sounds are only roughly right, so a weaker match is still accepted
+const STARTER_KIT = {
+  kick: [{ f0: 150, f1: 50, dur: 0.25, vol: 1 }, { hp: 2000, dur: 0.012, vol: 0.2 }],
+  snare: [{ hp: 1500, dur: 0.16, vol: 0.6 }, { f0: 220, f1: 160, dur: 0.1, vol: 0.5 }],
+  hihat: [{ hp: 7000, dur: 0.05, vol: 0.5 }],
+  hihatopen: [{ hp: 6500, dur: 0.6, vol: 0.5 }],
+  hhpedal: [{ hp: 4500, dur: 0.03, vol: 0.4 }],
+  crash: [{ hp: 3500, dur: 0.9, vol: 0.5 }],
+  ride: [{ hp: 8000, dur: 0.3, vol: 0.3 }, { f0: 900, f1: 880, dur: 0.25, vol: 0.25 }],
+  tom1: [{ f0: 220, f1: 150, dur: 0.3, vol: 1 }],
+  tom2: [{ f0: 165, f1: 110, dur: 0.3, vol: 1 }],
+  tom3: [{ f0: 120, f1: 75, dur: 0.35, vol: 1 }]
+};
+function highpass(buf, hz, sr) {
+  const w = 2 * Math.PI * hz / sr, cs = Math.cos(w), al = Math.sin(w) / 1.414;
+  const b0 = (1 + cs) / 2 / (1 + al), b1 = -(1 + cs) / (1 + al), a1 = -2 * cs / (1 + al), a2 = (1 - al) / (1 + al);
+  let x1 = 0, x2 = 0, y1 = 0, y2 = 0;
+  for (let i = 0; i < buf.length; i++) { const x = buf[i], y = b0 * x + b1 * x1 + b0 * x2 - a1 * y1 - a2 * y2; x2 = x1; x1 = x; y2 = y1; y1 = y; buf[i] = y; }
+  return buf;
+}
+// One ready-made hit. pitch makes it a little higher or lower; speaker cuts the deep notes the way a small speaker does.
+function starterHit(parts, pitch, speaker, seed) {
+  const sr = 44100, out = new Float32Array(FRAME);
+  let rnd = seed;
+  const noise = () => { rnd = (rnd * 1664525 + 1013904223) >>> 0; return rnd / 2147483648 - 1; };
+  parts.forEach(p => {
+    const part = new Float32Array(FRAME);
+    if (p.hp) {
+      for (let i = 0; i < FRAME; i++) part[i] = noise();
+      highpass(part, p.hp * pitch, sr);
+    } else {
+      let ph = 0;
+      for (let i = 0; i < FRAME; i++) {
+        const t = i / sr, f = p.f0 * Math.pow(p.f1 / p.f0, Math.min(1, t / (p.dur * 0.6))) * pitch;
+        ph += 2 * Math.PI * f / sr;
+        part[i] = Math.sin(ph);
+      }
+    }
+    for (let i = 0; i < FRAME; i++) out[i] += part[i] * p.vol * Math.exp(-6.9 * (i / sr) / p.dur);
+  });
+  if (speaker) highpass(out, speaker, sr);
+  return fingerprint(out, sr);
+}
+function starterFeats(key) {
+  return [[1, 0, 11], [0.88, 180, 23], [1.15, 300, 37], [1, 300, 51]].map(v => starterHit(STARTER_KIT[key], v[0], v[1], v[2]));
+}
+
 const Ear = {
+  starter: {},            // padId -> true while its sound is the ready-made one, not taught from the real pad
+  // Gives every pad that was never taught its ready-made sound.
+  addStarters() {
+    const add = {};
+    Object.keys(STARTER_KIT).forEach(k => { if (!this.templates[k]) { add[k] = this.makeTemplate(starterFeats(k)); this.starter[k] = true; } });
+    if (Object.keys(add).length) this.templates = Object.assign({}, this.templates, add);
+  },
+  taughtIds() { return this.padIds().filter(k => !this.starter[k]); },
   ctx: null, stream: null, src: null, node: null, monitor: null, moduleLoaded: false,
   listening: false, deviceLabel: '',
   templates: {},          // padId -> { mean: Float32Array, samples: [Float32Array] }; "_click" = metronome heard by the input
@@ -297,7 +357,7 @@ const Ear = {
   },
   exportSounds() {
     const out = {};
-    for (const k of Object.keys(this.templates)) if (k !== '_click') out[k] = this.templates[k].samples.map(s => s.snd || '');
+    for (const k of Object.keys(this.templates)) if (k !== '_click' && !this.starter[k]) out[k] = this.templates[k].samples.map(s => s.snd || '');
     return out;
   },
   importSounds(obj) {
@@ -389,8 +449,9 @@ const Ear = {
     const lead = ranked.length > 1 ? ranked[0] - ranked[1] : 1;
     const clickScore = click ? dot(x, shaped('_click', () => click)) : -1;
     if (clickScore > best.raw) return { pads: [], keys: [], score: clickScore, click: true };
-    if (best.raw < UNKNOWN_BELOW) return { pads: [], keys: [], score: best.raw };
-    return { pads: canonPads(best.keys), keys: best.keys, score: best.raw, lead };
+    const readyMade = best.keys.length > 0 && best.keys.every(k => this.starter[k]);
+    if (best.raw < (readyMade ? STARTER_BELOW : UNKNOWN_BELOW)) return { pads: [], keys: [], score: best.raw };
+    return { pads: canonPads(best.keys), keys: best.keys, score: best.raw, lead, starter: readyMade };
   },
   EXPECTED_BONUS: 0.04,
   // Guessed blends of an expected combination get the benefit of the doubt (a quiet pad under a loud one cannot be
@@ -401,7 +462,7 @@ const Ear = {
   // How well do the taught hits separate? Each hit is set aside in turn and recognised from the others alone,
   // so the figure is not flattered by a hit matching itself. Returns { accuracy 0..1, confusions: [[a,b],...] }
   quality() {
-    const keep = this.templates, ids = this.padIds();
+    const keep = this.templates, ids = this.taughtIds();   // only what was taught from the real pad
     let total = 0, ok = 0;
     const conf = {};
     for (const id of ids) {
@@ -424,11 +485,11 @@ const Ear = {
   },
   exportTemplates() {
     const out = {};
-    for (const k of Object.keys(this.templates)) out[k] = this.templates[k].samples.map(s => Array.from(s, v => +v.toFixed(6)));
+    for (const k of Object.keys(this.templates)) if (!this.starter[k]) out[k] = this.templates[k].samples.map(s => Array.from(s, v => +v.toFixed(6)));   // ready-made sounds are never saved: they are built again each time
     return out;
   },
   importTemplates(obj) {
-    this.templates = {};
+    this.templates = {}; this.starter = {};
     for (const k of Object.keys(obj || {})) {
       const samples = obj[k].map(a => Float32Array.from(a));
       if (samples.length) this.templates[k] = this.makeTemplate(samples);

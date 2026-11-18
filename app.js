@@ -21,6 +21,7 @@ const saveSettings = () => store.set('settings', settings);
   Object.keys(saved).forEach(k => { if (k === '_click' || k.split('+').every(p => PAD[canon(p)])) ok[k] = saved[k]; });
   Ear.importTemplates(ok);
   Ear.importSounds(store.get('cal2snd', {}));
+  Ear.addStarters();   // pads that were never taught start with a ready-made sound
 }
 Ear.clickVolume = settings.clickVol / 100;
 
@@ -189,7 +190,7 @@ function tipSheet(k) {
   box.classList.remove('hidden');
 }
 function renderHome() {
-  $('#setupBanner').classList.toggle('hidden', calibrated());
+  $('#setupBanner').classList.toggle('hidden', learnedCount() > 0 || !!store.get('padChk', null));   // gone once the pad was checked or taught
   $('#lessonList').innerHTML = '';
   $('#songList').innerHTML = '';
   renderProfile();
@@ -505,12 +506,16 @@ function flashPad(key) {
 const CAL_ORDER = ['snare', 'kick', 'hihatopen', 'hihat', 'kickpad', 'tom1', 'tom2', 'tom3', 'crash', 'crash2', 'ride', 'hhpedal'];
 const Cal = { active: false, starting: false, phase: '', key: null, guided: false, got: [], lastT: 0, timer: null, hint: null,
   note: '', msg: '', retries: 0, deafUntil: 0, clicks: [], clickHits: [], clickChecked: false };
-const learned = (key) => !!Ear.templates[key];
+const known = (key) => !!Ear.templates[key];                       // the app has a sound for it, taught or ready-made
+const learned = (key) => known(key) && !Ear.starter[key];          // taught from the real pad
 const learnedCount = () => SPOTS.filter(s => keysOf(s).every(learned)).length;
+const taughtHits = (key) => (learned(key) ? Ear.templates[key].samples : []);
 function setTemplates(change) {
-  const T = Object.assign({}, Ear.templates);   // a new object, so the recogniser drops what it had prepared
+  const before = Ear.templates, T = Object.assign({}, before);   // a new object, so the recogniser drops what it had prepared
   change(T);
+  Object.keys(Ear.starter).forEach(k => { if (T[k] !== before[k]) delete Ear.starter[k]; });   // taught now: no longer ready-made
   Ear.templates = T;
+  Ear.addStarters();   // a forgotten pad goes back to its ready-made sound
   store.set('cal2', Ear.exportTemplates());
   store.set('cal2snd', Ear.exportSounds());
 }
@@ -559,7 +564,7 @@ function calUi() {
 }
 function calSummary() {
   const n = learnedCount();
-  if (!n) return '';
+  if (!n) return 'The app is using ready-made drum sounds for now. Press "Check all pads" in step 3 to see how well they fit your pad, then teach only the pads that score badly.';
   const q = Ear.quality();
   let msg = n + ' of ' + SPOTS.length + ' learned (the ones with a tick).';
   q.confusions.forEach(c => { msg += ' ' + PAD[c[0]].name + ' and ' + PAD[c[1]].name + ' sound very alike and may get mixed up.'; });
@@ -604,6 +609,7 @@ async function calPick(key, guided) {
     fillDevices();
   }
   if (Chk.active) chkStop();
+  if (!guided) Cal.queue = null;
   Cal.active = true; Cal.key = key; Cal.guided = guided; Cal.msg = ''; Cal.append = false;
   if (Cal.clickChecked) { calArm(true); return; }
   // Once per visit: play a few clicks to learn what the metronome sounds like through the microphone.
@@ -652,10 +658,11 @@ function calHit(h) {
     return;
   }
   // "Add more hits" keeps the hits already taught (up to CAL_KEEP in all); teaching again replaces them.
-  const old = Cal.append && Ear.templates[key] ? Ear.templates[key].samples : [];
+  const old = Cal.append ? taughtHits(key) : [];
   const tpl = Ear.makeTemplate(old.concat(Cal.got).slice(-CAL_KEEP));
   Cal.append = false;
   setTemplates(T => { T[key] = tpl; });
+  delete Chk.res[key];   // the last check was about the old sound of this pad
   const el = spotEl(key);
   el.classList.add('pop');
   setTimeout(() => el.classList.remove('pop'), 600);
@@ -666,6 +673,12 @@ function calHit(h) {
 }
 // Guided run: move on to the next pad in the list that has not been learned.
 function calNext() {
+  if (Cal.queue) {   // teaching only the pads that scored badly in the check
+    const k = Cal.queue.shift();
+    if (!k) { Cal.queue = null; calPause('Those pads are taught. Press "Check all pads" again to see the new scores.'); return; }
+    Cal.key = k; calArm(true);
+    return;
+  }
   const from = CAL_ORDER.indexOf(Cal.key) + 1;
   const next = CAL_ORDER.slice(from).find(k => !learned(k));
   if (!next) { calPause(learnedCount() === SPOTS.length ? '' : 'That was the last pad. Pads without a tick were skipped: click one to teach it.'); return; }
@@ -738,10 +751,11 @@ function latDone(ms, how) {
 // ---------- Setup: check every pad ----------
 // The app asks for each taught pad in turn, three hits each, and keeps score of what it recognised.
 const CHK_NEED = 3;
+const CHK_SOLID = 0.75;   // an average match below this is "recognised, but shaky"
 const Chk = { active: false, keys: [], i: 0, got: [], res: {}, lastT: 0 };
 function chkStart() {
   if (Cal.active || Cal.starting || Lat.active) return;
-  const keys = CAL_ORDER.filter(learned);
+  const keys = CAL_ORDER.filter(known);
   if (!keys.length) { $('#chkPrompt').textContent = 'Teach the app some pads first (step 2).'; return; }
   ensureListening().then(ok => {
     if (!ok || screen !== 'setup' || Cal.active) { if (!ok) $('#chkPrompt').textContent = micProblem(); return; }
@@ -768,7 +782,7 @@ function chkHit(h) {
   Chk.lastT = h.time;
   const key = Chk.keys[Chk.i], r = Ear.classify(h.feat, { allPairs: true });
   if (r.click) return;
-  Chk.got.push({ feat: h.feat, keys: r.keys, pads: r.pads, lead: r.lead });
+  Chk.got.push({ feat: h.feat, keys: r.keys, pads: r.pads, lead: r.lead, score: Math.max(0, r.score || 0) });
   flashPad(key);
   if (Chk.got.length < CHK_NEED) { chkUi(); return; }
   Chk.res[key] = Chk.got; Chk.got = [];
@@ -804,27 +818,35 @@ function hitChip(n, feat, mark, act) {
 function hitsRender(afterCheck) {
   const box = $('#chkOut');
   box.innerHTML = '';
-  const keys = CAL_ORDER.filter(learned);
-  let right = 0, all = 0;
+  const keys = CAL_ORDER.filter(known);
+  const pct = (v) => Math.round(v * 100) + '%';
+  let right = 0, all = 0, sum = 0;
+  const weak = [];
   keys.forEach(key => {
-    const hits = Chk.res[key] || [], want = canon(key), taught = Ear.templates[key].samples;
+    const hits = Chk.res[key] || [], want = canon(key), taught = taughtHits(key), ready = !!Ear.starter[key];
     const isGood = (x) => x.pads.length === 1 && x.pads[0] === want;
     const good = hits.filter(isGood), unsure = good.filter(x => x.lead < 0.03).length;
     const exact = good.filter(x => x.keys[0] === key).length;
-    right += good.length; all += hits.length;
+    const match = hits.length ? hits.reduce((a, x) => a + (x.score || 0), 0) / hits.length : 0;   // how close the hits were to the sound the app knows
+    right += good.length; all += hits.length; sum += match * hits.length;
+    const state = !hits.length ? '' : good.length < hits.length ? 'bad' : unsure || match < CHK_SOLID ? 'warn' : 'ok';
+    if (state === 'bad' || state === 'warn') weak.push(key);
     const row = document.createElement('div');
-    row.className = 'chkRow ' + (!hits.length ? '' : good.length === hits.length ? (unsure ? 'warn' : 'ok') : 'bad');
+    row.className = 'chkRow ' + state;
     const head = document.createElement('div');
     head.className = 'hitHead';
     head.innerHTML = '<b></b><span></span>';
-    head.firstChild.textContent = (!hits.length ? '' : good.length === hits.length ? '✓ ' : '✗ ') + padLabel(key);
+    head.firstChild.textContent = (!hits.length ? '' : state === 'bad' ? '✗ ' : state === 'warn' ? '! ' : '✓ ') + padLabel(key);
     let txt = '';
     if (hits.length) {
-      txt = good.length + ' of ' + hits.length + ' right';
-      if (good.length === hits.length && unsure) txt += ', but only just: it sounds a lot like another pad';
+      txt = good.length + ' of ' + hits.length + ' right · match ' + pct(match);
+      if (state === 'bad') txt += ': teach this pad';
+      else if (unsure) txt += ', but only just: it sounds a lot like another pad';
+      else if (state === 'warn') txt += ': recognised, but not a close match. Teaching it will make it safer';
       if ((key === 'hihat' || key === 'hihatopen') && exact < good.length) txt += ' (open and closed were mixed up)';
     }
     head.lastChild.textContent = txt;
+    if (hits.length) { const sc = document.createElement('i'); sc.className = 'chkScore'; sc.textContent = pct(match); head.appendChild(sc); }
     row.appendChild(head);
     if (hits.length) {
       const line = document.createElement('div');
@@ -832,9 +854,9 @@ function hitsRender(afterCheck) {
       line.innerHTML = '<span class="hl">In this check</span>';
       hits.forEach((x, i) => {
         const ok = isGood(x), heard = x.pads.length ? x.pads.map(p => PAD[p].name).join(' + ') : 'unknown';
-        line.appendChild(hitChip(i + 1, x.feat, { bad: !ok, txt: ok ? '✓' : '→ ' + heard }, x.added ? null : {
+        line.appendChild(hitChip(i + 1, x.feat, { bad: !ok, txt: (ok ? '✓ ' : '→ ' + heard + ' ') + pct(x.score || 0) }, x.added ? null : {
           txt: '＋ teach', title: 'Only if you really hit the ' + padLabel(key) + ': the app learns this hit as that pad.',
-          run: () => { x.added = true; setTemplates(T => { T[key] = Ear.makeTemplate(T[key].samples.concat([x.feat]).slice(-CAL_KEEP)); }); calUi(); hitsRender(); }
+          run: () => { x.added = true; setTemplates(T => { T[key] = Ear.makeTemplate(taughtHits(key).concat([x.feat]).slice(-CAL_KEEP)); }); calUi(); hitsRender(); }
         }));
       });
       row.appendChild(line);
@@ -842,7 +864,7 @@ function hitsRender(afterCheck) {
     const line2 = document.createElement('div');
     line2.className = 'hitLine';
     line2.innerHTML = '<span class="hl"></span>';
-    line2.firstChild.textContent = 'Taught (' + taught.length + ')';
+    line2.firstChild.textContent = ready ? 'Ready-made sound, not yet taught from your pad' : 'Taught (' + taught.length + ')';
     taught.forEach((f, i) => {
       line2.appendChild(hitChip(i + 1, f, null, taught.length <= 2 ? null : {
         txt: '✕', title: 'Remove this hit from what the app learned (for a hit on the wrong pad, or with a noise in it).',
@@ -854,14 +876,36 @@ function hitsRender(afterCheck) {
     one.title = 'Hit the pad once: that hit is added to what the app knows.';
     one.onclick = () => { Cal.pendingOne = true; calPick(key, false); UI.reveal($('#padMap')); };
     const again = document.createElement('button');
-    again.className = 'hitMore'; again.textContent = '↻ teach again';
-    again.title = 'Forget these hits and teach this pad from the start.';
+    again.className = 'hitMore'; again.textContent = ready ? '🎓 teach this pad' : '↻ teach again';
+    again.title = ready ? 'Hit this pad 8 times so the app learns how your own pad sounds.' : 'Forget these hits and teach this pad from the start.';
     again.onclick = () => { calPick(key, false); UI.reveal($('#padMap')); };
-    line2.appendChild(one); line2.appendChild(again);
+    if (!ready) line2.appendChild(one);
+    line2.appendChild(again);
     row.appendChild(line2);
     box.appendChild(row);
   });
-  if (afterCheck) $('#chkPrompt').textContent = 'Check finished: ' + right + ' of ' + all + ' hits recognised' + (right === all ? '. The app knows your pads.' : '. See the pads marked ✗ below.');
+  if (all) {
+    // The verdict on top: the two numbers, what they mean, and one button for the pads that need teaching.
+    const top = document.createElement('div');
+    top.className = 'chkTop ' + (right < all ? 'bad' : weak.length ? 'warn' : 'ok');
+    top.innerHTML = '<div class="chkNums"><span><b></b>hits recognised</span><span><b></b>average match</span></div><p></p>';
+    const bs = top.querySelectorAll('b');
+    bs[0].textContent = right + ' / ' + all + ' (' + pct(right / all) + ')'; bs[1].textContent = pct(sum / all);
+    top.querySelector('p').textContent = (!weak.length ? 'The app knows your pads. Nothing needs teaching.'
+      : weak.length + (weak.length === 1 ? ' pad needs' : ' pads need') + ' teaching: ' + weak.map(padLabel).join(', ') + '.')
+      + ' A match of ' + pct(CHK_SOLID) + ' or more is solid; a taught pad usually reaches 90%.';
+    if (weak.length) {
+      const fix = document.createElement('button');
+      fix.className = 'primary'; fix.textContent = '🎓 Teach ' + (weak.length === 1 ? 'that pad' : 'those ' + weak.length + ' pads') + ' now';
+      fix.onclick = () => { Cal.queue = weak.slice(1); calPick(weak[0], true); UI.reveal($('#padMap')); };
+      top.appendChild(fix);
+    }
+    box.insertBefore(top, box.firstChild);
+  }
+  if (afterCheck) {
+    store.set('padChk', { right, all, match: +(sum / Math.max(1, all)).toFixed(2), day: dayStr(new Date()) });
+    $('#chkPrompt').textContent = 'Check finished: ' + right + ' of ' + all + ' hits recognised, average match ' + pct(sum / Math.max(1, all)) + '.';
+  }
   else if (!keys.length) $('#chkPrompt').textContent = 'Teach the app some pads first (step 2).';
   Chk.listed = true;
 }
@@ -872,7 +916,7 @@ function testHit(h) {
   const r = Ear.classify(h.feat, { allPairs: true });
   if (r.click) { out.textContent = '(metronome)'; return; }
   if (!r.pads.length) { out.innerHTML = 'Unknown sound <small>best match ' + Math.round(Math.max(0, r.score) * 100) + '%</small>'; return; }
-  out.innerHTML = r.pads.map(p => PAD[p].name + (p !== 'hihat' ? '' : r.keys.indexOf('hihatopen') >= 0 ? ' (open)' : ' (closed)')).join(' + ') + ' <small>match ' + Math.round(r.score * 100) + '%</small>';
+  out.innerHTML = r.pads.map(p => PAD[p].name + (p !== 'hihat' ? '' : r.keys.indexOf('hihatopen') >= 0 ? ' (open)' : ' (closed)')).join(' + ') + ' <small>match ' + Math.round(r.score * 100) + '%' + (r.starter ? ' · ready-made sound' : '') + '</small>';
   r.keys.forEach(flashPad);
 }
 
@@ -1040,6 +1084,7 @@ function updatePlayNote(tried) {
   else if (micUserOff && !Ear.listening) msg = 'The microphone is switched off. Tap "Mic off" to switch it on. Until then only ' + KEYS_OR_TAP + '.';
   else if (tried && !Ear.listening) msg = micProblem() + ' Until then only ' + KEYS_OR_TAP + '.';
   else if (untaught.length) msg = 'The app was never taught the sound of: ' + untaught.map(p => PAD[p].name).join(', ') + '. Those notes will count as missed. Open Setup and tap those pads in the picture to teach them.';
+  else if (!Ear.taughtIds().length && !store.get('padChk', null)) msg = 'The app is using ready-made drum sounds. If it mishears your pad, a grown-up can check and teach the pads in Setup at the top.';
   $('#playNote').textContent = msg;
   $('#playNote').classList.toggle('hidden', !msg);
 }
@@ -1853,7 +1898,7 @@ $('#sens').oninput = (e) => { settings.sens = +e.target.value; saveSettings(); a
 $('#offset').oninput = (e) => { settings.offsetMs = +e.target.value; settings.offsetChosen = true; $('#offsetTxt').textContent = settings.offsetMs + ' ms'; saveSettings(); };
 $('#clickVol').oninput = (e) => { settings.clickVol = +e.target.value; Ear.clickVolume = settings.clickVol / 100; saveSettings(); };
 $('#latBtn').onclick = latStart;
-$('#calStart').onclick = () => { const k = CAL_ORDER.find(x => !learned(x)); if (k) calPick(k, true); };
+$('#calStart').onclick = () => { Cal.queue = null; const k = CAL_ORDER.find(x => !learned(x)); if (k) calPick(k, true); };
 $('#calSkip').onclick = calNext;
 $('#calPause').onclick = () => calPause();
 $('#calRedo').onclick = () => calArm(false);
@@ -1869,8 +1914,8 @@ $('#calReset').onclick = () => {
     return;
   }
   delete b.dataset.sure; b.textContent = 'Forget all pads';
-  Ear.templates = {}; store.set('cal2', {}); store.set('cal2snd', {});
-  Cal.clickChecked = false; Cal.msg = 'All pads forgotten.';
+  Ear.templates = {}; Ear.starter = {}; Ear.addStarters(); store.set('cal2', {}); store.set('cal2snd', {}); store.del('padChk');
+  Cal.clickChecked = false; Cal.msg = 'All pads forgotten. The app is back to its ready-made drum sounds.';
   calUi();
 };
 $('#backBtn').onclick = () => show(listOf());
