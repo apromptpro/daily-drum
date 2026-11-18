@@ -138,10 +138,12 @@
 
   <!-- Start here: the drum kit and the basics, to click and hear rather than read -->
   <section id="learn" class="hidden">
-    <h1>Basics <span class="muted small">(the drum kit, the beat, reading notes, how to sit)</span></h1>
+    <h1>Basics <span class="muted small">Pick one to try</span></h1>
+    <div id="learnBar" class="learnBar noFlow"><button id="learnBack">&larr; All of Basics</button></div>
+    <div id="learnHub" class="learnHub noFlow"></div>
     <div class="card">
-      <h2>1. Meet the drum kit</h2>
-      <p class="muted">This is a real drum kit. Your roll-up pad is a small, flat version of it. Tap any part to hear it and to see where it is on your pad.</p>
+      <h2>&#129345; Meet the drum kit</h2>
+      <p class="muted">Tap any part of the kit to hear it and to see where it is on your pad.</p>
       <div class="kitGrid">
         <svg id="kitSvg" viewBox="0 0 520 340" aria-label="A drum kit. Tap a part to hear it."></svg>
         <div class="kitInfo">
@@ -154,8 +156,8 @@
       </div>
     </div>
     <div class="card">
-      <h2>2. Feel the beat</h2>
-      <p class="muted">Music has a steady pulse called the beat. Press Play, then try the buttons: they change how many hits fit into each beat.</p>
+      <h2>&#128147; Feel the beat</h2>
+      <p class="muted">Press Play, then try the buttons: they change how many hits fit into each beat.</p>
       <div class="row">
         <button id="labPlay" class="primary big">&#9654; Play</button>
         <label>Tempo <input id="labTempo" type="range" min="40" max="160" step="5" value="80"> <b id="labTempoTxt">80</b> BPM <span id="labTempoWord" class="muted small"></span></label>
@@ -171,8 +173,8 @@
       <p class="muted small">Four beats make one <b>bar</b>. The loud click is beat 1. <b>BPM</b> means beats per minute: 60 BPM is one beat every second.</p>
     </div>
     <div class="card">
-      <h2>3. Read drum music</h2>
-      <p class="muted">Drum music is written on five lines called a staff. Each drum has its own place on it. Tap a note to hear which drum it is.</p>
+      <h2>&#127932; Read the notes</h2>
+      <p class="muted">Each drum has its own place on the five lines. Tap a note to hear which drum it is.</p>
       <div id="readKey" class="notation readKey"></div>
       <div id="readInfo" class="labSay">Tap a note above.</div>
       <div class="howCards">
@@ -202,6 +204,18 @@
       <div class="row" id="bmReady"><span class="muted small">Start from:</span></div>
       <div class="row bmGoRow"><button id="bmGo" class="playBtn">&#127919; Practise this beat</button><span id="bmSay" class="small bmSay"></span></div>
     </div>
+    <div class="card" id="rgCard">
+      <h2 id="rgTitle"></h2>
+      <p id="rgHow" class="muted"></p>
+      <div class="row" id="rgTopics"></div>
+      <div id="rgSay" class="labSay">Press Start.</div>
+      <div id="rgStaff" class="notation readKey rgStaff"></div>
+      <div id="rgOpts" class="rgOpts"></div>
+      <svg id="rgPad" class="padSvg quizPad" viewBox="0 0 420 340" aria-label="Your drum pad. Tap the drum you heard."></svg>
+      <div class="row rgRow"><button id="rgGo" class="primary big">&#9654; Start</button><button id="rgAgain" class="hidden">&#128266; Hear it again</button><b id="rgScore" class="quizScore"></b></div>
+      <button id="rgTap" class="rgTap hidden" aria-label="Tap the rhythm here">&#129345;<span>TAP</span></button>
+      <p id="rgBest" class="muted small"></p>
+    </div>
     <div class="card" id="quizCard">
       <h2>&#127932; Note quiz: which drum is it?</h2>
       <p class="muted">A note appears on the staff. Tap that drum in the pad picture, or hit it on your real pad. Ten notes make one round.</p>
@@ -217,7 +231,7 @@
       <p id="quizBest" class="muted small"></p>
     </div>
     <div class="card">
-      <h2>4. How to sit and hold the sticks</h2>
+      <h2>&#129681; Sit and hold the sticks</h2>
       <div id="howCards" class="howCards"></div>
     </div>
     <div class="row"><button id="learnDone" class="primary big">Go to the lessons</button></div>

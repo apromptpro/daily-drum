@@ -48,6 +48,7 @@ function show(name) {
   if (G.test && name !== 'play' && name !== 'testDone') endTest('');   // leaving in the middle of a test ends it
   if (Online.blocked() && name !== 'account') name = 'account';   // nothing opens without an approved account
   $('#frCard').classList.add('hidden'); $('#padCard').classList.add('hidden'); $('#setMore').classList.add('hidden');
+  if (name !== 'learn' && typeof learnQuiet === 'function' && typeof RG !== 'undefined') learnQuiet();   // nothing in Basics keeps playing
   document.body.classList.toggle('locked', Online.blocked());
   if (name === 'hub') { renderHub(); Online.renderMsgs(); }
   if (name === 'account') Online.renderAccount();
@@ -397,7 +398,7 @@ Ear.onHit = (h) => {
   else if (screen === 'setup') testHit(h);
   else if (screen === 'play') gameAudioHit(h);
   else if (screen === 'tour') Tour.audio(h);
-  else if (screen === 'learn') quizAudio(h);
+  else if (screen === 'learn') { quizAudio(h); rgAudio(h); }
 };
 
 // ---------- Setup: pad map ----------
@@ -473,9 +474,11 @@ function buildPadMap(sel, prefix, pick) {
     if (s.r) {
       mk('circle', { class: 'ring', cx: s.x, cy: s.y, r: s.r + 5 }, g);
       mk('circle', { class: 'pad', cx: s.x, cy: s.y, r: s.r }, g);
+      mk('circle', { class: 'app', cx: s.x, cy: s.y, r: s.r + 5 }, g);   // the ring that closes in on the pad as its note arrives
     } else {
       mk('rect', { class: 'ring', x: s.x - 55, y: s.y - 23, width: 110, height: 46, rx: 14 }, g);
       mk('rect', { class: 'pad', x: s.x - 50, y: s.y - 18, width: 100, height: 36, rx: 10 }, g);
+      mk('rect', { class: 'app', x: s.x - 55, y: s.y - 23, width: 110, height: 46, rx: 14 }, g);
     }
     const mini = s.r && s.r < 20;   // a small extra spot: the same pad played another way
     if (mini) g.classList.add('mini');
@@ -1915,7 +1918,7 @@ function syncSettingsUi() {
   $('#meterMark').style.left = (meterPos(floorFromSens(settings.sens)) * 100) + '%';
 }
 $('#navHome').onclick = () => show('home');
-$('#navLearn').onclick = () => show('learn');
+$('#navLearn').onclick = () => { learnOpen(''); show('learn'); };
 $('#navProgress').onclick = () => show('progress');
 $('#weakBtn').onclick = () => { show('progress'); $('#pgWeak').scrollIntoView({ block: 'center' }); };
 $('#tdHome').onclick = () => show('home');
@@ -1933,7 +1936,7 @@ $('#pgReset').onclick = () => {
   if (keep.name) store.set('profile', Object.assign({ xp: 0 }, keep));
   location.reload();
 };
-$('#learnLink').onclick = (e) => { e.preventDefault(); show('learn'); };
+$('#learnLink').onclick = (e) => { e.preventDefault(); learnOpen(''); show('learn'); };
 $('#learnDone').onclick = () => show('home');
 $('#navSetup').onclick = () => show('setup');
 $('#bannerSetup').onclick = () => show('setup');
@@ -2004,6 +2007,7 @@ $('#handSel').onchange = (e) => { settings.lefty = e.target.value === 'L'; saveS
 $('#nextBtn').onclick = () => openLesson(Math.min(LESSONS.length - 1, G.idx + 1));
 $('#homeBtn').onclick = () => show(listOf());
 window.addEventListener('resize', draw);
+$('#sheetOnly').addEventListener('change', () => requestAnimationFrame(draw));   // reading mode changes the sheet at once
 // Notes cannot be drawn or scheduled while the tab is hidden, so a run is stopped rather than left to fall apart.
 document.addEventListener('visibilitychange', () => { if (document.hidden && G.running) stopRun(false); });
 
@@ -2079,6 +2083,7 @@ buildCombos();
 buildKit();
 buildLab();
 buildBeat();
+buildLearn();
 buildHow();
 buildRead();
 buildQuiz();

@@ -1006,8 +1006,8 @@ function staffSvg(lesson, idxs, W) {
       up.concat(down).forEach(p => {
         const y = STAFF_Y[p], x = X(i);
         if (p === 'crash') s += L('st', x - 7, 6, x + 7, 6);
-        if (p === 'hihat' || p === 'ride' || p === 'crash' || p === 'hhpedal') s += '<path class="xh" d="M' + (x - 3.5) + ' ' + (y - 3.5) + 'l7 7m0 -7l-7 7"/>';
-        else s += '<ellipse class="nh" cx="' + x + '" cy="' + y + '" rx="4.4" ry="3.3" transform="rotate(-20 ' + x + ' ' + y + ')"/>';
+        if (p === 'hihat' || p === 'ride' || p === 'crash' || p === 'hhpedal') s += '<path class="xh" data-n="' + b + '-' + i + '-' + p + '" d="M' + (x - 3.5) + ' ' + (y - 3.5) + 'l7 7m0 -7l-7 7"/>';
+        else s += '<ellipse class="nh" data-n="' + b + '-' + i + '-' + p + '" cx="' + x + '" cy="' + y + '" rx="4.4" ry="3.3" transform="rotate(-20 ' + x + ' ' + y + ')"/>';
       });
       if (up.length) { hands.push(i); s += L('stem', X(i) + 4, Math.max.apply(null, up.map(p => STAFF_Y[p])), X(i) + 4, -4); }
       if (down.length) { feet.push(i); s += L('stem', X(i) - 4, Math.min.apply(null, down.map(p => STAFF_Y[p])), X(i) - 4, 90); }
@@ -1045,22 +1045,55 @@ function updateSheet() {
   const l = G.lesson, box = $('#sheet');
   if (!l || !box) return;
   const B = barBeats(l), n = l.bars.length, pos = G.running ? G.viewPos : -1;
-  const barNo = Math.max(0, Math.floor(pos / B + 1e-6)), totalBars = Math.round(G.totalBeats / B);
-  const cur = barNo % n, last = barNo >= totalBars - 1 && G.running;
-  const idxs = last || (n === 1 && totalBars === 1) ? [cur] : [cur, (cur + 1) % n];
-  const key = idxs.join(',');
-  if (sheetState.lesson !== l || sheetState.key !== key) {
-    sheetState.lesson = l; sheetState.key = key;
-    box.innerHTML = staffSvg(l, idxs, idxs.length === 1 ? SHEET_W / 2 : SHEET_W) +
-      '<div class="small">Bar ' + (cur + 1) + ' of ' + n + (n === 1 ? ' (it repeats)' : '') + '. Crosses are cymbals, dots are drums. Stems up: hands. Stems down: feet.</div>';
-    box.classList.toggle('one', idxs.length === 1);
+  const barNo = Math.max(0, Math.floor(pos / B + 1e-6)), totalBars = Math.max(1, Math.round(G.totalBeats / B));
+  // Reading mode ("Sheet only"): two lines like a real page. The top line is being played, the lower line comes next.
+  const read = $('#sheetOnly').checked && !G.demo && !G.track;
+  if (sheetState.read !== read) { sheetState.read = read; sheetState.key = ''; document.body.classList.toggle('sheetMode', read); }
+  let rows;   // the bars on each line, counted from the start of the piece
+  if (read) {
+    const p = Math.floor(barNo / 2) * 2;
+    rows = [[p, p + 1], [p + 2, p + 3]].map(r => r.filter(b => b < totalBars)).filter(r => r.length);
+  } else {
+    const last = barNo >= totalBars - 1 && G.running;
+    rows = [last || totalBars === 1 ? [barNo] : [barNo, barNo + 1]];
   }
-  const c = box.querySelector('.cur');
+  const widthOf = (r) => (r.length === 1 ? SHEET_W / 2 : SHEET_W);
+  const key = (read ? 'r' : 'n') + rows.map(r => r.join(',')).join('|');
+  if (sheetState.lesson !== l || sheetState.key !== key) {
+    sheetState.lesson = l; sheetState.key = key; sheetState.sig = '';
+    const lastBar = rows[rows.length - 1][rows[rows.length - 1].length - 1];
+    box.innerHTML = rows.map(r => staffSvg(l, r.map(b => b % n), widthOf(r)).replace('<svg ', '<svg class="' + (r.length === 1 ? 'half' : 'full') + '" ')).join('') +
+      '<div class="small">' + (read
+        ? 'Bars ' + (rows[0][0] + 1) + ' to ' + (lastBar + 1) + ' of ' + totalBars + '. Read ahead: the lower line comes next.'
+        : 'Bar ' + (barNo % n + 1) + ' of ' + n + (n === 1 ? ' (it repeats)' : '') + '. Crosses are cymbals, dots are drums. Stems up: hands. Stems down: feet.') + '</div>';
+    box.classList.toggle('one', !read && rows[0].length === 1);
+  }
+  const svgs = box.querySelectorAll('svg');
+  const c = svgs[0].querySelector('.cur');
   if (G.running && pos >= 0 && pos < G.totalBeats) {
-    const g = staffGeom(l, idxs.length, idxs.length === 1 ? SHEET_W / 2 : SHEET_W);
-    const x = g.X(0, (pos - barNo * B) * l.div);
+    const g = staffGeom(l, rows[0].length, widthOf(rows[0]));
+    const x = g.X(barNo - rows[0][0], (pos - barNo * B) * l.div);
     c.style.display = ''; c.setAttribute('x1', x); c.setAttribute('x2', x);
   } else c.style.display = 'none';
+  // Notes that have been played turn green; missed ones turn red.
+  if (!G.running || G.demo) return;
+  const first = rows[0][0] * B, end = (rows[rows.length - 1][rows[rows.length - 1].length - 1] + 1) * B;
+  const done = [];
+  for (let i = Math.max(0, G.head - 300); i < G.notes.length; i++) {
+    const nt = G.notes[i];
+    if (nt.t >= end) break;
+    if (nt.t >= first - 1e-6 && nt.state !== 0) done.push(nt);
+  }
+  const sig = done.length + ':' + done.filter(x => x.state === 2).length;
+  if (sig === sheetState.sig) return;
+  sheetState.sig = sig;
+  done.forEach(nt => {
+    const bar = Math.floor(nt.t / B + 1e-6), step = Math.round((nt.t - bar * B) * l.div);
+    const r = rows.findIndex(x => x.indexOf(bar) >= 0);
+    if (r < 0) return;
+    const el = svgs[r].querySelector('[data-n="' + rows[r].indexOf(bar) + '-' + step + '-' + nt.pad + '"]');
+    if (el) el.setAttribute('class', el.getAttribute('class').split(' ')[0] + (nt.state === 2 ? ' bad' : ' ok'));
+  });
 }
 
 // ---------- Start here: how to read drum music ----------
@@ -1518,6 +1551,312 @@ function buildBeat() {
     beatStop();
     openCustom(l);
   };
+}
+
+// ---------- Basics: four small games for the ears, the eyes and the hands ----------
+// Name that drum (hear a drum, find it), Which one was it? (hear a rhythm, pick the written one),
+// Copy me (hear a rhythm, play it back) and Read and play (read a rhythm, play it).
+// The two playing games only listen for WHEN the taps come, so any pad, the big drum on the screen or the space bar will do.
+const RG_TOPICS = [
+  { name: 'Quarter notes', div: 1, bpm: 80, pats: ['xxxx', 'x-x-', 'xx-x', 'x-xx', 'xxx-', 'x--x', 'xx--'] },
+  { name: 'Eighth notes', div: 2, bpm: 80, pats: ['x-x-xxx-', 'xxx-x-x-', 'x-xxx-x-', 'xxxxx-x-', 'x-x-x-xx', 'xxx-xxx-', 'x-xxxxx-'] },
+  { name: 'With rests', div: 2, bpm: 80, pats: ['x---x-x-', 'x-x---x-', 'x-xx--x-', 'x--xx-x-', 'x-x-x---', 'xx--x-x-', 'x---xxx-'] },
+  { name: 'Sixteenth notes', div: 4, bpm: 60, pats: ['x---xxxxx---x---', 'xxxxx---x-x-x---', 'x-x-xxxxx---x---', 'x-xxx-x-x-xxx---', 'xxx-x-x-xxx-x---', 'x---x-xxx---xxxx'] }
+];
+const RG_GAMES = {
+  drum: { title: '🎧 Name that drum', how: 'You hear a drum. Tap that drum in the picture, or hit it on your pad.' },
+  hear: { title: '👂 Which one was it?', how: 'You hear a rhythm. Tap the written rhythm that matches it.' },
+  copy: { title: '🔁 Copy me', how: 'Listen to the rhythm. Then play it back: tap the big drum, press Space, or hit any pad.' },
+  read: { title: '📖 Read and play', how: 'Read the rhythm. After four clicks, play it: tap the big drum, press Space, or hit any pad.' }
+};
+const RG_DRUMS = ['snare', 'kick', 'hihat', 'crash', 'tom1', 'tom3', 'ride'];
+const RG_LEN = 5;
+const RG = { game: 'hear', topic: 0, on: false, n: 0, score: 0, pat: '', opts: [], want: '', phase: '', taps: [], t1: 0, timers: [], deaf: 0, lastT: 0 };
+const rgTopic = () => RG_TOPICS[RG.topic];
+const rgKey = () => RG.game + (RG.game === 'drum' ? '' : '.' + RG.topic);
+const rgPick = (list, not) => { let v; do { v = list[Math.floor(Math.random() * list.length)]; } while (list.length > 1 && v === not); return v; };
+function rgSay(text, color) { const e = $('#rgSay'); e.textContent = text; e.style.color = color || ''; }
+function rgLater(fn, ms) { RG.timers.push(setTimeout(fn, ms)); }
+function rgClear() { RG.timers.forEach(clearTimeout); RG.timers = []; }
+function rgStaffHtml(pat) { return staffSvg({ div: rgTopic().div, bars: [{ snare: pat }] }, [0], 450); }
+// One bar: a click on every beat, and the rhythm on the snare when the app plays it itself.
+function rgBar(t0, pat, withDrum) {
+  const tp = rgTopic(), spb = 60 / tp.bpm, step = spb / tp.div;
+  for (let b = 0; b < 4; b++) Ear.click(t0 + b * spb, b === 0, 0.25);
+  if (withDrum) for (let i = 0; i < pat.length; i++) if (pat[i] === 'x') Ear.drum('snare', t0 + i * step);
+  return t0 + 4 * spb;
+}
+function rgScoreUi() {
+  $('#rgScore').textContent = RG.on ? 'Round ' + Math.min(RG_LEN, RG.n + 1) + ' of ' + RG_LEN + ' · ' + RG.score + ' right' : '';
+  const best = ((prof().rg || {})[rgKey()]) || 0;
+  $('#rgBest').textContent = best ? 'Your best here: ' + '★'.repeat(best) + '☆'.repeat(3 - best) : '';
+}
+// Put one of the four games on the page.
+function rgSet(game) {
+  rgStop();
+  RG.game = game;
+  const g = RG_GAMES[game];
+  $('#rgTitle').textContent = g.title;
+  $('#rgHow').textContent = g.how;
+  $('#rgTopics').classList.toggle('hidden', game === 'drum');
+  $('#rgPad').classList.toggle('hidden', game !== 'drum');
+  $('#rgStaff').innerHTML = ''; $('#rgOpts').innerHTML = '';
+  rgSay('Press Start. ' + RG_LEN + ' rounds.');
+  rgScoreUi();
+}
+function rgStop() {
+  rgClear();
+  RG.on = false; RG.phase = '';
+  $('#rgGo').textContent = '▶ Start';
+  $('#rgAgain').classList.add('hidden');
+  $('#rgTap').classList.add('hidden');
+  document.querySelectorAll('#rgPad .spot').forEach(e => e.classList.remove('target'));
+}
+function rgStart() {
+  rgStop();
+  Ear.ensureCtx();
+  RG.on = true; RG.n = 0; RG.score = 0;
+  $('#rgGo').textContent = '■ Stop';
+  if (RG.game !== 'hear' && calibrated() && !micUserOff) ensureListening();   // the real pad can answer too
+  rgRound();
+}
+function rgRound() {
+  rgClear();
+  const now = Ear.ensureCtx().currentTime, game = RG.game;
+  $('#rgStaff').innerHTML = ''; $('#rgOpts').innerHTML = '';
+  $('#rgTap').classList.toggle('hidden', game !== 'copy' && game !== 'read');
+  $('#rgAgain').classList.toggle('hidden', game !== 'drum' && game !== 'hear');
+  rgScoreUi();
+  if (game === 'drum') {
+    RG.want = rgPick(RG_DRUMS, RG.want);
+    RG.phase = 'answer';
+    rgSay('Which drum was that?');
+    rgHearAgain();
+    return;
+  }
+  const tp = rgTopic(), bar = 4 * 60 / tp.bpm;
+  RG.pat = rgPick(tp.pats, RG.pat);
+  if (game === 'hear') {
+    const others = tp.pats.filter(p => p !== RG.pat).sort(() => Math.random() - 0.5).slice(0, 2);
+    RG.opts = [RG.pat].concat(others).sort(() => Math.random() - 0.5);
+    const box = $('#rgOpts');
+    RG.opts.forEach((p, i) => {
+      const b = document.createElement('button');
+      b.className = 'rgOpt notation';
+      b.innerHTML = '<i>' + 'ABC'[i] + '</i>' + rgStaffHtml(p);
+      b.onclick = () => rgChoose(p, b);
+      box.appendChild(b);
+    });
+    RG.phase = 'answer';
+    rgSay('Listen: four clicks, then the rhythm.');
+    rgHearAgain();
+    return;
+  }
+  // Copy me and Read and play: four clicks, (the app plays it,) then the child plays one bar.
+  RG.taps = [];
+  let t = now + 0.35;
+  t = rgBar(t, RG.pat, false);
+  if (game === 'copy') {
+    rgSay('Listen…');
+    rgLater(() => rgSay('Listen… 🔊'), (t - now) * 1000);
+    t = rgBar(t, RG.pat, true);
+  } else {
+    $('#rgStaff').innerHTML = rgStaffHtml(RG.pat);
+    rgSay('Get ready: 1, 2, 3, 4…');
+  }
+  RG.t1 = t;
+  RG.deaf = t - 0.12;   // the app's own drum must not count as a tap
+  RG.phase = 'wait';
+  rgLater(() => { RG.phase = 'tap'; rgSay('Your turn! Play it now.', '#4b2bbf'); $('#rgTap').classList.add('go'); }, (t - 0.25 - now) * 1000);
+  rgBar(t, RG.pat, false);
+  rgLater(rgJudge, (t + bar + 0.3 - now) * 1000);
+}
+function rgHearAgain() {
+  if (!RG.on || RG.phase !== 'answer') return;
+  const t = Ear.ensureCtx().currentTime + 0.15;
+  if (RG.game === 'drum') { Ear.drum(RG.want, t); Ear.drum(RG.want, t + 0.6); RG.deaf = t + 1.1; }
+  else if (RG.game === 'hear') rgBar(rgBar(t, RG.pat, false), RG.pat, true);
+}
+function rgNext(right) {
+  if (right) RG.score++;
+  RG.n++; RG.phase = 'done';
+  rgScoreUi();
+  rgLater(() => (RG.n >= RG_LEN ? rgEnd() : rgRound()), right ? 1500 : 2400);
+}
+function rgChoose(p, btn) {
+  if (!RG.on || RG.phase !== 'answer') return;
+  const right = p === RG.pat;
+  btn.classList.add(right ? 'ok' : 'bad');
+  if (!right) Array.from($('#rgOpts').children).forEach((b, i) => { if (RG.opts[i] === RG.pat) b.classList.add('ok'); });
+  rgSay(right ? '✓ Yes, that was it!' : 'Not that one. The green one was played.', right ? '#1c9d58' : '#c0392b');
+  rgNext(right);
+}
+function rgDrumAnswer(pad, heard) {
+  if (!RG.on || RG.phase !== 'answer') return;
+  const now = Ear.ensureCtx().currentTime;
+  if (!heard) { Ear.drum(pad, now + 0.02); RG.deaf = now + 0.45; }
+  const right = pad === RG.want;
+  SPOTS.filter(s => s.pad === RG.want).forEach(s => { const e = $('#rg-' + s.key); if (e) { e.classList.add('target'); setTimeout(() => e.classList.remove('target'), 1400); } });
+  rgSay(right ? '✓ Yes! That was the ' + PAD[pad].name + '.' : 'That is the ' + PAD[pad].name + '. It was the ' + PAD[RG.want].name + ': the one that glows.', right ? '#1c9d58' : '#c0392b');
+  rgNext(right);
+}
+// A tap from the screen, the keyboard or the pad. time = when it was meant, on the app's own clock.
+function rgTap(time) {
+  if (!RG.on || RG.phase !== 'tap') return;
+  if (time - RG.lastT < 0.07) return;
+  RG.lastT = time;
+  RG.taps.push(time);
+  const b = $('#rgTap');
+  b.classList.add('hit'); setTimeout(() => b.classList.remove('hit'), 90);
+}
+function rgJudge() {
+  const tp = rgTopic(), step = 60 / tp.bpm / tp.div, tol = Math.min(0.2, step * 0.45);
+  RG.phase = 'done';
+  $('#rgTap').classList.remove('go');
+  const want = [];
+  for (let i = 0; i < RG.pat.length; i++) if (RG.pat[i] === 'x') want.push({ i, t: RG.t1 + i * step, ok: false });
+  const taps = RG.taps.map(t => ({ t, used: false }));
+  want.forEach(w => {
+    let best = null;
+    taps.forEach(x => { if (!x.used && Math.abs(x.t - w.t) <= tol && (!best || Math.abs(x.t - w.t) < Math.abs(best.t - w.t))) best = x; });
+    if (best) { best.used = true; w.ok = true; }
+  });
+  const missed = want.filter(w => !w.ok).length, extra = taps.filter(x => !x.used).length, right = !missed && !extra;
+  $('#rgStaff').innerHTML = rgStaffHtml(RG.pat);
+  want.forEach(w => { const e = $('#rgStaff').querySelector('[data-n="0-' + w.i + '-snare"]'); if (e) e.setAttribute('class', 'nh ' + (w.ok ? 'ok' : 'bad')); });
+  rgSay(!taps.length ? 'I did not hear any taps. Tap the big drum when it says "Your turn".'
+    : right ? '✓ Spot on!'
+    : missed ? 'Nearly: ' + missed + (missed === 1 ? ' note was' : ' notes were') + ' missed or out of time (the red ones).'
+    : extra + (extra === 1 ? ' tap' : ' taps') + ' too many. Play only the notes you see.', right ? '#1c9d58' : '#c0392b');
+  rgNext(right);
+}
+function rgEnd() {
+  const s = RG.score, stars = s >= RG_LEN ? 3 : s >= RG_LEN - 1 ? 2 : s >= RG_LEN - 2 ? 1 : 0;
+  rgStop();
+  const p = prof();
+  p.rg = p.rg || {};
+  if (stars > (p.rg[rgKey()] || 0)) { p.rg[rgKey()] = stars; saveProf(); }
+  $('#rgOpts').innerHTML = '';
+  rgSay((stars ? '★'.repeat(stars) + ' ' : '') + s + ' of ' + RG_LEN + ' right. ' + (stars === 3 ? 'Perfect! Try the next step, or another game.' : stars ? 'Well done! Play again to beat it.' : 'Good try. Have another go.'), stars ? '#1c9d58' : '');
+  if (stars === 3) { const t = Ear.ensureCtx().currentTime + 0.05; Ear.drum('crash', t); Ear.drum('kick', t); RG.deaf = t + 0.8; }
+  rgScoreUi();
+  learnTiles();
+}
+// A hit heard from the real pad.
+function rgAudio(h) {
+  if (!RG.on || h.time < RG.deaf) return;
+  if (RG.game === 'drum') {
+    if (RG.phase !== 'answer' || !calibrated()) return;
+    const r = Ear.classify(h.feat, { expected: [[RG.want]] });
+    if (r.click || r.pads.length !== 1) return;
+    rgDrumAnswer(r.pads[0], true);
+  } else if (RG.phase === 'tap') {
+    if (Ear.classify(h.feat).click) return;   // the metronome, heard through the microphone
+    rgTap(h.time - settings.offsetMs / 1000);
+  }
+}
+function buildRg() {
+  buildPadMap('#rgPad', 'rg-', (s) => rgDrumAnswer(s.pad, false));
+  const topics = $('#rgTopics');
+  RG_TOPICS.forEach((tp, i) => {
+    const b = document.createElement('button');
+    b.className = 'feel' + (i === 0 ? ' active' : '');
+    b.textContent = tp.name;
+    b.onclick = () => {
+      RG.topic = i;
+      Array.from(topics.children).forEach(x => x.classList.toggle('active', x === b));
+      const was = RG.on;
+      rgSet(RG.game);
+      if (was) rgStart();
+    };
+    topics.appendChild(b);
+  });
+  $('#rgGo').onclick = () => { if (RG.on) { rgStop(); rgSay('Stopped. Press Start for a new go.'); rgScoreUi(); } else rgStart(); };
+  $('#rgAgain').onclick = rgHearAgain;
+  const tapNow = (e) => {
+    e.preventDefault();
+    const ctx = Ear.ensureCtx();
+    if (RG.phase === 'tap') { Ear.drum('snare', ctx.currentTime); RG.deaf = Math.max(RG.deaf, ctx.currentTime + 0.25); }
+    rgTap(ctx.currentTime - outLat());
+  };
+  $('#rgTap').addEventListener('pointerdown', tapNow);
+  document.addEventListener('keydown', (e) => {
+    if (e.code !== 'Space' || e.repeat || screen !== 'learn' || !RG.on || (RG.phase !== 'tap' && RG.phase !== 'wait')) return;
+    tapNow(e);
+  });
+}
+
+// ---------- Basics: the menu ----------
+// Basics opens as a page of big tiles. One tile opens one thing, alone on the page, with a way back.
+const LEARN_ACTS = [
+  ['kit', '🥁', 'Meet the drum kit', 'Tap each drum and hear it', 'Learn'],
+  ['beat', '💓', 'Feel the beat', 'Slow, fast, 4 beat, 8 beat', 'Learn'],
+  ['read', '🎼', 'Read the notes', 'Where each drum sits on the lines', 'Learn'],
+  ['sit', '🪑', 'Sit and hold the sticks', 'Four quick tips', 'Learn'],
+  ['quiz', '🎯', 'Note quiz', 'See a note, find its drum', 'Play'],
+  ['rg:drum', '🎧', 'Name that drum', 'Hear a drum, find it', 'Play'],
+  ['rg:hear', '👂', 'Which one was it?', 'Hear a rhythm, pick it', 'Play'],
+  ['rg:copy', '🔁', 'Copy me', 'Hear a rhythm, play it back', 'Play'],
+  ['rg:read', '📖', 'Read and play', 'Read a rhythm, play it', 'Play'],
+  ['maker', '🎛', 'Beat maker', 'Build your own beat, then practise it', 'Make']
+];
+const Learn = { act: '' };
+function learnStars(act) {
+  const p = prof();
+  if (act === 'quiz') { const q = p.quiz || []; const s = Math.max(0, q[0] || 0, q[1] || 0, q[2] || 0); return s >= 10 ? 3 : s >= 8 ? 2 : s >= 5 ? 1 : 0; }
+  if (act.indexOf('rg:') === 0) { const g = act.slice(3), r = p.rg || {}; return Math.max(0, ...Object.keys(r).filter(k => k === g || k.indexOf(g + '.') === 0).map(k => r[k])); }
+  return -1;
+}
+function learnTiles() {
+  const hub = $('#learnHub');
+  hub.innerHTML = '';
+  ['Learn', 'Play', 'Make'].forEach(group => {
+    const h = document.createElement('h3');
+    h.textContent = group === 'Learn' ? '👀 Look and listen' : group === 'Play' ? '🎮 Games' : '🛠 Make your own';
+    const row = document.createElement('div');
+    row.className = 'learnRow';
+    LEARN_ACTS.filter(a => a[4] === group).forEach(a => {
+      const b = document.createElement('button');
+      b.className = 'learnTile g' + group;
+      const st = learnStars(a[0]);
+      b.innerHTML = '<span class="ti"></span><b></b><span class="small"></span>' + (st >= 0 ? '<span class="st"></span>' : '');
+      b.children[0].textContent = a[1]; b.children[1].textContent = a[2]; b.children[2].textContent = a[3];
+      if (st >= 0) b.children[3].textContent = '★'.repeat(st) + '☆'.repeat(3 - st);
+      b.onclick = () => learnOpen(a[0]);
+      row.appendChild(b);
+    });
+    const wrap = document.createElement('div');
+    wrap.className = 'learnGroup';
+    wrap.appendChild(h); wrap.appendChild(row);
+    hub.appendChild(wrap);
+  });
+}
+function learnQuiet() {   // whatever was playing in Basics stops
+  if (Lab.on) labStop();
+  if (Beat.on) beatStop();
+  if (Quiz.on) quizStop();
+  if (RG.on) rgStop();
+  if (typeof readStop === 'function') readStop();
+}
+function learnOpen(act) {
+  learnQuiet();
+  Learn.act = act;
+  const sec = $('#learn'), cards = Array.from(sec.querySelectorAll('.card'));
+  const plain = cards.filter(c => !c.id);   // in page order: the kit, the beat, the notes, how to sit
+  const card = !act ? null : act === 'kit' ? plain[0] : act === 'beat' ? plain[1] : act === 'read' ? plain[2] : act === 'sit' ? plain[3]
+    : act === 'quiz' ? $('#quizCard') : act === 'maker' ? $('#beatCard') : $('#rgCard');
+  cards.forEach(c => c.classList.toggle('actOn', c === card));
+  if (act) sec.dataset.act = act.split(':')[0]; else delete sec.dataset.act;
+  if (act && act.indexOf('rg:') === 0) rgSet(act.slice(3));
+  if (!act) learnTiles();
+  const flow = sec.querySelector('.flow');
+  if (flow) flow.scrollLeft = 0;
+  window.scrollTo(0, 0);
+}
+function buildLearn() {
+  buildRg();
+  $('#learnBack').onclick = () => learnOpen('');
+  learnOpen('');
 }
 
 // ---------- Celebration ----------

@@ -58,7 +58,7 @@ const UI = {
     const wrap = (id, wide) => {
       const sec = document.getElementById(id), flow = document.createElement('div');
       flow.className = 'flow' + (wide ? ' wideCols' : '');
-      Array.from(sec.children).forEach(c => { if (c.tagName !== 'H1') flow.appendChild(c); });
+      Array.from(sec.children).forEach(c => { if (c.tagName !== 'H1' && !c.classList.contains('noFlow')) flow.appendChild(c); });
       sec.appendChild(flow);
     };
     ['songs', 'learn', 'friends', 'inbox', 'progress', 'testDone'].forEach(id => wrap(id, id === 'songs' || id === 'progress'));
