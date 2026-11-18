@@ -44,7 +44,8 @@ function show(name) {
   if (screen === 'play' && name !== 'play' && name !== 'recap' && G.running) stopRun(false);
   if (Cal.active && name !== 'setup') calPause();
   if (Chk.active && name !== 'setup') chkStop();
-  if (Lat.active && name !== 'setup') { clearTimeout(Lat.timer); Lat.active = false; $('#latBtn').disabled = false; $('#latOut').textContent = ''; }
+  if (Lat.active && name !== 'setup') latStop('');
+  $('#latCard').classList.add('hidden');
   if (G.test && name !== 'play' && name !== 'testDone') endTest('');   // leaving in the middle of a test ends it
   if (Online.blocked() && name !== 'account') name = 'account';   // nothing opens without an approved account
   $('#frCard').classList.add('hidden'); $('#padCard').classList.add('hidden'); $('#setMore').classList.add('hidden');
@@ -700,7 +701,10 @@ function calPause(msg) {
 }
 
 // ---------- Setup: measure this computer's sound delay ----------
-const Lat = { active: false, phase: '', clicks: [], heard: [], timer: null };
+// Step 1 plays clicks and listens for them through the microphone: the gap is the delay of this device.
+// Step 2 is a try-out: the player hits a pad on every click and each hit lands as a dot on an early / late gauge.
+const LAT_SPAN = 150;   // the gauge shows hits from this many ms early to this many ms late
+const Lat = { active: false, phase: '', clicks: [], heard: [], timer: null, tick: null, next: 0, errs: [], shift: 0 };
 function setOffset(ms) {
   settings.offsetMs = Math.max(-50, Math.min(400, Math.round(ms)));
   saveSettings();
@@ -716,44 +720,144 @@ function clickDelays(clicks, heard, lo, hi) {
   });
   return out;
 }
-function latPlay(n, gap) {
-  Lat.clicks = []; Lat.heard = [];
-  const t = Ear.ctx.currentTime + 0.5;
-  for (let i = 0; i < n; i++) { Lat.clicks.push(t + i * gap); Ear.click(t + i * gap, true, 0.3); }
-  return (0.5 + n * gap + 0.4) * 1000;
+const latSpread = (a) => { const m = median(a); return median(a.map(v => Math.abs(v - m))); };   // how far a typical value sits from the middle
+function latUi() {
+  const run = Lat.active;
+  $('#latVal').textContent = settings.offsetMs + ' ms';
+  $('#latHow').textContent = settings.offsetChosen ? 'measured or set by hand' : 'not measured yet: this is a guess';
+  $('#latBtn').classList.toggle('hidden', run); $('#latTry').classList.toggle('hidden', run);
+  $('#latStopBtn').classList.toggle('hidden', !run);
+  $('#latS1').classList.toggle('on', run && Lat.phase !== 'try'); $('#latS2').classList.toggle('on', run && Lat.phase === 'try');
+  if (run) $('#latUse').classList.add('hidden');
+  if (!run) $('#latBeat').classList.remove('on');
 }
-async function latStart() {
+function latDot(ms, cls) {
+  const d = document.createElement('i');
+  const x = Math.max(-1, Math.min(1, ms / LAT_SPAN));
+  d.className = 'dot ' + (cls || (Math.abs(ms) <= 45 ? 'perf' : Math.abs(ms) <= 90 ? 'good' : 'off'));
+  d.style.left = (50 + 50 * x) + '%';
+  const box = $('#latDots'), last = box.querySelector('.dot.last');
+  if (last) last.classList.remove('last');
+  d.classList.add('last');
+  box.appendChild(d);
+}
+function latMark(ms) {
+  const m = document.createElement('i');
+  m.className = 'mid'; m.style.left = (50 + 50 * Math.max(-1, Math.min(1, ms / LAT_SPAN))) + '%';
+  $('#latDots').appendChild(m);
+}
+// Clicks are sent a moment ahead, one by one, so that Stop really stops them. Returns how long the run lasts, in ms.
+function latPlay(n, gap) {
+  Lat.clicks = []; Lat.heard = []; Lat.next = 0;
+  const t = Ear.ctx.currentTime + 0.6;
+  for (let i = 0; i < n; i++) Lat.clicks.push(t + i * gap);
+  clearInterval(Lat.tick);
+  Lat.tick = setInterval(() => {
+    const now = Ear.ctx.currentTime;
+    while (Lat.next < n && Lat.clicks[Lat.next] < now + 0.2) { Ear.click(Lat.clicks[Lat.next], true, 0.3); Lat.next++; }
+    const heardNow = now - outLat();   // the light flashes when the click is heard, not when it was sent
+    $('#latBeat').classList.toggle('on', Lat.clicks.some(c => heardNow >= c && heardNow < c + 0.12));
+  }, 25);
+  return (0.6 + n * gap + 0.45) * 1000;
+}
+function latStop(msg) {
+  clearTimeout(Lat.timer); clearInterval(Lat.tick);
+  Lat.active = false; Lat.phase = '';
+  latUi();
+  if (msg !== undefined) $('#latOut').textContent = msg;
+}
+async function latBegin(phase) {
   const out = $('#latOut');
-  if (Lat.active || Lat.starting || Cal.active || Cal.starting) return;
+  if (Lat.active || Lat.starting || Cal.active || Cal.starting || Chk.active) return false;
   Lat.starting = true;
   const ok = await ensureListening();
   Lat.starting = false;
-  if (screen !== 'setup' || Cal.active) return;
-  if (!ok) { out.textContent = micProblem(); return; }
-  Lat.active = true; Lat.phase = 'auto';
-  $('#latBtn').disabled = true;
-  out.textContent = 'Stay quiet for 4 seconds: listening for the metronome through the microphone...';
+  if (screen !== 'setup' || Cal.active || $('#latCard').classList.contains('hidden')) return false;
+  if (!ok) { out.textContent = micProblem(); return false; }
+  Lat.active = true; Lat.phase = phase;
+  $('#latDots').innerHTML = '';
+  latUi();
+  return true;
+}
+async function latStart() {
+  if (!await latBegin('auto')) return;
+  const out = $('#latOut');
+  out.textContent = 'Stay quiet: listening for the click through the microphone...';
   Lat.timer = setTimeout(() => {
-    const d = clickDelays(Lat.clicks, Lat.heard, 0, 0.3);
-    if (d.length >= 4) { latDone(median(d) * 1000, 'measured automatically'); return; }
+    // Only sounds that share one gap to the clicks are the click itself; a cough or a pad hit is left out.
+    const heard = Lat.heard.map(h => ({ h, d: clickDelays(Lat.clicks, [h.time], 0, 0.3)[0] })).filter(x => x.d !== undefined);
+    const md = heard.length ? median(heard.map(x => x.d)) : 0;
+    const ok = heard.filter(x => Math.abs(x.d - md) < 0.025);
+    if (ok.length >= 4) {
+      setTemplates(T => { T._click = Ear.makeTemplate(ok.map(x => x.h.feat)); });   // a fresh picture of the click, so lessons can ignore it
+      const ds = ok.map(x => x.d * 1000), sp = Math.round(Math.max.apply(null, ds) - Math.min.apply(null, ds));
+      latDone(md * 1000, 'The microphone heard ' + ok.length + ' of ' + Lat.clicks.length + ' clicks, all within ' + Math.max(1, sp) + ' ms of each other.');
+      ds.forEach(d => latDot(d - settings.offsetMs, 'click'));
+      return;
+    }
     // The microphone cannot hear the click (headphones, or volume too low): ask the player to tap along.
-    Lat.phase = 'tap';
-    out.textContent = 'The microphone cannot hear the metronome. Hit any pad exactly together with each of the next 12 clicks.';
+    Lat.phase = 'tap'; latUi();
+    out.textContent = 'The microphone cannot hear the click (headphones, or the sound is low). Hit one pad exactly with each of the next 12 clicks.';
     Lat.timer = setTimeout(() => {
-      const t = clickDelays(Lat.clicks, Lat.heard, -0.15, 0.35);
-      if (t.length >= 6) latDone(median(t) * 1000, 'measured from your taps');
-      else { Lat.active = false; $('#latBtn').disabled = false; out.textContent = 'Not enough hits were heard. Check the microphone level above and try again.'; }
+      const t = clickDelays(Lat.clicks, Lat.heard.map(h => h.time), -0.15, 0.35);
+      if (t.length < 6) { latStop('Only ' + t.length + ' hits were heard. Check that the microphone is on and try again.'); return; }
+      const m = median(t) * 1000;
+      latDone(m, 'Worked out from ' + t.length + ' of your hits. They were within ' + Math.round(latSpread(t) * 1000) + ' ms of each other.');
+      t.forEach(d => latDot(d * 1000 - settings.offsetMs));
     }, latPlay(12, 0.6));
   }, latPlay(8, 0.4));
 }
-function latHit(h) { Lat.heard.push(h.time); }
 function latDone(ms, how) {
-  Lat.active = false;
-  $('#latBtn').disabled = false;
   setOffset(ms);
   settings.offsetChosen = true; saveSettings();
-  $('#latOut').textContent = 'Delay is ' + settings.offsetMs + ' ms (' + how + '). Saved.';
+  latStop('Delay is ' + settings.offsetMs + ' ms. Saved. ' + how + ' Now press "Try it" to see it work.');
 }
+async function latTry() {
+  if (!await latBegin('try')) return;
+  Lat.errs = [];
+  $('#latOut').textContent = 'Hit one pad exactly on every click. 16 clicks.';
+  Lat.timer = setTimeout(latTryEnd, latPlay(16, 0.6));
+}
+function latTryEnd() {
+  const e = Lat.errs;
+  if (e.length < 6) { latStop(e.length ? 'Only ' + e.length + ' hits were heard. Hit a pad on every click and try again.' : 'No hits were heard. Check that the microphone is on and hit a pad on every click.'); return; }
+  const m = Math.round(median(e)), sp = Math.round(latSpread(e));
+  const good = e.filter(v => Math.abs(v) <= 90).length;
+  latMark(m);
+  let msg = good + ' of ' + e.length + ' hits were on the beat. In the middle you were ' + (Math.abs(m) < 10 ? 'right on the click' : Math.abs(m) + ' ms ' + (m < 0 ? 'early' : 'late')) + ', and your hits were spread ' + sp + ' ms around that.';
+  const use = $('#latUse');
+  if (Math.abs(m) >= 25 && sp <= 40) {
+    // All early or all late by the same amount: that points at the device, not at the player.
+    Lat.shift = m;
+    msg += ' Your hits were steady but all ' + (m < 0 ? 'early' : 'late') + '. If you felt on the click, the delay number is off.';
+    use.textContent = 'Move the delay by ' + (m > 0 ? '+' : '') + m + ' ms';
+    latStop(msg);
+    use.classList.remove('hidden');
+    return;
+  }
+  if (sp > 40) msg += ' The dots are far apart: that is the playing, not the device. Slow down and listen for the click.';
+  else msg += ' The timing is set well.';
+  latStop(msg);
+}
+function latHit(h) {
+  if (Lat.phase !== 'try') { Lat.heard.push(h); return; }
+  if (calibrated() && Ear.classify(h.feat, { allPairs: true }).click) return;   // the microphone heard our own click
+  const d = clickDelays(Lat.clicks, [h.time - settings.offsetMs / 1000], -0.25, 0.25)[0];
+  if (d === undefined) return;
+  const ms = d * 1000;
+  Lat.errs.push(ms);
+  latDot(ms);
+  const a = Math.abs(ms);
+  $('#latOut').textContent = (a <= 45 ? 'Perfect!' : a <= 90 ? 'Good' : ms < 0 ? 'Early' : 'Late') + '  ' + (ms < 0 ? '' : '+') + Math.round(ms) + ' ms   (hit ' + Lat.errs.length + ')';
+}
+function latOpen() {
+  if (Cal.active || Cal.starting || Chk.active) return;
+  $('#setMore').classList.add('hidden');
+  $('#latDots').innerHTML = ''; $('#latOut').textContent = ''; $('#latUse').classList.add('hidden');
+  latUi();
+  $('#latCard').classList.remove('hidden');
+}
+function latClose() { latStop(''); $('#latCard').classList.add('hidden'); }
 
 // ---------- Setup: check every pad ----------
 // The app asks for each taught pad in turn, three hits each, and keeps score of what it recognised.
@@ -1537,6 +1641,37 @@ const LIMB_PICS = {}, LIMB_NAMES = { LF: 'Left foot', LH: 'Left hand', RH: 'Righ
   im.src = 'art/limb-' + k.toLowerCase() + '.jpg';
   LIMB_PICS[k] = im;
 });
+// The metronome beside the notes: the arm reaches a side on every beat and the numbered lights count the bar.
+// Returns true when it is on show (so the lane need not draw its own beat lights).
+const Metro = { n: 0, cur: -2, shown: null };
+function metroDraw(on, pos, B) {
+  const box = $('#metroVis');
+  if (Metro.shown === null || Metro.w !== window.innerWidth || Metro.h !== window.innerHeight) { Metro.shown = box.offsetParent !== null; Metro.w = window.innerWidth; Metro.h = window.innerHeight; }
+  if (!Metro.shown) return false;
+  if (Metro.n !== B) {
+    Metro.n = B; Metro.cur = -2;
+    let s = '';
+    for (let k = 0; k < B; k++) s += '<i' + (k === 0 ? ' class="one"' : '') + '>' + (k + 1) + '</i>';
+    $('#metroDots').innerHTML = s;
+  }
+  box.classList.toggle('idle', !on);
+  const bi = Math.floor(pos), cur = on ? ((bi % B) + B) % B : -1;
+  $('#metroArm').setAttribute('transform', 'rotate(' + (on ? (24 * Math.cos(Math.PI * pos)).toFixed(2) : 0) + ' 60 80)');
+  if (cur !== Metro.cur) {
+    Metro.cur = cur;
+    const dots = $('#metroDots').children;
+    for (let k = 0; k < dots.length; k++) dots[k].classList.toggle('on', k === cur);
+  }
+  return true;
+}
+// The pad picture is as tall as the stage allows; the buddy and the metronome sit in a column beside it.
+function fitSide() {
+  const st = $('#play .stage'), side = $('#play .side');
+  if (!st || !st.clientHeight) return;
+  const h = st.clientHeight - 20;
+  side.style.setProperty('--padW', Math.round(Math.max(190, Math.min(h * 420 / 340, st.clientWidth * 0.36, 470))) + 'px');
+}
+if (window.ResizeObserver) new ResizeObserver(() => { fitSide(); if (screen === 'play' && !G.running) draw(); }).observe($('#play .stage'));
 function draw() {
   if (screen !== 'play' || !G.lesson) return;
   updatePadView();
@@ -1703,7 +1838,10 @@ function draw() {
   });
 
   // Beat lights: a silent metronome. Beat 1 is yellow; the current beat swells and fades.
-  if (G.running && !G.wait && G.metroMode !== 'off' && pos > -preBeats() - 0.05) {
+  // Where the metronome beside the notes is on show, it does this job and the lights stay out of the way.
+  const beatOn = G.running && !G.wait && G.metroMode !== 'off' && pos > -preBeats() - 0.05;
+  const sideMetro = metroDraw(beatOn, pos, B);
+  if (beatOn && !sideMetro) {
     const bi = Math.floor(pos), frac = pos - bi, cur = ((bi % B) + B) % B;
     c.fillStyle = 'rgba(13,16,23,0.85)';
     rr(c, w / 2 - 8 - 21 * B, 8, 16 + 42 * B, 44, 22); c.fill();
@@ -1914,6 +2052,7 @@ function renderRecap(st, wasWait, climb) {
 function syncSettingsUi() {
   $('#sens').value = settings.sens;
   $('#offset').value = settings.offsetMs; $('#offsetTxt').textContent = settings.offsetMs + ' ms';
+  $('#latVal').textContent = settings.offsetMs + ' ms';
   $('#clickVol').value = settings.clickVol;
   $('#meterMark').style.left = (meterPos(floorFromSens(settings.sens)) * 100) + '%';
 }
@@ -1948,6 +2087,13 @@ $('#sens').oninput = (e) => { settings.sens = +e.target.value; saveSettings(); a
 $('#offset').oninput = (e) => { settings.offsetMs = +e.target.value; settings.offsetChosen = true; $('#offsetTxt').textContent = settings.offsetMs + ' ms'; saveSettings(); };
 $('#clickVol').oninput = (e) => { settings.clickVol = +e.target.value; Ear.clickVolume = settings.clickVol / 100; saveSettings(); };
 $('#latBtn').onclick = latStart;
+$('#latTry').onclick = latTry;
+$('#latStopBtn').onclick = () => latStop('Stopped.');
+$('#latUse').onclick = () => { setOffset(settings.offsetMs + Lat.shift); settings.offsetChosen = true; saveSettings(); $('#latUse').classList.add('hidden'); $('#latDots').innerHTML = ''; latUi(); $('#latOut').textContent = 'Delay is now ' + settings.offsetMs + ' ms. Press "Try it" again: the dots should land in the middle.'; };
+$('#latOpen').onclick = latOpen; $('#latOpen2').onclick = latOpen;
+$('#latX').onclick = latClose;
+$('#latCard').onclick = (e) => { if (e.target.id === 'latCard') latClose(); };
+document.body.appendChild($('#latCard'));
 $('#calStart').onclick = () => { Cal.queue = null; const k = CAL_ORDER.find(x => !learned(x)); if (k) calPick(k, true); };
 $('#calSkip').onclick = calNext;
 $('#calPause').onclick = () => calPause();

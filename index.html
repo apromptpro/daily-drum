@@ -572,6 +572,7 @@
         <div class="padActs">
           <button id="chkStart" class="primary big">&#9989; Check my pad</button>
           <button id="chkFix" class="big hidden"></button>
+          <button id="latOpen" class="big" title="Measures how late this device plays and hears sound, so hits are judged fairly">&#9201; Check the timing</button>
        </div>
         <div id="calResult" class="muted small"></div>
       </div>
@@ -588,6 +589,38 @@
           <button id="padCardForget" class="hidden">Forget what was taught</button>
         </div>
         <div id="chkOut" class="chkOut"></div>
+      </div>
+    </div>
+
+    <!-- timing: measure the delay of this device, then try it against the click -->
+    <div id="latCard" class="frCard hidden" role="dialog" aria-modal="true" aria-label="Check the timing">
+      <div class="card latBox">
+        <button id="latX" class="xBtn" aria-label="Close">&#10005;</button>
+        <h2>Check the timing</h2>
+        <p class="muted small">Every device plays and hears sound a little late. The app must know how late, or a good hit is called "early" or "late".</p>
+        <div class="latNow">
+          <span>Delay of this device</span>
+          <b id="latVal">60 ms</b>
+          <span id="latHow" class="muted small"></span>
+        </div>
+        <ol class="latSteps">
+          <li id="latS1"><b>1</b><span><strong>Measure.</strong> Stay quiet for 4 seconds while the app listens to its own click.</span></li>
+          <li id="latS2"><b>2</b><span><strong>Try it.</strong> Hit one pad on every click and watch where the dots land.</span></li>
+        </ol>
+        <div class="latGaugeRow">
+          <i id="latBeat" class="latBeat" aria-hidden="true"></i>
+          <div class="latGaugeWrap">
+            <div id="latGauge" class="latGauge" aria-hidden="true"><i class="zGood"></i><i class="zPerf"></i><i class="zMid"></i><span id="latDots"></span></div>
+            <div class="latLbl"><span>&#9664; Early</span><span>On the beat</span><span>Late &#9654;</span></div>
+          </div>
+        </div>
+        <div id="latOut" class="latOut" role="status"></div>
+        <div class="row latBtns">
+          <button id="latBtn" class="primary big">1. Measure the delay</button>
+          <button id="latTry" class="big">2. Try it with the click</button>
+          <button id="latStopBtn" class="big hidden">Stop</button>
+          <button id="latUse" class="hidden"></button>
+        </div>
       </div>
     </div>
 
@@ -623,8 +656,7 @@
             <h3>Timing</h3>
             <p class="muted small">Every device delays sound a little. Measure it once so "early" and "late" are judged fairly. Takes about 5 seconds.</p>
             <div class="row">
-              <button id="latBtn" class="primary">Measure delay</button>
-              <span id="latOut" class="small"></span>
+              <button id="latOpen2" class="primary">&#9201; Check the timing</button>
             </div>
             <div class="row">
               <label for="offset">Timing offset</label>
@@ -694,6 +726,11 @@
       <div class="side">
         <div class="sideTitle">Your pad</div>
         <svg id="padView" class="padSvg view tap" viewBox="0 0 420 340" aria-label="Your drum pad. Tap a pad to play it without the real pad."></svg>
+        <div class="sideAux">
+        <div id="metroVis" class="metroVis" aria-hidden="true">
+          <svg viewBox="0 0 120 92"><path class="mvBody" d="M44 88 L54 10 Q60 4 66 10 L76 88 Z"/><path class="mvFace" d="M50 82 L56.5 22 L63.5 22 L70 82 Z"/><g id="metroArm"><line x1="60" y1="80" x2="60" y2="10"/><rect x="53" y="26" width="14" height="12" rx="3"/></g><circle class="mvPin" cx="60" cy="80" r="4"/></svg>
+          <div id="metroDots" class="metroDots"></div>
+        </div>
         <div id="limbPic" class="limbPic" aria-hidden="true"><span data-l="LF"><img src="art/limb-lf.jpg" alt=""><b>Left foot</b></span><span data-l="LH"><img src="art/limb-lh.jpg" alt=""><b>Left hand</b></span><span data-l="RH"><img src="art/limb-rh.jpg" alt=""><b>Right hand</b></span><span data-l="RF"><img src="art/limb-rf.jpg" alt=""><b>Right foot</b></span></div>
         <div id="nextUp" class="nextUp"></div>
         <div id="climbHud" class="climbHud hidden"></div>
@@ -703,6 +740,7 @@
           <div id="buddySay" class="buddySay"></div>
         </div>
         <div id="padHint" class="padHint"></div>
+        </div>
       </div>
     </div>
     <div id="lessonTip" class="tip"></div>

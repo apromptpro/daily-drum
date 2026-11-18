@@ -1145,3 +1145,59 @@ html body button.rgTap:not(.go) span { letter-spacing: 2px; }
 .rgPlay button.rgTap, body.touch .rgPlay button.rgTap { flex: 1 1 auto; max-width: 360px; width: auto; margin: 0; }
 #rgCard .rgPlay .rgRow { margin: 0; flex: none; }
 #rgCard.rgOn .rgPlay #rgGo { min-height: 0; padding: 10px 16px; font-size: 16px; }
+
+/* ---------- 20. Timing check on My pad; lesson screen: a metronome beside the notes and a pad as tall as the stage ---------- */
+.latBox { position: relative; width: min(640px, 100%); max-height: calc(100vh - 40px); max-height: calc(100dvh - 40px); overflow-y: auto; margin: 0; }
+.latBox h2 { margin: 0 48px 4px 0; }
+.latBox > p { margin: 0 0 10px; }
+.latNow { display: flex; align-items: baseline; flex-wrap: wrap; gap: 4px 12px; padding: 8px 14px; border-radius: 16px; border: 3px solid #cfd3ea; background: #f4f5fc; font-weight: 700; color: #4a4f6a; }
+.latNow b { font-size: 30px; line-height: 1.1; color: #23264a; }
+.latSteps { list-style: none; margin: 10px 0; padding: 0; display: grid; gap: 6px; }
+.latSteps li { display: flex; align-items: center; gap: 10px; padding: 6px 10px; border-radius: 14px; border: 2px solid transparent; font-size: 14.5px; color: #4a4f6a; }
+.latSteps li > b { flex: none; width: 30px; height: 30px; border-radius: 50%; display: grid; place-items: center; background: #dfe2f2; color: #4a4f6a; font-size: 16px; }
+.latSteps li.on { border-color: #8f6cff; background: #f1ecff; color: #23264a; }
+.latSteps li.on > b { background: #5a36d6; color: #fff; }
+.latGaugeRow { display: flex; align-items: center; gap: 12px; margin: 4px 0 8px; }
+.latBeat { flex: none; width: 46px; height: 46px; border-radius: 50%; background: #dfe2f2; border: 4px solid #c5c9e6; transition: background .12s, transform .12s, box-shadow .12s; }
+.latBeat.on { background: #ffd84a; border-color: #fff; transform: scale(1.18); box-shadow: 0 0 18px rgba(255, 190, 40, .95); transition: none; }
+.latGaugeWrap { flex: 1; min-width: 0; }
+.latGauge { position: relative; height: 54px; border-radius: 14px; background: #fde3df; overflow: hidden; border: 2px solid #c5c9e6; }
+.latGauge .zGood { position: absolute; top: 0; bottom: 0; left: 20%; width: 60%; background: #fff3c4; }
+.latGauge .zPerf { position: absolute; top: 0; bottom: 0; left: 35%; width: 30%; background: #c9f1d8; }
+.latGauge .zMid { position: absolute; top: 0; bottom: 0; left: calc(50% - 1.5px); width: 3px; background: #23264a; opacity: .55; }
+.latGauge .dot { position: absolute; top: 50%; width: 18px; height: 18px; margin: -9px 0 0 -9px; border-radius: 50%; background: #d6453a; border: 2px solid #fff; opacity: .75; }
+.latGauge .dot.perf { background: #1c9d58; } .latGauge .dot.good { background: #c98a00; } .latGauge .dot.click { background: #5a36d6; }
+.latGauge .dot.last { opacity: 1; width: 26px; height: 26px; margin: -13px 0 0 -13px; box-shadow: 0 0 0 4px rgba(35, 38, 74, .2); z-index: 2; }
+.latGauge .mid { position: absolute; top: 2px; bottom: 2px; width: 4px; margin-left: -2px; border-radius: 2px; background: #23264a; z-index: 3; }
+.latLbl { display: flex; justify-content: space-between; font-size: 12.5px; font-weight: 800; color: #5a5f80; padding: 2px 4px 0; }
+.latOut { min-height: 44px; font-size: 16px; font-weight: 700; color: #23264a; line-height: 1.3; }
+.latBtns { margin: 8px 0 0; }
+.latBtns .big { flex: 1 1 200px; }
+@media (max-height: 620px) { .latBox > p, .latSteps li span strong ~ * { display: none; } .latGauge { height: 44px; } }
+
+.sideAux { display: contents; }
+.metroVis { display: none; }
+@media (min-width: 901px) {
+  .appMode #play .side { width: auto; flex-direction: row; align-items: stretch; gap: 10px; padding: 8px 10px; }
+  .appMode #play .side .padSvg { flex: none; width: var(--padW, 300px); height: auto; align-self: center; max-height: 100%; }
+  .appMode #play .sideAux { display: flex; flex-direction: column; gap: 6px; width: 172px; flex: none; min-height: 0; overflow: hidden; }
+  .appMode #play .sideAux .limbPic { grid-template-columns: 1fr 1fr; max-width: 150px; }
+  .appMode #play .sideAux .buddy { flex-direction: column; align-items: stretch; gap: 4px; min-height: 0; margin-top: auto; }
+  .appMode #play .sideAux .buddy .buddyFace { align-self: center; }
+  .appMode #play .sideAux .buddy .buddySay { font-size: 13px; text-align: center; }
+  .appMode #play .metroVis { display: flex; flex-direction: column; align-items: center; gap: 4px; flex: none; padding: 6px 4px; border-radius: 14px; background: #1f2740; border: 2px solid #2f3850; }
+  .metroVis svg { display: block; width: 116px; height: auto; }
+  .metroVis .mvBody { fill: #3a2f6e; stroke: #8f6cff; stroke-width: 2.5; stroke-linejoin: round; }
+  .metroVis .mvFace { fill: #f5ecd2; }
+  .metroVis #metroArm line { stroke: #23264a; stroke-width: 3.5; stroke-linecap: round; }
+  .metroVis #metroArm rect { fill: #ffd84a; stroke: #23264a; stroke-width: 2; }
+  .metroVis .mvPin { fill: #23264a; }
+  .metroDots { display: flex; gap: 5px; justify-content: center; flex-wrap: wrap; }
+  .metroDots i { width: 26px; height: 26px; border-radius: 50%; display: grid; place-items: center; font-style: normal; font-size: 14px; font-weight: 800; background: #2f3850; color: #7d87ab; transition: transform .25s, background .25s; }
+  .metroDots i.on { background: #e8ecf4; color: #23264a; transform: scale(1.3); transition: none; box-shadow: 0 0 12px rgba(232, 236, 244, .8); }
+  .metroDots i.one.on { background: #ffd84a; box-shadow: 0 0 14px rgba(255, 216, 74, .95); }
+  .metroVis.idle { opacity: .55; }
+}
+@media (min-width: 901px) and (max-height: 760px) { .appMode #play .side .sideAux .limbPic { display: none; } }
+@media (min-width: 901px) and (max-height: 760px) { .appMode #play .metroVis svg { width: 84px; } .appMode #play .sideAux .buddy { flex: 0 1 auto; min-height: 60px; } .appMode #play .sideAux .nextUp { flex: none; font-size: 12.5px; line-height: 1.3; } }
+@media (max-width: 900px) and (max-height: 819px) { .appMode #play .side .sideTitle, .appMode #play .side .padHint { display: none; } }
