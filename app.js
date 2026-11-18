@@ -223,7 +223,7 @@ function renderHome() {
   if (homeSel.lv === null || !levels[homeSel.lv]) homeSel.lv = current;
   const sel = levels[homeSel.lv], list = $('#lessonList');
   const mk = (tag, cls, text) => { const e = document.createElement(tag); if (cls) e.className = cls; if (text !== undefined) e.textContent = text; return e; };
-  const STAGE_ICON = { Beginner: '🌱', Intermediate: '🚀', Advanced: '👑' };
+  const STAGE_PIC = { Beginner: 'art/stage-1.jpg', Intermediate: 'art/stage-2.jpg', Advanced: 'art/stage-3.jpg' };
   const tabs = mk('div', 'stageTabs');
   ['Beginner', 'Intermediate', 'Advanced'].forEach(sg => {
     const lv = levels.filter(v => v.stage === sg);
@@ -231,8 +231,8 @@ function renderHome() {
     const got = lv.reduce((a, v) => a + v.items.reduce((c, x) => c + (progress[x.l.id] ? progress[x.l.id].stars || 0 : 0), 0), 0);
     const all = lv.reduce((a, v) => a + v.items.length * 3, 0);
     const b = mk('button', 'stageTab' + (sel.stage === sg ? ' active' : ''));
-    b.innerHTML = '<span class="ti"></span><b></b><span class="small"></span>';
-    b.children[0].textContent = STAGE_ICON[sg]; b.children[1].textContent = sg; b.children[2].textContent = '⭐ ' + got + ' / ' + all;
+    b.innerHTML = '<img class="tp" alt=""><b></b><span class="small"></span>';
+    b.children[0].src = STAGE_PIC[sg]; b.children[1].textContent = sg; b.children[2].textContent = '⭐ ' + got + ' / ' + all;
     b.onclick = () => { homeSel.lv = (lv.find(v => !v.items.every(x => solid(x.l))) || lv[0]).k; renderHome(); };
     tabs.appendChild(b);
   });
@@ -1432,6 +1432,15 @@ function rr(c, x, y, w, h, r) {
   c.moveTo(x + r, y); c.arcTo(x + w, y, x + w, y + h, r); c.arcTo(x + w, y + h, x, y + h, r);
   c.arcTo(x, y + h, x, y, r); c.arcTo(x, y, x + w, y, r); c.closePath();
 }
+// The drawn pictures of the two hands and the two feet. They are shown large before a lesson starts.
+// The pictures are a mirror: the left hand is on the left of the picture, like the child's own.
+const LIMB_PICS = {}, LIMB_NAMES = { LF: 'Left foot', LH: 'Left hand', RH: 'Right hand', RF: 'Right foot' };
+['LF', 'LH', 'RH', 'RF'].forEach(k => {
+  const im = new Image();
+  im.onload = () => { if (screen === 'play') requestAnimationFrame(draw); };
+  im.src = 'art/limb-' + k.toLowerCase() + '.jpg';
+  LIMB_PICS[k] = im;
+});
 function draw() {
   if (screen !== 'play' || !G.lesson) return;
   updatePadView();
@@ -1623,13 +1632,37 @@ function draw() {
     c.font = '16px "Segoe UI", sans-serif'; c.fillStyle = '#96a0b8';
     c.fillText('Get ready', w / 2, h / 2 + 34);
   } else if (!G.running) {
-    c.font = '16px "Segoe UI", sans-serif';
     const msg = 'Press Start. Hit each note as it reaches the white line.';
-    const mw = c.measureText(msg).width + 28;
-    c.fillStyle = 'rgba(13,16,23,0.88)';
-    rr(c, w / 2 - mw / 2, hitY - 62, mw, 34, 10); c.fill();
-    c.fillStyle = '#e8ecf4';
-    c.fillText(msg, w / 2, hitY - 40);
+    // Before the start: big pictures of the hands and feet this lesson uses.
+    const seen = {};
+    G.notes.forEach(n => { if (n.limb) seen[n.limb] = true; });
+    const list = ['LF', 'LH', 'RH', 'RF'].filter(k => seen[k] && LIMB_PICS[k].complete && LIMB_PICS[k].naturalWidth);
+    const top = 8, bottom = h - 52;   // the row of hands and feet at the bottom stays in view
+    const size = list.length ? Math.floor(Math.min(150, bottom - top - 96, (w - 40) / list.length - 12)) : 0;
+    if (size >= 64) {
+      const pw = list.length * (size + 12) - 12, bw = Math.max(pw + 28, Math.min(w - 16, 470)), bh = size + 96;
+      const by = top + Math.max(0, (bottom - top - bh) / 2);
+      c.fillStyle = 'rgba(13,16,23,0.92)'; rr(c, w / 2 - bw / 2, by, bw, bh, 18); c.fill();
+      c.strokeStyle = '#6a5cf0'; c.lineWidth = 2; rr(c, w / 2 - bw / 2, by, bw, bh, 18); c.stroke();
+      c.fillStyle = '#ffd84a'; c.font = '800 16px "Segoe UI", sans-serif';
+      c.fillText('You play this with:', w / 2, by + 23);
+      list.forEach((k, i) => {
+        const x = w / 2 - pw / 2 + i * (size + 12), y = by + 34;
+        c.save(); rr(c, x, y, size, size, 14); c.clip(); c.drawImage(LIMB_PICS[k], x, y, size, size); c.restore();
+        c.strokeStyle = '#ffd84a'; c.lineWidth = 3; rr(c, x, y, size, size, 14); c.stroke();
+        c.fillStyle = '#ffffff'; c.font = '800 ' + (size < 84 ? 12 : 14) + 'px "Segoe UI", sans-serif';
+        c.fillText(LIMB_NAMES[k], x + size / 2, y + size + 17);
+      });
+      c.fillStyle = '#e8ecf4'; c.font = '15px "Segoe UI", sans-serif';
+      c.fillText(bw < 410 ? 'Press Start when you are ready.' : msg, w / 2, by + bh - 14);
+    } else {
+      c.font = '16px "Segoe UI", sans-serif';
+      const mw = c.measureText(msg).width + 28;
+      c.fillStyle = 'rgba(13,16,23,0.88)';
+      rr(c, w / 2 - mw / 2, hitY - 62, mw, 34, 10); c.fill();
+      c.fillStyle = '#e8ecf4';
+      c.fillText(msg, w / 2, hitY - 40);
+    }
   }
 }
 
@@ -1677,8 +1710,9 @@ function renderRecap(st, wasWait, climb) {
   rf.classList.remove('flyIn'); void rf.offsetWidth; rf.classList.add('flyIn');
   $('#recapBros').innerHTML = stars >= 2 ? '<span class="brosSay">' + (stars === 3 ? 'The Beat Brothers say: WOW!' : 'The Beat Brothers say: nice one!') + '</span>' : '';
   // The Beat Brothers stand left and right of the result, in a pose that fits it.
-  const poses = stars === 3 ? ['trophy', 'jump'] : stars === 2 ? ['clap', 'cheer'] : stars === 1 ? ['thumb', 'hi5'] : ['ready', 'think'];   // no stars: "let's try again", not a victory pose
-  $('#recapBroL').innerHTML = mascotHtml(0, false, poses[0]); $('#recapBroR').innerHTML = mascotHtml(1, false, poses[1]);
+  // Two stars or more: they jump with confetti. Otherwise a thumbs up and "you can do it", not a victory pose.
+  const pic = stars >= 2 ? 'win' : 'try';
+  $('#recapBroL').innerHTML = '<img class="recapPic ' + pic + ' l" src="art/' + pic + '-l.png" alt="">'; $('#recapBroR').innerHTML = '<img class="recapPic ' + pic + ' r" src="art/' + pic + '-r.png" alt="">';
   document.getElementById('recap').dataset.stars = stars;
   $('#recapPoints').textContent = st.points;
   $('#recapCombo').textContent = st.bestCombo;

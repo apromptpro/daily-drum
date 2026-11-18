@@ -905,3 +905,25 @@ html body button.stageTab.active { background: linear-gradient(#8f6cff, #5a36d6)
 html body button.lvStep.active { background: var(--lv); color: #fff; box-shadow: 0 3px 0 rgba(0, 0, 0, .25), 0 0 16px var(--lv); }
 html.appMode body button.lvStep { flex: none; }
 @media (max-height: 740px) { html.appMode body button.lvStep { padding: 4px 8px 4px 5px; border-radius: 16px; } }
+
+/* ---------- 14. the drawn pictures: hands and feet, the three stages, the result page ---------- */
+.limbPic span { position: relative; padding: 2px; }
+.limbPic img { display: block; width: 100%; aspect-ratio: 5 / 4; object-fit: cover; object-position: 50% 15%; border-radius: 9px; filter: grayscale(.85) brightness(.55); transition: filter .08s; }
+.limbPic span[data-l="LF"] img, .limbPic span[data-l="RF"] img { object-position: 50% 85%; }
+.limbPic b { display: none; }
+.limbPic { width: 100%; max-width: 280px; }
+@media (max-width: 900px) { .limbPic { max-width: 240px; align-self: center; } }
+.limbPic span.on { z-index: 3; transform: scale(1.3); }
+.limbPic span.on img { filter: none; }
+/* short screens: the pad picture needs the room; the row of hands and feet under the notes still lights up */
+@media (max-height: 720px) { .appMode #play .side .limbPic { display: none; } }
+button.stageTab .tp { flex: none; width: 60px; height: 60px; margin: -17px 0; border-radius: 50%; object-fit: cover; border: 3px solid #fff; box-shadow: 0 3px 0 rgba(40, 24, 110, .25); background: #fff; }
+html body button.stageTab.active .tp { border-color: #ffd84a; }
+@media (min-height: 900px) and (min-width: 700px) { button.stageTab .tp { width: 84px; height: 84px; margin: -4px 0; } }
+@media (max-width: 699px) { button.stageTab .tp { width: 46px; height: 46px; margin: 0 0 2px; } }
+.recapBro .recapPic { display: block; height: clamp(120px, 30vh, 270px); width: auto; filter: drop-shadow(0 8px 6px rgba(10, 5, 40, .45)); animation: broBreath 2.8s ease-in-out infinite, brosUp .7s .3s cubic-bezier(.2, 1.4, .4, 1) backwards; }
+.recapBro .recapPic.win { animation: broJoy 1s ease-in-out infinite alternate, brosUp .7s .3s cubic-bezier(.2, 1.4, .4, 1) backwards; }
+.recapBro .recapPic.try.l { -webkit-mask-image: linear-gradient(to right, #000 74%, transparent 99%); mask-image: linear-gradient(to right, #000 74%, transparent 99%); }
+.recapBro .recapPic.try.r { -webkit-mask-image: linear-gradient(to left, #000 74%, transparent 99%); mask-image: linear-gradient(to left, #000 74%, transparent 99%); }
+@media (max-width: 699px) { .recapBro .recapPic { height: 110px; } }
+@media (prefers-reduced-motion: reduce) { .recapBro .recapPic { animation: none !important; } }
