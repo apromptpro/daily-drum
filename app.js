@@ -274,7 +274,7 @@ function renderHome() {
     b.innerHTML = '<span class="n"></span><b class="tt"></b><span class="s">' + starsHtml(p ? p.stars : 0) + '</span><span class="mm small"></span>' + (x === nextItem ? '<span class="go">▶ Play next</span>' : '');
     b.querySelector('.n').textContent = x.n;
     b.querySelector('.tt').textContent = l.title;
-    b.querySelector('.mm').textContent = (p && p.bpm ? (mastered(l) ? '👑 ' : '⚡ ') + p.bpm + ' BPM · ' : '') + '⏱ ' + fmtTime(secs) + (p && repTier(p.reps) ? ' · ' + repTier(p.reps)[2] + '×' + p.reps : '');
+    b.querySelector('.mm').textContent = (p && p.bpm ? (mastered(l) ? '👑 ' : '⚡ ') + p.bpm + ' BPM · ' + (nextTempo(l) ? 'next ' + nextTempo(l) + ' · ' : '') : '') + '⏱ ' + fmtTime(secs) + (p && repTier(p.reps) ? ' · ' + repTier(p.reps)[2] + '×' + p.reps : '');
     b.title = feelOf(l) + '. ' + l.goal;
     b.onclick = () => openLesson(x.i);
     tiles.appendChild(b);
@@ -1161,6 +1161,7 @@ function setLesson(l) {
   showNotation(l);
   const pg = progress[l.id];
   $('#tempoGoal').textContent = own || l.song || l.custom ? '' : (mastered(l) ? '👑 ' : '') + 'Goal ' + goalBpm(l) + ' BPM' + (pg && pg.bpm ? ', your top ' + pg.bpm : '');
+  renderTempoTry(l);
   $('#musicLabel').classList.toggle('hidden', !l.song);
   ['#tempoLabel', '#waitLabel', '#loopLabel', '#sheetOnlyLabel'].forEach(s => $(s).classList.toggle('hidden', own));
   ['#speedLabel', '#partLabel', '#alignBox'].forEach(s => $(s).classList.toggle('hidden', !own));
@@ -1173,12 +1174,46 @@ function setLesson(l) {
   $('#padHint').textContent = hint.join(' ');
   resetRun();
 }
+// ---------- Tempo challenge: the same lesson at faster and faster tempos, up to its goal tempo ----------
+// A tempo counts as done when the lesson was played with two stars at that tempo or faster (progress.bpm).
+function tempoSteps(l) {
+  const out = [], goal = goalBpm(l);
+  for (let b = l.bpm; b < goal; b += 10) out.push(b);
+  out.push(goal);
+  return out;
+}
+const topTempo = (l) => (progress[l.id] && progress[l.id].bpm) || 0;
+const nextTempo = (l) => l.song || l.custom ? 0 : (tempoSteps(l).find(b => b > topTempo(l)) || 0);
+function renderTempoTry(l) {
+  const box = $('#tempoTry'), on = !G.track && !l.song && !l.custom;
+  box.classList.toggle('hidden', !on);
+  box.classList.toggle('locked', $('#tempo').disabled);
+  if (!on) return;
+  const top = topTempo(l), nxt = nextTempo(l), goal = goalBpm(l);
+  box.innerHTML = '';
+  const msg = document.createElement('span');
+  msg.className = 'ttMsg';
+  msg.textContent = !nxt ? '👑 Every tempo done! Switch on Climb to go even faster.'
+    : top >= l.bpm ? '🎚️ Tempo challenge: you did ' + top + ' BPM. Now try ' + nxt + '!'
+    : '🎚️ Tempo challenge: get two stars at each tempo. Start with ' + nxt + '.';
+  box.appendChild(msg);
+  tempoSteps(l).forEach(b => {
+    const s = document.createElement('button');
+    s.type = 'button';
+    s.className = 'ttStep' + (b <= top ? ' done' : '') + (b === nxt ? ' next' : '');
+    s.textContent = (b <= top ? '✓ ' : b === goal ? '👑 ' : '') + b;
+    s.title = b <= top ? 'Done: ' + b + ' BPM' : 'Set the tempo to ' + b + ' BPM';
+    s.onclick = () => { const t = $('#tempo'); if (t.disabled || G.running) return; t.value = b; t.oninput({ target: t }); };
+    box.appendChild(s);
+  });
+}
 // A Tour piece (the gig or the sight-reading test) is played as written: no slowing down, no Wait mode, no repeats.
 // sheet = play from the sheet only; noDemo = no "Listen first" (it would give the unseen bars away).
 function gigLock(on, sheet, noDemo) {
   ['#tempo', '#waitMode', '#loopMode', '#climbMode', '#sheetOnly'].forEach(s => { $(s).disabled = on; });
   if (on) { ['#waitMode', '#loopMode', '#climbMode'].forEach(s => { $(s).checked = false; }); $('#sheetOnly').checked = !!sheet; }
   else $('#sheetOnly').checked = false;
+  $('#tempoTry').classList.toggle('locked', on);
   $('#demoBtn').classList.toggle('hidden', !!(on && noDemo));
   $('#backBtn').textContent = backLabel();
 }
@@ -1979,6 +2014,15 @@ function renderRecap(st, wasWait, climb) {
   if (stars >= 1) fanfare(stars);
   if (!own && !wasMaster && mastered(G.lesson)) { const e = document.createElement('span'); e.className = 'newBadge'; e.textContent = '👑 Goal tempo reached: ' + pr.bpm + ' BPM'; nb.appendChild(e); }
   else if (newTop && !own) { const e = document.createElement('span'); e.className = 'newBadge'; e.textContent = '⚡ New top tempo: ' + pr.bpm + ' BPM (goal ' + goalBpm(G.lesson) + ')'; nb.appendChild(e); }
+  // After a good run in time: invite the player to the next tempo, one press away.
+  const upTo = !own && !wasWait && !climb && !G.gig && !G.test && enough && stars >= 2 ? nextTempo(G.lesson) : 0;
+  if (upTo) {
+    const e = document.createElement('button');
+    e.type = 'button'; e.className = 'newBadge tempoUp';
+    e.textContent = '🎚️ Tempo challenge: now try it at ' + upTo + ' BPM ▶';
+    e.onclick = () => { G.bpm = upTo; $('#againBtn').click(); };
+    nb.appendChild(e);
+  }
   if (cleanRun) {
     const tier = repTier(pr.reps), next = REP_TIERS.find(t => t[0] > pr.reps);
     const e = document.createElement('span');

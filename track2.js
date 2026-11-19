@@ -118,6 +118,7 @@ function lockForTest(on) {
   ['#tempo', '#waitMode', '#loopMode', '#climbMode'].forEach(s => { $(s).disabled = on; });
   if (on) { $('#waitMode').checked = false; $('#loopMode').checked = false; $('#climbMode').checked = false; }
   $('#demoBtn').classList.toggle('hidden', on);
+  $('#tempoTry').classList.toggle('locked', on);
   $('#backBtn').textContent = on ? 'Quit test' : backLabel();
   $('#testBar').classList.toggle('hidden', !on);
 }

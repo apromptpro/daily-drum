@@ -14,6 +14,10 @@ const BADGES = [
   { id: 'combo100', icon: '💯', name: '100 in a row', how: 'Hit 100 notes in a row' },
   { id: 'perfect', icon: '🎯', name: 'Spot on', how: 'Finish a lesson with no missed and no extra hits' },
   { id: 'fast', icon: '🚀', name: 'Speed-up', how: 'Two stars with the tempo 20 BPM above the lesson\'s own' },
+  { id: 'up10', icon: '🐇', name: 'A bit faster', how: 'Two stars with the tempo 10 BPM above the lesson\'s own' },
+  { id: 'crown1', icon: '👑', name: 'Tempo crown', how: 'Reach the goal tempo of a lesson' },
+  { id: 'crown5', icon: '🏎️', name: 'Five crowns', how: 'Reach the goal tempo in 5 lessons' },
+  { id: 'crown15', icon: '🐆', name: 'Speed royalty', how: 'Reach the goal tempo in 15 lessons' },
   { id: 'stars10', icon: '✨', name: 'Ten shining lessons', how: 'Three stars in 10 lessons' },
   { id: 'song', icon: '🎤', name: 'Band member', how: 'Two stars on a song' },
   { id: 'own', icon: '🎧', name: 'My music', how: 'A star playing along with your own song' },
@@ -88,6 +92,9 @@ function awardRun(r) {
   [25, 50, 100].forEach(n => { if (p.bestCombo >= n) giveBadge('combo' + n, got); });
   if (!r.wasWait && r.enough && st.miss === 0 && st.extra === 0 && st.hit >= 16) giveBadge('perfect', got);
   if (r.stars >= 2 && !r.own && !r.wasWait && r.bpm >= r.lesson.bpm + 20) giveBadge('fast', got);
+  if (r.stars >= 2 && !r.own && !r.wasWait && r.bpm >= r.lesson.bpm + 10) giveBadge('up10', got);
+  const crowns = LESSONS.filter(l => !l.song && mastered(l)).length;   // lessons played at their goal tempo
+  [1, 5, 15].forEach(n => { if (crowns >= n) giveBadge('crown' + n, got); });
   if (r.stars >= 2 && r.lesson.song) giveBadge('song', got);
   if (LESSONS.filter(l => stars(l.id) === 3).length >= 10) giveBadge('stars10', got);
   if (p.streak >= 3) giveBadge('days3', got);
