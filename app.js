@@ -1464,6 +1464,15 @@ function nextPending() {
   return null;
 }
 
+// How strictly a lesson is judged. The first lessons (lesson.ease 2, then 1) get wider timing and lower star marks,
+// so that a beginner can reach three stars; everything after Level 1 uses the full rules.
+// perf / good = ms from the beat; extra = cost of a wrong or extra hit; s = score needed for 3, 2 and 1 stars.
+const EASE = [
+  { perf: 45, good: 90, extra: 0.25, s: [0.92, 0.8, 0.6] },
+  { perf: 55, good: 105, extra: 0.2, s: [0.85, 0.7, 0.5] },
+  { perf: 70, good: 120, extra: 0.1, s: [0.75, 0.6, 0.4] }
+];
+const easeOf = () => EASE[(G.lesson && !G.track && G.lesson.ease) || 0];
 // A hit arrived (from sound or keyboard). time is on the audio clock, already latency-corrected.
 function handleHit(pads, time, fromAudio) {
   if (!G.running || G.demo) return;
@@ -1511,8 +1520,9 @@ function handleHit(pads, time, fromAudio) {
     if (fromAudio) st.audioErrs.push(err);
     const a = Math.abs(err);
     flashLane(pad, true);
-    if (a <= 45) { st.perfect++; addPoints(st, 100); pop(pad, 'Perfect!', '#6fcf97', true); }
-    else if (a <= 90) { st.good++; addPoints(st, 70); pop(pad, 'Good', '#b7e08f'); }
+    const ez = easeOf();
+    if (a <= ez.perf) { st.perfect++; addPoints(st, 100); pop(pad, 'Perfect!', '#6fcf97', true); }
+    else if (a <= ez.good) { st.good++; addPoints(st, 70); pop(pad, 'Good', '#b7e08f'); }
     else { st.ok++; addPoints(st, 40); pop(pad, err < 0 ? 'Early' : 'Late', '#f2c94c'); }
   });
 }
@@ -1910,13 +1920,14 @@ function renderRecap(st, wasWait, climb) {
   const total = st.hit + st.miss;
   const own = !!G.track;
   let score;
+  const ez = easeOf();
   if (wasWait) score = st.hit / Math.max(1, st.hit + st.extra);
-  else score = Math.max(0, (st.perfect + 0.8 * st.good + 0.5 * st.ok - 0.25 * st.extra) / total);
+  else score = Math.max(0, (st.perfect + 0.8 * st.good + 0.5 * st.ok - ez.extra * st.extra) / total);
   // Stars are earned by playing (nearly) to the end; a long song of your own counts after 100 notes.
   const need = own ? Math.min(0.9 * G.notes.length, 100) : 0.9 * G.notes.length;
   const enough = climb ? climb.segs >= 2 : total >= need;   // Speed climb has no end: two finished rounds count as a full run
   // Wait mode has no time pressure, so it can earn one star at most: the rest are for playing in time.
-  const stars = !enough ? 0 : wasWait ? (score >= 0.8 ? 1 : 0) : score >= 0.92 ? 3 : score >= 0.8 ? 2 : score >= 0.6 ? 1 : 0;
+  const stars = !enough ? 0 : wasWait ? (score >= 0.8 ? 1 : 0) : score >= ez.s[0] ? 3 : score >= ez.s[1] ? 2 : score >= ez.s[2] ? 1 : 0;
   const id = G.lesson.id;
   const prevStars = progress[id] ? progress[id].stars : 0;
   const pr = progress[id] || (progress[id] = { best: 0, stars: 0 });
@@ -2017,7 +2028,7 @@ function renderRecap(st, wasWait, climb) {
   if (worst && worstRate > 0.3) tips.push('Most misses were on the ' + PAD[worst].name + '. Practise that part on its own first.');
   if (st.extra > Math.max(3, total * 0.2)) tips.push(own ? 'Many wrong or extra hits. Pick an easier drum part for this song, or check that the headphones are plugged in.' : 'Many wrong or extra hits. Try Wait mode to learn the order without time pressure.');
   if (st.miss > total * 0.4 && !wasWait) tips.push(own ? 'That is too fast for now. Lower the song speed, or pick an easier drum part.' : 'That tempo is too fast for now. Drop the tempo slider by 10 to 20 BPM.');
-  if (score >= 0.92) tips.push(own ? 'Excellent. Try a harder drum part, or the next song.' : 'Excellent. Move on to the next lesson, or raise the tempo by 10 BPM.');
+  if (score >= ez.s[0]) tips.push(own ? 'Excellent. Try a harder drum part, or the next song.' : 'Excellent. Move on to the next lesson, or raise the tempo by 10 BPM.');
   else if (score >= 0.8) tips.push(own ? 'Solid. One more clean run and you are ready for a harder drum part.' : 'Solid. One more clean run and you are ready for the next lesson.');
   if (!tips.length) tips.push('Keep going. Short, regular practice beats one long session.');
   $('#recapTips').innerHTML = '';
